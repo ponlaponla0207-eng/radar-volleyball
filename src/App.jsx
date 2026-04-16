@@ -44,6 +44,19 @@ function formatDate(d) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+// Check if a string is a valid URL (http/https)
+function isValidUrl(str) {
+  if (!str || typeof str !== "string") return false;
+  const trimmed = str.trim();
+  if (!trimmed) return false;
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 function getDateLabel(offset) {
   if (offset === 0) return "今天";
   if (offset === 1) return "明天";
@@ -138,6 +151,7 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
   const isFull = session.registered >= session.max;
   const isFormed = session.registered >= session.min;
   const waitlist = session.waitlist || 0;
+  const hasValidUrl = isValidUrl(session.signupUrl);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const comments = session.comments || [];
   const commentCount = comments.length;
@@ -177,7 +191,7 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
             <span>📍 {area}</span><span>🕐 {session.time} 開始</span><span>🏐 {session.level}</span><span>💰 ${session.fee}/人</span><span>👤 主揪：{session.host}</span>
           </div>
           {session.notes && <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 8, fontStyle: "italic" }}>📝 {session.notes}</div>}
-          {session.signupUrl && !hasJoined && !hasWaitlisted && <div style={{ fontSize: 11, marginBottom: 8, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>🔗 點擊報名按鈕將前往外部報名頁面</div>}
+          {hasValidUrl && !hasJoined && !hasWaitlisted && <div style={{ fontSize: 11, marginBottom: 8, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>🔗 點擊報名按鈕將前往外部報名頁面</div>}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
             {!isFormed && !isFull && <span style={{ fontSize: 13, color: status.color, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><PersonIcon/> 還差 {need} 人成團</span>}
             {isFormed && !isFull && <span style={{ fontSize: 13, color: "#22c55e", fontWeight: 500 }}>✅ 已成團，還可加入 {session.max - session.registered} 人</span>}
@@ -199,17 +213,17 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
                 onMouseLeave={(e) => { e.target.style.background = "rgba(239,68,68,0.08)"; }}
               >✕ 取消候補</button>
             ) : isFull ? (
-              <button onClick={() => { if (session.signupUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } onWaitlist(session.id); }}
+              <button onClick={() => { if (hasValidUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } onWaitlist(session.id); }}
                 style={{ padding: "7px 18px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #a855f7, #8b5cf6)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
-              >🕐 我要候補{session.signupUrl ? " ↗" : ""}</button>
+              >🕐 我要候補{hasValidUrl ? " ↗" : ""}</button>
             ) : (
-              <button onClick={() => { if (session.signupUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } onJoin(session.id); }}
+              <button onClick={() => { if (hasValidUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } onJoin(session.id); }}
                 style={{ padding: "7px 20px", borderRadius: 10, border: "none", background: isFormed ? "rgba(34,197,94,0.12)" : `linear-gradient(135deg, ${status.color}, ${status.color}dd)`, color: isFormed ? "#22c55e" : "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
-              >{isFormed ? "+ 我要加入" : "🙋 我要報名"}{session.signupUrl ? " ↗" : ""}</button>
+              >{isFormed ? "+ 我要加入" : "🙋 我要報名"}{hasValidUrl ? " ↗" : ""}</button>
             )}
           </div>
 
@@ -597,8 +611,24 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onC
               <F label="每人費用 (NT$) *" field="fee" type="number" min="0" step="10" placeholder="150" err={errors.fee}/>
             </div>
 
-            <F label="報名連結（選填）" field="signupUrl" placeholder="https://..." />
-            <span style={{ fontSize: 11, color: "#64748b", marginTop: -10 }}>貼上 FB 社團、LINE 群組或其他報名頁面的網址</span>
+            <div>
+              <label style={labelStyle}>報名連結（選填）</label>
+              <input value={form.signupUrl || ""} onChange={(e) => setForm({...form, signupUrl: e.target.value})} placeholder="https://..."
+                style={{
+                  ...inputStyle,
+                  borderColor: form.signupUrl && !isValidUrl(form.signupUrl) ? "#ef4444" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#22c55e" : "rgba(148,163,184,0.15)")
+                }}
+                onFocus={(e)=>{ if (!form.signupUrl) e.target.style.borderColor = "#f59e0b"; }}
+                onBlur={(e)=>{ e.target.style.borderColor = form.signupUrl && !isValidUrl(form.signupUrl) ? "#ef4444" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#22c55e" : "rgba(148,163,184,0.15)"); }}
+              />
+              {form.signupUrl && !isValidUrl(form.signupUrl) ? (
+                <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>⚠️ 這不是有效的網址，請以 http:// 或 https:// 開頭（留空也 OK）</span>
+              ) : form.signupUrl && isValidUrl(form.signupUrl) ? (
+                <span style={{ fontSize: 11, color: "#22c55e", marginTop: 4, display: "block" }}>✓ 網址格式正確</span>
+              ) : (
+                <span style={{ fontSize: 11, color: "#64748b", marginTop: 4, display: "block" }}>貼上 FB 社團、LINE 群組或其他報名頁面的網址</span>
+              )}
+            </div>
 
             <F label="備註（選填）" field="notes" type="textarea" placeholder="例：需自備球鞋..."/>
 
@@ -732,8 +762,25 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
               </div>
               <div>
                 <label style={labelStyle}>報名連結（選填）</label>
-                <input value={form.signupUrl} onChange={(e) => setForm({...form, signupUrl: e.target.value})} placeholder="例：https://www.facebook.com/groups/..." style={inputStyle} onFocus={(e)=>{e.target.style.borderColor="#f59e0b";}} onBlur={(e)=>{e.target.style.borderColor="rgba(148,163,184,0.15)";}}/>
-                <span style={{ fontSize: 11, color: "#64748b", marginTop: 4, display: "block" }}>貼上 FB 社團、LINE 群組或其他報名頁面的網址</span>
+                <input value={form.signupUrl} onChange={(e) => setForm({...form, signupUrl: e.target.value})} placeholder="例：https://www.facebook.com/groups/..."
+                  style={{
+                    ...inputStyle,
+                    borderColor: form.signupUrl && !isValidUrl(form.signupUrl) ? "#ef4444" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#22c55e" : "rgba(148,163,184,0.15)")
+                  }}
+                  onFocus={(e)=>{
+                    if (!form.signupUrl) e.target.style.borderColor = "#f59e0b";
+                  }}
+                  onBlur={(e)=>{
+                    e.target.style.borderColor = form.signupUrl && !isValidUrl(form.signupUrl) ? "#ef4444" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#22c55e" : "rgba(148,163,184,0.15)");
+                  }}
+                />
+                {form.signupUrl && !isValidUrl(form.signupUrl) ? (
+                  <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>⚠️ 這不是有效的網址，請以 http:// 或 https:// 開頭（留空也 OK）</span>
+                ) : form.signupUrl && isValidUrl(form.signupUrl) ? (
+                  <span style={{ fontSize: 11, color: "#22c55e", marginTop: 4, display: "block" }}>✓ 網址格式正確</span>
+                ) : (
+                  <span style={{ fontSize: 11, color: "#64748b", marginTop: 4, display: "block" }}>貼上 FB 社團、LINE 群組或其他報名頁面的網址</span>
+                )}
               </div>
               <div>
                 <label style={labelStyle}>備註（選填）</label>
