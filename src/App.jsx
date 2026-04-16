@@ -1,4 +1,23 @@
 import { useState, useEffect, useRef } from "react";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, serverTimestamp, increment } from "firebase/firestore";
+
+// ════════════════════════════════════════════
+// Firebase 設定 — 請在 firebase.google.com 註冊後貼上你的設定
+// ════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyBz2UCtxx5eGbDcgcYg9Iow3xFvzoIn4Ig",
+  authDomain: "volleyball-radar.firebaseapp.com",
+  projectId: "volleyball-radar",
+  storageBucket: "volleyball-radar.firebasestorage.app",
+  messagingSenderId: "140812184648",
+  appId: "1:140812184648:web:92ea6b8288d93716c6bc7d",
+  measurementId: "G-1YHGSNSQN6"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const sessionsRef = collection(db, "sessions");
 
 // Helper to get date string offset from today
 function dayOffset(n) {
@@ -6,9 +25,6 @@ function dayOffset(n) {
   const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,"0"), day = String(d.getDate()).padStart(2,"0");
   return `${y}-${m}-${day}`;
 }
-const D0 = dayOffset(0), D1 = dayOffset(1), D2 = dayOffset(2), D3 = dayOffset(3);
-
-const INITIAL_COURTS = [];
 
 const AREAS_FILTER = ["全部", "大安區", "信義區", "中山區", "松山區", "內湖區", "文山區", "北投區", "士林區"];
 const LEVELS = ["全部", "初階", "中階", "中高階", "不限"];
@@ -447,46 +463,80 @@ export default function VolleyballMatcher() {
   const [sortBy, setSortBy] = useState("need");
   const [joinedSessions, setJoinedSessions] = useState(new Set());
   const [showToast, setShowToast] = useState(null);
-  const [courts, setCourts] = useState(INITIAL_COURTS);
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editTarget, setEditTarget] = useState(null); // { session, courtName, area }
-  const nextId = useRef(100);
+  const [editTarget, setEditTarget] = useState(null);
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
-  const handleJoin = (sessionId) => {
+  // Subscribe to Firestore — auto-updates whenever data changes
+  useEffect(() => {
+    const q = query(sessionsRef, orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const today = getToday();
+      const list = [];
+      snap.forEach(d => {
+        const data = d.data();
+        // Hide past sessions (data kept but filtered from UI)
+        if (data.date >= today) {
+          list.push({ id: d.id, ...data });
+        }
+      });
+      setSessions(list);
+      // Collect unique areas into filter
+      list.forEach(s => { if (s.area && !AREAS_FILTER.includes(s.area)) AREAS_FILTER.push(s.area); });
+      setLoading(false);
+    }, (err) => {
+      console.error("Firestore 讀取錯誤：", err);
+      toast("連線失敗，請檢查網路或 Firebase 設定", 4000, "warn");
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleJoin = async (sessionId) => {
     if (joinedSessions.has(sessionId)) return;
     const nj = new Set(joinedSessions); nj.add(sessionId); setJoinedSessions(nj);
-    setCourts(prev => prev.map(c => ({...c, sessions: c.sessions.map(s => s.id === sessionId ? {...s, registered: s.registered + 1} : s)})));
-    toast("請記得到主揪的報名頁面 +1，待主揪與您確認後才算報名成功喔！", 4000, "warn");
-  };
-
-  const handleCreateSession = (data) => {
-    const ns = { id: `new_${nextId.current++}`, time: data.time, date: data.date, registered: data.registered, max: data.max, min: data.min, level: data.level, fee: data.fee, host: data.host, signupUrl: data.signupUrl, notes: data.notes, password: data.password };
-    setCourts(prev => {
-      const idx = prev.findIndex(c => c.name === data.courtName && c.area === data.area);
-      if (idx >= 0) { const u = [...prev]; u[idx] = {...u[idx], sessions: [...u[idx].sessions, ns]}; return u; }
-      return [...prev, { id: nextId.current++, name: data.courtName, area: data.area, sessions: [ns] }];
-    });
-    if (!AREAS_FILTER.includes(data.area)) AREAS_FILTER.push(data.area);
-    setShowCreateModal(false);
-    setSelectedDate(data.date);
-    toast("場次已發佈！等待球友加入 🎉");
-  };
-
-  // Find session + court info by session id
-  const findSessionInfo = (sessionId) => {
-    for (const c of courts) {
-      const s = c.sessions.find(s => s.id === sessionId);
-      if (s) return { session: s, courtName: c.name, area: c.area };
+    try {
+      await updateDoc(doc(db, "sessions", sessionId), { registered: increment(1) });
+      toast("請記得到主揪的報名頁面 +1，待主揪與您確認後才算報名成功喔！", 4000, "warn");
+    } catch (err) {
+      console.error(err);
+      toast("報名失敗，請稍後再試", 3000, "warn");
     }
-    return null;
+  };
+
+  const handleCreateSession = async (data) => {
+    try {
+      await addDoc(sessionsRef, {
+        courtName: data.courtName, area: data.area,
+        date: data.date, time: data.time,
+        registered: data.registered, max: data.max, min: data.min,
+        level: data.level, fee: data.fee,
+        host: data.host, signupUrl: data.signupUrl || "",
+        notes: data.notes || "", password: data.password,
+        createdAt: serverTimestamp(),
+      });
+      if (!AREAS_FILTER.includes(data.area)) AREAS_FILTER.push(data.area);
+      setShowCreateModal(false);
+      setSelectedDate(data.date);
+      toast("場次已發佈！等待球友加入 🎉");
+    } catch (err) {
+      console.error(err);
+      toast("發佈失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  const findSessionInfo = (sessionId) => {
+    const s = sessions.find(s => s.id === sessionId);
+    if (!s) return null;
+    return { session: s, courtName: s.courtName, area: s.area };
   };
 
   const handleEditClick = (session) => {
-    // find full session from courts (with password)
     const info = findSessionInfo(session.id);
     if (!info) return;
     setEditTarget(info);
@@ -497,56 +547,34 @@ export default function VolleyballMatcher() {
     const info = findSessionInfo(sessionId);
     if (!info) return false;
     if (info.session.password !== pw) return false;
-    // password correct → close password modal, open edit modal
     setShowPasswordModal(false);
     setShowEditModal(true);
     return true;
   };
 
-  const handleSaveEdit = (sessionId, data) => {
-    setCourts(prev => {
-      let updated = prev.map(c => {
-        const sIdx = c.sessions.findIndex(s => s.id === sessionId);
-        if (sIdx < 0) return c;
-        const oldSession = c.sessions[sIdx];
-        const newSession = { ...oldSession, time: data.time, date: data.date, registered: data.registered, max: data.max, level: data.level, fee: data.fee, host: data.host, signupUrl: data.signupUrl, notes: data.notes };
-        // If court name or area changed, remove from here and add elsewhere
-        if (data.courtName !== c.name || data.area !== c.area) {
-          const newSessions = c.sessions.filter(s => s.id !== sessionId);
-          return { ...c, sessions: newSessions, _movedSession: newSession, _newCourtName: data.courtName, _newArea: data.area };
-        }
-        const newSessions = [...c.sessions]; newSessions[sIdx] = newSession;
-        return { ...c, sessions: newSessions };
+  const handleSaveEdit = async (sessionId, data) => {
+    try {
+      await updateDoc(doc(db, "sessions", sessionId), {
+        courtName: data.courtName, area: data.area,
+        date: data.date, time: data.time,
+        registered: data.registered, max: data.max,
+        level: data.level, fee: data.fee,
+        host: data.host, signupUrl: data.signupUrl || "", notes: data.notes || "",
       });
-
-      // Handle moved sessions
-      const moved = updated.find(c => c._movedSession);
-      if (moved) {
-        const ms = moved._movedSession;
-        const cn = moved._newCourtName, ca = moved._newArea;
-        updated = updated.map(c => { const { _movedSession, _newCourtName, _newArea, ...rest } = c; return rest; });
-        // remove empty courts
-        updated = updated.filter(c => c.sessions.length > 0);
-        const targetIdx = updated.findIndex(c => c.name === cn && c.area === ca);
-        if (targetIdx >= 0) {
-          updated[targetIdx] = { ...updated[targetIdx], sessions: [...updated[targetIdx].sessions, ms] };
-        } else {
-          updated.push({ id: nextId.current++, name: cn, area: ca, sessions: [ms] });
-        }
-      }
-
-      return updated;
-    });
-
-    if (!AREAS_FILTER.includes(data.area)) AREAS_FILTER.push(data.area);
-    setShowEditModal(false);
-    setEditTarget(null);
-    toast("場次已更新 ✅");
+      if (!AREAS_FILTER.includes(data.area)) AREAS_FILTER.push(data.area);
+      setShowEditModal(false);
+      setEditTarget(null);
+      toast("場次已更新 ✅");
+    } catch (err) {
+      console.error(err);
+      toast("更新失敗，請稍後再試", 3000, "warn");
+    }
   };
 
-  const allSessions = courts.flatMap(c =>
-    c.sessions.filter(s => s.date === selectedDate).filter(s => selectedArea === "全部" || c.area === selectedArea).filter(s => selectedLevel === "全部" || s.level === selectedLevel).map(s => ({...s, courtName: c.name, area: c.area}))
-  );
+  const allSessions = sessions
+    .filter(s => s.date === selectedDate)
+    .filter(s => selectedArea === "全部" || s.area === selectedArea)
+    .filter(s => selectedLevel === "全部" || s.level === selectedLevel);
   const sorted = [...allSessions].sort((a,b) => { if (sortBy === "need") return getStatusPriority(a) - getStatusPriority(b); if (sortBy === "time") return a.time.localeCompare(b.time); if (sortBy === "fee") return a.fee - b.fee; return 0; });
   const totalPlayers = allSessions.reduce((sum,s) => sum + s.registered, 0);
   const needPeople = allSessions.filter(s => s.registered < s.min);
@@ -608,13 +636,19 @@ export default function VolleyballMatcher() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {sorted.length === 0 && (
+          {loading && (
+            <div style={{ textAlign: "center", padding: 48, color: "var(--text-dim)", fontSize: 14 }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>🏐</div>
+              載入場次中...
+            </div>
+          )}
+          {!loading && sorted.length === 0 && (
             <div style={{ textAlign: "center", padding: 48, color: "var(--text-dim)", fontSize: 14 }}>
               這個時段目前沒有場次，試試其他日期或地區 🏐<br/>
               <button onClick={() => setShowCreateModal(true)} style={{ marginTop: 16, padding: "10px 24px", borderRadius: 12, border: "1px dashed rgba(245,158,11,0.4)", background: "rgba(245,158,11,0.06)", color: "#f59e0b", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ 自己開一場</button>
             </div>
           )}
-          {sorted.map((s, i) => (
+          {!loading && sorted.map((s, i) => (
             <div key={s.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
               <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick}/>
             </div>
