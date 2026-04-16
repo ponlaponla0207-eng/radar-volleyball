@@ -25,7 +25,6 @@ const sessionsRef = collection(db, "sessions");
 // ════════════════════════════════════════════
 const ADMIN_PASSWORD = "0912662663";
 const ADMIN_SESSION_KEY = "vb_admin_session";
-
 // Helper to get date string offset from today
 function dayOffset(n) {
   const d = new Date(); d.setDate(d.getDate() + n);
@@ -129,8 +128,16 @@ const ProgressRing = ({ current, min, max }) => {
   const offset = circ - Math.min(current / max, 1) * circ;
   const minOffset = circ - (min / max) * circ;
   const status = getStatus({ registered: current, min, max });
+  const [bumpKey, setBumpKey] = useState(0);
+  const prevCurrent = useRef(current);
+  useEffect(() => {
+    if (prevCurrent.current !== current) {
+      setBumpKey(k => k + 1);
+      prevCurrent.current = current;
+    }
+  }, [current]);
   return (
-    <div style={{ position: "relative", width: radius*2, height: radius*2, flexShrink: 0 }}>
+    <div key={bumpKey} style={{ position: "relative", width: radius*2, height: radius*2, flexShrink: 0, animation: bumpKey > 0 ? "ringBump 0.4s ease" : undefined }}>
       <svg width={radius*2} height={radius*2} style={{ transform: "rotate(-90deg)" }}>
         <circle stroke="rgba(148,163,184,0.15)" fill="transparent" strokeWidth={stroke} r={nr} cx={radius} cy={radius}/>
         <circle stroke="rgba(148,163,184,0.25)" fill="transparent" strokeWidth={stroke} strokeDasharray={`2 ${circ-2}`} strokeDashoffset={-minOffset+1} r={nr} cx={radius} cy={radius} strokeLinecap="butt"/>
@@ -158,11 +165,12 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
   // Sort comments by createdAt descending (newest first)
   const sortedComments = [...comments].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   return (
-    <div style={{ background: "var(--card-bg)", borderRadius: 16, padding: "20px 22px", border: "1px solid var(--border)", position: "relative", overflow: "hidden", transition: "all 0.25s ease" }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = status.color; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 8px 24px ${status.bg}`; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+    <div style={{ background: "var(--card-bg)", borderRadius: 16, padding: "20px 22px 20px 26px", border: "1px solid var(--border)", position: "relative", overflow: "hidden", transition: "all 0.25s ease" }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${status.color}55`; e.currentTarget.style.boxShadow = `0 8px 24px ${status.bg}`; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "none"; }}
     >
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: status.color, opacity: 0.7 }}/>
+      {/* Left-side accent bar (bold and tall, more noticeable) */}
+      <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: status.color, opacity: 0.85 }}/>
       {/* Edit button top-right */}
       <button onClick={() => onEdit(session)} title="主揪編輯" style={{ position: "absolute", top: 10, right: 12, background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#64748b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
         onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.12)"; e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.borderColor = "rgba(245,158,11,0.25)"; }}
@@ -187,8 +195,12 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
               <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(239,68,68,0.12)", color: "#ef4444", fontWeight: 600 }}>🚫 已關閉</span>
             )}
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 13, color: "var(--text-secondary)", marginBottom: 10 }}>
-            <span>📍 {area}</span><span>🕐 {session.time} 開始</span><span>🏐 {session.level}</span><span>💰 ${session.fee}/人</span><span>👤 主揪：{session.host}</span>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "6px 14px", fontSize: 13, color: "var(--text-secondary)", marginBottom: 10 }}>
+            <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>📍 {area}</span>
+            <span style={{ whiteSpace: "nowrap" }}>🕐 {session.time} 開始</span>
+            <span style={{ whiteSpace: "nowrap" }}>🏐 {session.level}</span>
+            <span style={{ whiteSpace: "nowrap" }}>💰 ${session.fee}/人</span>
+            <span style={{ gridColumn: "1 / -1", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>👤 主揪：{session.host}</span>
           </div>
           {session.notes && <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 8, fontStyle: "italic" }}>📝 {session.notes}</div>}
           {hasValidUrl && !hasJoined && !hasWaitlisted && <div style={{ fontSize: 11, marginBottom: 8, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>🔗 點擊報名按鈕將前往外部報名頁面</div>}
@@ -1135,6 +1147,8 @@ export default function VolleyballMatcher() {
         @keyframes toastIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes glow { 0%, 100% { box-shadow: 0 0 12px rgba(245,158,11,0.3); } 50% { box-shadow: 0 0 24px rgba(245,158,11,0.5); } }
         @keyframes adminPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes ringBump { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.18); } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
       `}</style>
 
@@ -1168,11 +1182,18 @@ export default function VolleyballMatcher() {
         </div>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "center" }}>
-          {DATES.map(d => (
-            <button key={d.value} onClick={() => setSelectedDate(d.value)} style={{ padding: "8px 20px", borderRadius: 10, border: "1px solid", borderColor: selectedDate === d.value ? "#f59e0b" : "var(--border)", background: selectedDate === d.value ? "rgba(245,158,11,0.12)" : "transparent", color: selectedDate === d.value ? "#f59e0b" : "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
-              {d.label}<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 4 }}>{d.value.slice(5).replace("-","/")}</span>
-            </button>
-          ))}
+          {DATES.map(d => {
+            const count = sessions.filter(s => s.date === d.value && !hasSessionStarted(s)).length;
+            const isSelected = selectedDate === d.value;
+            return (
+              <button key={d.value} onClick={() => setSelectedDate(d.value)} style={{ position: "relative", padding: "8px 20px", borderRadius: 10, border: "1px solid", borderColor: isSelected ? "#f59e0b" : "var(--border)", background: isSelected ? "rgba(245,158,11,0.12)" : "transparent", color: isSelected ? "#f59e0b" : "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
+                {d.label}<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 4 }}>{d.value.slice(5).replace("-","/")}</span>
+                {count > 0 && (
+                  <span style={{ position: "absolute", top: -6, right: -6, minWidth: 18, height: 18, padding: "0 5px", borderRadius: 9, background: isSelected ? "#f59e0b" : "#60a5fa", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>{count}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", padding: "12px 16px", background: "var(--surface)", borderRadius: 14, border: "1px solid var(--border)" }}>
@@ -1190,14 +1211,19 @@ export default function VolleyballMatcher() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {loading && (
             <div style={{ textAlign: "center", padding: 48, color: "var(--text-dim)", fontSize: 14 }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>🏐</div>
-              載入場次中...
+              <div style={{ fontSize: 36, marginBottom: 12, display: "inline-block", animation: "spin 2s linear infinite" }}>🏐</div>
+              <div>載入場次中...</div>
             </div>
           )}
           {!loading && sorted.length === 0 && (
-            <div style={{ textAlign: "center", padding: 48, color: "var(--text-dim)", fontSize: 14 }}>
-              這個時段目前沒有場次，試試其他日期或地區 🏐<br/>
-              <button onClick={() => setShowCreateModal(true)} style={{ marginTop: 16, padding: "10px 24px", borderRadius: 12, border: "1px dashed rgba(245,158,11,0.4)", background: "rgba(245,158,11,0.06)", color: "#f59e0b", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ 自己開一場</button>
+            <div style={{ textAlign: "center", padding: "48px 24px", background: "rgba(15,23,42,0.3)", borderRadius: 16, border: "1px dashed rgba(148,163,184,0.15)" }}>
+              <div style={{ fontSize: 56, marginBottom: 12, opacity: 0.7 }}>🏐</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>這個時段還沒有場次</div>
+              <div style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 20 }}>換個日期看看，或是直接揪一場吧！</div>
+              <button onClick={() => setShowCreateModal(true)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px rgba(245,158,11,0.25)", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.transform = "translateY(-2px)"; e.target.style.boxShadow = "0 6px 20px rgba(245,158,11,0.35)"; }}
+                onMouseLeave={(e) => { e.target.style.transform = "translateY(0)"; e.target.style.boxShadow = "0 4px 16px rgba(245,158,11,0.25)"; }}
+              >🏐 我要開場</button>
             </div>
           )}
           {!loading && sorted.map((s, i) => (
