@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, serverTimestamp, increment } from "firebase/firestore";
+import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, serverTimestamp, increment, deleteDoc } from "firebase/firestore";
 
 // ════════════════════════════════════════════
 // Firebase 設定 — 請在 firebase.google.com 註冊後貼上你的設定
@@ -107,7 +107,7 @@ const ProgressRing = ({ current, min, max }) => {
 };
 
 /* ── Session Card ── */
-const SessionCard = ({ session, courtName, area, onJoin, onEdit }) => {
+const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined }) => {
   const status = getStatus(session);
   const need = Math.max(0, session.min - session.registered);
   const isFull = session.registered >= session.max;
@@ -132,17 +132,26 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit }) => {
             <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: status.bg, color: status.color, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}>
               {!isFormed && !isFull && <FireIcon/>}{status.label}
             </span>
+            {hasJoined && (
+              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(96,165,250,0.12)", color: "#60a5fa", fontWeight: 600 }}>✓ 你已報名</span>
+            )}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 13, color: "var(--text-secondary)", marginBottom: 10 }}>
             <span>📍 {area}</span><span>🕐 {session.time} 開始</span><span>🏐 {session.level}</span><span>💰 ${session.fee}/人</span><span>👤 主揪：{session.host}</span>
           </div>
           {session.notes && <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 8, fontStyle: "italic" }}>📝 {session.notes}</div>}
-          {session.signupUrl && <div style={{ fontSize: 11, marginBottom: 8, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>🔗 點擊報名按鈕將前往外部報名頁面</div>}
+          {session.signupUrl && !hasJoined && <div style={{ fontSize: 11, marginBottom: 8, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>🔗 點擊報名按鈕將前往外部報名頁面</div>}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
             {!isFormed && !isFull && <span style={{ fontSize: 13, color: status.color, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><PersonIcon/> 還差 {need} 人成團</span>}
             {isFormed && !isFull && <span style={{ fontSize: 13, color: "#22c55e", fontWeight: 500 }}>✅ 已成團，還可加入 {session.max - session.registered} 人</span>}
             {isFull && <span style={{ fontSize: 13, color: "#94a3b8" }}>已額滿</span>}
-            {!isFull && (
+            {hasJoined ? (
+              <button onClick={() => onCancel(session.id)}
+                style={{ padding: "7px 18px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#ef4444", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { e.target.style.background = "rgba(239,68,68,0.15)"; }}
+                onMouseLeave={(e) => { e.target.style.background = "rgba(239,68,68,0.08)"; }}
+              >✕ 取消報名</button>
+            ) : !isFull && (
               <button onClick={() => { if (session.signupUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } onJoin(session.id); }}
                 style={{ padding: "7px 20px", borderRadius: 10, border: "none", background: isFormed ? "rgba(34,197,94,0.12)" : `linear-gradient(135deg, ${status.color}, ${status.color}dd)`, color: isFormed ? "#22c55e" : "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
@@ -207,7 +216,7 @@ const PasswordModal = ({ open, onClose, onVerify, sessionId }) => {
 /* ════════════════════════════════════════════
    Edit Session Modal (all fields)
    ════════════════════════════════════════════ */
-const EditSessionModal = ({ open, onClose, session, courtName, area, onSave }) => {
+const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onCloseSession }) => {
   const [form, setForm] = useState({});
   const [errors, setErrors] = useState({});
 
@@ -323,6 +332,21 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave }) =
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(245,158,11,0.3)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "none"; }}
               >💾 儲存變更</button>
+            </div>
+
+            {/* Danger zone — close session */}
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed rgba(239,68,68,0.15)" }}>
+              <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, letterSpacing: "0.04em" }}>危險區域</div>
+              <button
+                onClick={() => {
+                  if (window.confirm("確定要關閉這個場次嗎？\n關閉後場次會立刻從列表中隱藏，資料仍會保留但無法再被報名。此動作無法在前端復原。")) {
+                    onCloseSession(session.id);
+                  }
+                }}
+                style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)", color: "#ef4444", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.background = "rgba(239,68,68,0.12)"; }}
+                onMouseLeave={(e) => { e.target.style.background = "rgba(239,68,68,0.06)"; }}
+              >🚫 關閉此場次（立刻隱藏）</button>
             </div>
           </div>
         </div>
@@ -472,18 +496,45 @@ export default function VolleyballMatcher() {
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
+  // Ticker to refresh time-based filtering every minute
+  const [nowTick, setNowTick] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNowTick(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // localStorage helpers for tracking "sessions I joined"
+  const JOINED_KEY = "vb_joined_sessions";
+  const loadJoined = () => {
+    try { return new Set(JSON.parse(localStorage.getItem(JOINED_KEY) || "[]")); } catch { return new Set(); }
+  };
+  const saveJoined = (set) => {
+    try { localStorage.setItem(JOINED_KEY, JSON.stringify([...set])); } catch {}
+  };
+
+  // Initialize joined from localStorage on mount
+  useEffect(() => { setJoinedSessions(loadJoined()); }, []);
+
+  // Check if a session has already started (based on date + time)
+  const hasSessionStarted = (session) => {
+    if (!session.date || !session.time) return false;
+    const startStr = session.time.split("\u2013")[0].trim();
+    const [h, m] = startStr.split(":").map(Number);
+    const [y, mo, d] = session.date.split("-").map(Number);
+    const sessionStart = new Date(y, mo - 1, d, h || 0, m || 0);
+    return sessionStart.getTime() <= Date.now();
+  };
+
   // Subscribe to Firestore — auto-updates whenever data changes
   useEffect(() => {
     const q = query(sessionsRef, orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
-      const today = getToday();
       const list = [];
       snap.forEach(d => {
         const data = d.data();
-        // Hide past sessions (data kept but filtered from UI)
-        if (data.date >= today) {
-          list.push({ id: d.id, ...data });
-        }
+        // Hide closed sessions from UI (data kept in Firestore)
+        if (data.closed) return;
+        list.push({ id: d.id, ...data });
       });
       setSessions(list);
       // Collect unique areas into filter
@@ -499,13 +550,44 @@ export default function VolleyballMatcher() {
 
   const handleJoin = async (sessionId) => {
     if (joinedSessions.has(sessionId)) return;
-    const nj = new Set(joinedSessions); nj.add(sessionId); setJoinedSessions(nj);
+    const nj = new Set(joinedSessions); nj.add(sessionId);
+    setJoinedSessions(nj); saveJoined(nj);
     try {
       await updateDoc(doc(db, "sessions", sessionId), { registered: increment(1) });
       toast("請記得到主揪的報名頁面 +1，待主揪與您確認後才算報名成功喔！", 4000, "warn");
     } catch (err) {
       console.error(err);
+      // Rollback on error
+      const rollback = new Set(joinedSessions);
+      setJoinedSessions(rollback); saveJoined(rollback);
       toast("報名失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  const handleCancelRegistration = async (sessionId) => {
+    if (!joinedSessions.has(sessionId)) return;
+    const nj = new Set(joinedSessions); nj.delete(sessionId);
+    setJoinedSessions(nj); saveJoined(nj);
+    try {
+      await updateDoc(doc(db, "sessions", sessionId), { registered: increment(-1) });
+      toast("已取消報名", 2500);
+    } catch (err) {
+      console.error(err);
+      const rollback = new Set(joinedSessions);
+      setJoinedSessions(rollback); saveJoined(rollback);
+      toast("取消失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  const handleCloseSession = async (sessionId) => {
+    try {
+      await updateDoc(doc(db, "sessions", sessionId), { closed: true });
+      setShowEditModal(false);
+      setEditTarget(null);
+      toast("場次已關閉 ✅", 2500);
+    } catch (err) {
+      console.error(err);
+      toast("關閉失敗，請稍後再試", 3000, "warn");
     }
   };
 
@@ -571,7 +653,10 @@ export default function VolleyballMatcher() {
     }
   };
 
+  // nowTick dependency ensures time-based filter re-evaluates every minute
+  const _tickRef = nowTick;
   const allSessions = sessions
+    .filter(s => !hasSessionStarted(s))
     .filter(s => s.date === selectedDate)
     .filter(s => selectedArea === "全部" || s.area === selectedArea)
     .filter(s => selectedLevel === "全部" || s.level === selectedLevel);
@@ -650,7 +735,7 @@ export default function VolleyballMatcher() {
           )}
           {!loading && sorted.map((s, i) => (
             <div key={s.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick}/>
+              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)}/>
             </div>
           ))}
         </div>
@@ -673,7 +758,7 @@ export default function VolleyballMatcher() {
 
       <PasswordModal open={showPasswordModal} onClose={() => { setShowPasswordModal(false); setEditTarget(null); }} onVerify={handlePasswordVerify} sessionId={editTarget?.session?.id}/>
 
-      <EditSessionModal open={showEditModal} onClose={() => { setShowEditModal(false); setEditTarget(null); }} session={editTarget?.session} courtName={editTarget?.courtName} area={editTarget?.area} onSave={handleSaveEdit}/>
+      <EditSessionModal open={showEditModal} onClose={() => { setShowEditModal(false); setEditTarget(null); }} session={editTarget?.session} courtName={editTarget?.courtName} area={editTarget?.area} onSave={handleSaveEdit} onCloseSession={handleCloseSession}/>
 
       {showToast && (
         <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.3)" : "0 8px 32px rgba(34,197,94,0.3)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5 }}>{showToast.msg}</div>
