@@ -1,47 +1,44 @@
 import { useState, useEffect, useRef } from "react";
 
-const INITIAL_COURTS = [
-  { id: 1, name: "大安運動中心", area: "大安區", sessions: [
-    { id: "s1", time: "18:00–20:00", date: "2026-04-15", registered: 10, max: 16, min: 12, level: "中階", fee: 150, host: "阿明", password: "1234", signupUrl: "", notes: "" },
-    { id: "s2", time: "20:00–22:00", date: "2026-04-15", registered: 7, max: 16, min: 12, level: "初階", fee: 120, host: "小美", password: "1234", signupUrl: "", notes: "" },
-  ]},
-  { id: 2, name: "信義國中活動中心", area: "信義區", sessions: [
-    { id: "s3", time: "19:00–21:00", date: "2026-04-15", registered: 11, max: 16, min: 12, level: "中高階", fee: 180, host: "大偉", password: "1234", signupUrl: "", notes: "" },
-    { id: "s4", time: "19:00–21:00", date: "2026-04-16", registered: 4, max: 16, min: 12, level: "初階", fee: 100, host: "小芳", password: "1234", signupUrl: "", notes: "" },
-  ]},
-  { id: 3, name: "中山運動中心", area: "中山區", sessions: [
-    { id: "s5", time: "18:30–20:30", date: "2026-04-15", registered: 12, max: 18, min: 12, level: "中階", fee: 140, host: "志豪", password: "1234", signupUrl: "", notes: "" },
-    { id: "s6", time: "20:30–22:00", date: "2026-04-16", registered: 6, max: 16, min: 12, level: "不限", fee: 100, host: "雅婷", password: "1234", signupUrl: "", notes: "" },
-  ]},
-  { id: 4, name: "松山運動中心", area: "松山區", sessions: [
-    { id: "s7", time: "19:00–21:00", date: "2026-04-15", registered: 14, max: 18, min: 12, level: "中高階", fee: 160, host: "家豪", password: "1234", signupUrl: "", notes: "" },
-    { id: "s8", time: "18:00–20:00", date: "2026-04-16", registered: 3, max: 16, min: 12, level: "初階", fee: 110, host: "佳琪", password: "1234", signupUrl: "", notes: "" },
-  ]},
-  { id: 5, name: "內湖運動中心", area: "內湖區", sessions: [
-    { id: "s9", time: "19:00–21:00", date: "2026-04-15", registered: 9, max: 16, min: 12, level: "中階", fee: 130, host: "建志", password: "1234", signupUrl: "", notes: "" },
-    { id: "s10", time: "20:00–22:00", date: "2026-04-17", registered: 2, max: 16, min: 12, level: "不限", fee: 90, host: "雅文", password: "1234", signupUrl: "", notes: "" },
-  ]},
-  { id: 6, name: "文山運動中心", area: "文山區", sessions: [
-    { id: "s11", time: "18:00–20:00", date: "2026-04-15", registered: 8, max: 16, min: 12, level: "初階", fee: 100, host: "怡君", password: "1234", signupUrl: "", notes: "" },
-    { id: "s12", time: "19:30–21:30", date: "2026-04-16", registered: 13, max: 16, min: 12, level: "中階", fee: 150, host: "宗翰", password: "1234", signupUrl: "", notes: "" },
-  ]},
-  { id: 7, name: "北投運動中心", area: "北投區", sessions: [
-    { id: "s13", time: "19:00–21:00", date: "2026-04-17", registered: 5, max: 16, min: 12, level: "不限", fee: 90, host: "淑芬", password: "1234", signupUrl: "", notes: "" },
-  ]},
-  { id: 8, name: "士林運動中心", area: "士林區", sessions: [
-    { id: "s14", time: "18:00–20:00", date: "2026-04-15", registered: 15, max: 18, min: 12, level: "中高階", fee: 170, host: "俊傑", password: "1234", signupUrl: "", notes: "" },
-    { id: "s15", time: "20:00–22:00", date: "2026-04-15", registered: 6, max: 16, min: 12, level: "初階", fee: 100, host: "美玲", password: "1234", signupUrl: "", notes: "" },
-  ]},
-];
+// Helper to get date string offset from today
+function dayOffset(n) {
+  const d = new Date(); d.setDate(d.getDate() + n);
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,"0"), day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+const D0 = dayOffset(0), D1 = dayOffset(1), D2 = dayOffset(2), D3 = dayOffset(3);
+
+const INITIAL_COURTS = [];
 
 const AREAS_FILTER = ["全部", "大安區", "信義區", "中山區", "松山區", "內湖區", "文山區", "北投區", "士林區"];
 const LEVELS = ["全部", "初階", "中階", "中高階", "不限"];
 const LEVELS_INPUT = ["初階", "中階", "中高階", "不限"];
-const DATES = [
-  { label: "今天", value: "2026-04-15" },
-  { label: "明天", value: "2026-04-16" },
-  { label: "後天", value: "2026-04-17" },
-];
+
+// Dynamic dates: generate 7 days starting from today
+function formatDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function getDateLabel(offset) {
+  if (offset === 0) return "今天";
+  if (offset === 1) return "明天";
+  if (offset === 2) return "後天";
+  const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+  const d = new Date(); d.setDate(d.getDate() + offset);
+  return `週${weekdays[d.getDay()]}`;
+}
+function buildDates() {
+  const result = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(); d.setDate(d.getDate() + i);
+    result.push({ label: getDateLabel(i), value: formatDate(d) });
+  }
+  return result;
+}
+function getToday() { return formatDate(new Date()); }
+const DATES = buildDates();
 const TIME_SLOTS = [
   "06:00–08:00","08:00–10:00","10:00–12:00","12:00–14:00",
   "14:00–16:00","16:00–18:00","18:00–20:00","18:30–20:30",
@@ -324,7 +321,7 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave }) =
    Create Session Modal (with password)
    ════════════════════════════════════════════ */
 const CreateSessionModal = ({ open, onClose, onSubmit }) => {
-  const [form, setForm] = useState({ courtName: "", area: "", date: "2026-04-15", time: "19:00–21:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" });
+  const [form, setForm] = useState({ courtName: "", area: "", date: getToday(), time: "19:00–21:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" });
   const [errors, setErrors] = useState({});
   const [step, setStep] = useState(1);
 
@@ -337,7 +334,7 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
     setErrors(e);
     if (Object.keys(e).length > 0) return;
     onSubmit({ courtName: form.courtName.trim(), area: form.area.trim(), date: form.date, time: form.time, registered: Number(form.currentPeople), max: Number(form.maxPeople), min: 12, level: form.level, fee: Number(form.fee), host: form.hostName.trim(), signupUrl: form.signupUrl.trim(), notes: form.notes.trim(), password: form.password });
-    setForm({ courtName: "", area: "", date: "2026-04-15", time: "19:00–21:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" });
+    setForm({ courtName: "", area: "", date: getToday(), time: "19:00–21:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" });
     setStep(1); setErrors({});
   };
 
@@ -446,7 +443,7 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
    Main App
    ════════════════════════════════════════════ */
 export default function VolleyballMatcher() {
-  const [selectedDate, setSelectedDate] = useState("2026-04-15");
+  const [selectedDate, setSelectedDate] = useState(getToday());
   const [selectedArea, setSelectedArea] = useState("全部");
   const [selectedLevel, setSelectedLevel] = useState("全部");
   const [sortBy, setSortBy] = useState("need");
@@ -592,9 +589,9 @@ export default function VolleyballMatcher() {
           <StatBadge value={formed.length} label="已成團" color="#22c55e"/>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "center" }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "flex-start", overflowX: "auto", paddingBottom: 4 }}>
           {DATES.map(d => (
-            <button key={d.value} onClick={() => setSelectedDate(d.value)} style={{ padding: "8px 20px", borderRadius: 10, border: "1px solid", borderColor: selectedDate === d.value ? "#f59e0b" : "var(--border)", background: selectedDate === d.value ? "rgba(245,158,11,0.12)" : "transparent", color: selectedDate === d.value ? "#f59e0b" : "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
+            <button key={d.value} onClick={() => setSelectedDate(d.value)} style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid", borderColor: selectedDate === d.value ? "#f59e0b" : "var(--border)", background: selectedDate === d.value ? "rgba(245,158,11,0.12)" : "transparent", color: selectedDate === d.value ? "#f59e0b" : "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", flexShrink: 0 }}>
               {d.label}<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 4 }}>{d.value.slice(5).replace("-","/")}</span>
             </button>
           ))}
