@@ -19,6 +19,13 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const sessionsRef = collection(db, "sessions");
 
+// ════════════════════════════════════════════
+// 管理者密碼 — 請改成你自己的密碼（請勿使用預設值）
+// 進入方式：網址加上 ?admin=1，例如 https://your-site.vercel.app/?admin=1
+// ════════════════════════════════════════════
+const ADMIN_PASSWORD = "0912662663";
+const ADMIN_SESSION_KEY = "vb_admin_session";
+
 // Helper to get date string offset from today
 function dayOffset(n) {
   const d = new Date(); d.setDate(d.getDate() + n);
@@ -94,6 +101,10 @@ const EditIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="no
 const LockIcon = () => (<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" opacity="0.6"><path d="M8 1a3 3 0 00-3 3v2H4a1 1 0 00-1 1v6a1 1 0 001 1h8a1 1 0 001-1V7a1 1 0 00-1-1h-1V4a3 3 0 00-3-3zm-1.5 3a1.5 1.5 0 113 0v2h-3V4z"/></svg>);
 const ChatIcon = () => (<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" opacity="0.8"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H6l-3 3V3z"/></svg>);
 const ChevronIcon = ({ open }) => (<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}><polyline points="3 4.5 6 7.5 9 4.5"/></svg>);
+const ShieldIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l6 2v4c0 4-3 7-6 8-3-1-6-4-6-8V3l6-2zm-1 6.5L5 6l-1 1 3 3 5-5-1-1-4 3.5z"/></svg>);
+const TrashIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="2 4 14 4"/><path d="M12.5 4v9a1 1 0 01-1 1h-7a1 1 0 01-1-1V4"/><path d="M6 4V2a1 1 0 011-1h2a1 1 0 011 1v2"/></svg>);
+const MinusIcon = () => (<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="6" x2="9" y2="6"/></svg>);
+const PlusSmallIcon = () => (<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="6" y1="3" x2="6" y2="9"/><line x1="3" y1="6" x2="9" y2="6"/></svg>);
 
 /* ── Shared styles ── */
 const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, background: "rgba(15,23,42,0.8)", border: "1px solid rgba(148,163,184,0.15)", color: "#e2e8f0", fontSize: 14, outline: "none", transition: "border-color 0.2s", fontFamily: "inherit" };
@@ -121,11 +132,12 @@ const ProgressRing = ({ current, min, max }) => {
 };
 
 /* ── Session Card ── */
-const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment }) => {
+const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment, onWaitlist, onCancelWaitlist, hasWaitlisted, isAdmin, onAdminDelete, onAdminAdjust }) => {
   const status = getStatus(session);
   const need = Math.max(0, session.min - session.registered);
   const isFull = session.registered >= session.max;
   const isFormed = session.registered >= session.min;
+  const waitlist = session.waitlist || 0;
   const [commentsOpen, setCommentsOpen] = useState(false);
   const comments = session.comments || [];
   const commentCount = comments.length;
@@ -154,23 +166,45 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
             {hasJoined && (
               <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(96,165,250,0.12)", color: "#60a5fa", fontWeight: 600 }}>✓ 你已報名</span>
             )}
+            {hasWaitlisted && (
+              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(168,85,247,0.12)", color: "#a855f7", fontWeight: 600 }}>🕐 你在候補中</span>
+            )}
+            {session.closed && (
+              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(239,68,68,0.12)", color: "#ef4444", fontWeight: 600 }}>🚫 已關閉</span>
+            )}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 13, color: "var(--text-secondary)", marginBottom: 10 }}>
             <span>📍 {area}</span><span>🕐 {session.time} 開始</span><span>🏐 {session.level}</span><span>💰 ${session.fee}/人</span><span>👤 主揪：{session.host}</span>
           </div>
           {session.notes && <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 8, fontStyle: "italic" }}>📝 {session.notes}</div>}
-          {session.signupUrl && !hasJoined && <div style={{ fontSize: 11, marginBottom: 8, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>🔗 點擊報名按鈕將前往外部報名頁面</div>}
+          {session.signupUrl && !hasJoined && !hasWaitlisted && <div style={{ fontSize: 11, marginBottom: 8, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>🔗 點擊報名按鈕將前往外部報名頁面</div>}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
             {!isFormed && !isFull && <span style={{ fontSize: 13, color: status.color, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><PersonIcon/> 還差 {need} 人成團</span>}
             {isFormed && !isFull && <span style={{ fontSize: 13, color: "#22c55e", fontWeight: 500 }}>✅ 已成團，還可加入 {session.max - session.registered} 人</span>}
-            {isFull && <span style={{ fontSize: 13, color: "#94a3b8" }}>已額滿</span>}
+            {isFull && (
+              <span style={{ fontSize: 13, color: "#94a3b8" }}>
+                已額滿{waitlist > 0 && <span style={{ color: "#a855f7", marginLeft: 6 }}>· 候補 {waitlist} 人</span>}
+              </span>
+            )}
             {hasJoined ? (
               <button onClick={() => onCancel(session.id)}
                 style={{ padding: "7px 18px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#ef4444", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => { e.target.style.background = "rgba(239,68,68,0.15)"; }}
                 onMouseLeave={(e) => { e.target.style.background = "rgba(239,68,68,0.08)"; }}
               >✕ 取消報名</button>
-            ) : !isFull && (
+            ) : hasWaitlisted ? (
+              <button onClick={() => onCancelWaitlist(session.id)}
+                style={{ padding: "7px 18px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#ef4444", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { e.target.style.background = "rgba(239,68,68,0.15)"; }}
+                onMouseLeave={(e) => { e.target.style.background = "rgba(239,68,68,0.08)"; }}
+              >✕ 取消候補</button>
+            ) : isFull ? (
+              <button onClick={() => { if (session.signupUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } onWaitlist(session.id); }}
+                style={{ padding: "7px 18px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #a855f7, #8b5cf6)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
+                onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+              >🕐 我要候補{session.signupUrl ? " ↗" : ""}</button>
+            ) : (
               <button onClick={() => { if (session.signupUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } onJoin(session.id); }}
                 style={{ padding: "7px 20px", borderRadius: 10, border: "none", background: isFormed ? "rgba(34,197,94,0.12)" : `linear-gradient(135deg, ${status.color}, ${status.color}dd)`, color: isFormed ? "#22c55e" : "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
@@ -178,6 +212,44 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
               >{isFormed ? "+ 我要加入" : "🙋 我要報名"}{session.signupUrl ? " ↗" : ""}</button>
             )}
           </div>
+
+          {/* Admin controls (red bar) */}
+          {isAdmin && (
+            <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
+                <ShieldIcon/> 管理者控制
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#94a3b8" }}>
+                  <span>報名：</span>
+                  <button onClick={() => onAdminAdjust(session.id, "registered", -1)}
+                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(148,163,184,0.2)", background: "rgba(15,23,42,0.8)", color: "#e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  ><MinusIcon/></button>
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: "#e2e8f0", minWidth: 20, textAlign: "center" }}>{session.registered}</span>
+                  <button onClick={() => onAdminAdjust(session.id, "registered", 1)}
+                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(148,163,184,0.2)", background: "rgba(15,23,42,0.8)", color: "#e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  ><PlusSmallIcon/></button>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#94a3b8" }}>
+                  <span>候補：</span>
+                  <button onClick={() => onAdminAdjust(session.id, "waitlist", -1)}
+                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(148,163,184,0.2)", background: "rgba(15,23,42,0.8)", color: "#e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  ><MinusIcon/></button>
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: "#e2e8f0", minWidth: 20, textAlign: "center" }}>{session.waitlist || 0}</span>
+                  <button onClick={() => onAdminAdjust(session.id, "waitlist", 1)}
+                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(148,163,184,0.2)", background: "rgba(15,23,42,0.8)", color: "#e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  ><PlusSmallIcon/></button>
+                </div>
+                <button onClick={() => onAdminDelete(session)}
+                  style={{ marginLeft: "auto", padding: "5px 10px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.4)", background: "rgba(239,68,68,0.1)", color: "#ef4444", fontSize: 11, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, transition: "all 0.2s" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.2)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
+                >
+                  <TrashIcon/> 刪除場次
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Comments section */}
           <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed rgba(148,163,184,0.15)" }}>
@@ -361,6 +433,58 @@ const CommentModal = ({ open, onClose, session, onSubmit }) => {
             </div>
           </>
         )}
+      </div>
+    </>
+  );
+};
+
+/* ════════════════════════════════════════════
+   Admin Login Modal
+   ════════════════════════════════════════════ */
+const AdminLoginModal = ({ open, onClose, onLogin }) => {
+  const [pw, setPw] = useState("");
+  const [error, setError] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => { if (open) { setPw(""); setError(""); setTimeout(() => inputRef.current?.focus(), 100); } }, [open]);
+
+  if (!open) return null;
+
+  const tryLogin = () => {
+    if (pw === ADMIN_PASSWORD) {
+      onLogin();
+    } else {
+      setError("管理者密碼錯誤");
+    }
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(380px, 90vw)", background: "linear-gradient(180deg, #2a1515, #1a0a0a)", borderRadius: 20, border: "1px solid rgba(239,68,68,0.3)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(239,68,68,0.2)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, color: "#ef4444" }}>
+          <ShieldIcon/>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#ef4444" }}>管理者登入</h3>
+        </div>
+        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
+          此為高權限模式，可刪除、編輯任何場次。請輸入管理者密碼。
+        </p>
+        <input ref={inputRef} type="password" value={pw} onChange={(e) => { setPw(e.target.value); setError(""); }}
+          placeholder="管理者密碼"
+          style={{ ...inputStyle, borderColor: error ? "#ef4444" : "rgba(239,68,68,0.3)", marginBottom: error ? 4 : 16 }}
+          onFocus={(e) => { e.target.style.borderColor = "#ef4444"; }}
+          onBlur={(e) => { e.target.style.borderColor = error ? "#ef4444" : "rgba(239,68,68,0.3)"; }}
+          onKeyDown={(e) => { if (e.key === "Enter") tryLogin(); }}
+        />
+        {error && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 12 }}>{error}</div>}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+          <button onClick={tryLogin}
+            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
+            onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+          >登入</button>
+        </div>
       </div>
     </>
   );
@@ -648,6 +772,8 @@ export default function VolleyballMatcher() {
   const [editTarget, setEditTarget] = useState(null);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [commentTarget, setCommentTarget] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
@@ -660,15 +786,27 @@ export default function VolleyballMatcher() {
 
   // localStorage helpers for tracking "sessions I joined"
   const JOINED_KEY = "vb_joined_sessions";
+  const WAITLIST_KEY = "vb_waitlist_sessions";
   const loadJoined = () => {
     try { return new Set(JSON.parse(localStorage.getItem(JOINED_KEY) || "[]")); } catch { return new Set(); }
   };
   const saveJoined = (set) => {
     try { localStorage.setItem(JOINED_KEY, JSON.stringify([...set])); } catch {}
   };
+  const loadWaitlist = () => {
+    try { return new Set(JSON.parse(localStorage.getItem(WAITLIST_KEY) || "[]")); } catch { return new Set(); }
+  };
+  const saveWaitlist = (set) => {
+    try { localStorage.setItem(WAITLIST_KEY, JSON.stringify([...set])); } catch {}
+  };
+
+  const [waitlistedSessions, setWaitlistedSessions] = useState(new Set());
 
   // Initialize joined from localStorage on mount
-  useEffect(() => { setJoinedSessions(loadJoined()); }, []);
+  useEffect(() => {
+    setJoinedSessions(loadJoined());
+    setWaitlistedSessions(loadWaitlist());
+  }, []);
 
   // Check if a session has already started (based on date + time)
   const hasSessionStarted = (session) => {
@@ -680,6 +818,34 @@ export default function VolleyballMatcher() {
     return sessionStart.getTime() <= Date.now();
   };
 
+  // Detect ?admin=1 URL or restore admin session
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "1") {
+        setIsAdmin(true);
+        return;
+      }
+    } catch {}
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("admin") === "1") {
+      setShowAdminLoginModal(true);
+    }
+  }, []);
+
+  const handleAdminLogin = () => {
+    setIsAdmin(true);
+    try { sessionStorage.setItem(ADMIN_SESSION_KEY, "1"); } catch {}
+    setShowAdminLoginModal(false);
+    toast("🛡️ 管理者模式已啟動", 2500, "warn");
+  };
+
+  const handleAdminLogout = () => {
+    if (!window.confirm("確定要登出管理者模式嗎？")) return;
+    setIsAdmin(false);
+    try { sessionStorage.removeItem(ADMIN_SESSION_KEY); } catch {}
+    toast("已登出管理者模式", 2000);
+  };
+
   // Subscribe to Firestore — auto-updates whenever data changes
   useEffect(() => {
     const q = query(sessionsRef, orderBy("createdAt", "desc"));
@@ -687,8 +853,8 @@ export default function VolleyballMatcher() {
       const list = [];
       snap.forEach(d => {
         const data = d.data();
-        // Hide closed sessions from UI (data kept in Firestore)
-        if (data.closed) return;
+        // Hide closed sessions from UI (admin still sees them)
+        if (data.closed && !isAdmin) return;
         list.push({ id: d.id, ...data });
       });
       setSessions(list);
@@ -701,7 +867,7 @@ export default function VolleyballMatcher() {
       setLoading(false);
     });
     return () => unsub();
-  }, []);
+  }, [isAdmin]);
 
   const handleJoin = async (sessionId) => {
     if (joinedSessions.has(sessionId)) return;
@@ -730,6 +896,36 @@ export default function VolleyballMatcher() {
       console.error(err);
       const rollback = new Set(joinedSessions);
       setJoinedSessions(rollback); saveJoined(rollback);
+      toast("取消失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  const handleWaitlist = async (sessionId) => {
+    if (waitlistedSessions.has(sessionId)) return;
+    const nw = new Set(waitlistedSessions); nw.add(sessionId);
+    setWaitlistedSessions(nw); saveWaitlist(nw);
+    try {
+      await updateDoc(doc(db, "sessions", sessionId), { waitlist: increment(1) });
+      toast("已加入候補！等主揪通知你是否能補上 🕐", 3500, "warn");
+    } catch (err) {
+      console.error(err);
+      const rollback = new Set(waitlistedSessions);
+      setWaitlistedSessions(rollback); saveWaitlist(rollback);
+      toast("候補失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  const handleCancelWaitlist = async (sessionId) => {
+    if (!waitlistedSessions.has(sessionId)) return;
+    const nw = new Set(waitlistedSessions); nw.delete(sessionId);
+    setWaitlistedSessions(nw); saveWaitlist(nw);
+    try {
+      await updateDoc(doc(db, "sessions", sessionId), { waitlist: increment(-1) });
+      toast("已取消候補", 2500);
+    } catch (err) {
+      console.error(err);
+      const rollback = new Set(waitlistedSessions);
+      setWaitlistedSessions(rollback); saveWaitlist(rollback);
       toast("取消失敗，請稍後再試", 3000, "warn");
     }
   };
@@ -766,6 +962,38 @@ export default function VolleyballMatcher() {
     }
   };
 
+  // Admin-only: permanently delete a session from Firestore
+  const handleAdminDelete = async (session) => {
+    if (!isAdmin) return;
+    const label = `${session.courtName || "場次"} ${session.date} ${session.time}`;
+    if (!window.confirm(`⚠️ 確定要永久刪除此場次嗎？\n\n${label}\n\n此動作無法復原，資料會從 Firebase 徹底移除。`)) return;
+    try {
+      await deleteDoc(doc(db, "sessions", session.id));
+      toast("場次已永久刪除 🗑️", 2500, "warn");
+    } catch (err) {
+      console.error(err);
+      toast("刪除失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  // Admin-only: adjust registered or waitlist count by +1 / -1
+  const handleAdminAdjust = async (sessionId, field, delta) => {
+    if (!isAdmin) return;
+    const s = sessions.find(s => s.id === sessionId);
+    if (!s) return;
+    const current = s[field] || 0;
+    if (current + delta < 0) {
+      toast("數量不能小於 0", 2000, "warn");
+      return;
+    }
+    try {
+      await updateDoc(doc(db, "sessions", sessionId), { [field]: increment(delta) });
+    } catch (err) {
+      console.error(err);
+      toast("調整失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
   const handleCreateSession = async (data) => {
     try {
       await addDoc(sessionsRef, {
@@ -797,7 +1025,12 @@ export default function VolleyballMatcher() {
     const info = findSessionInfo(session.id);
     if (!info) return;
     setEditTarget(info);
-    setShowPasswordModal(true);
+    // Admin skips password verification
+    if (isAdmin) {
+      setShowEditModal(true);
+    } else {
+      setShowPasswordModal(true);
+    }
   };
 
   const handlePasswordVerify = (sessionId, pw) => {
@@ -841,7 +1074,7 @@ export default function VolleyballMatcher() {
   const formed = allSessions.filter(s => s.registered >= s.min && s.registered < s.max);
 
   return (
-    <div style={{ "--text-primary": "#e2e8f0", "--text-secondary": "#94a3b8", "--text-dim": "#64748b", "--card-bg": "rgba(15,23,42,0.6)", "--border": "rgba(148,163,184,0.1)", "--surface": "rgba(15,23,42,0.4)", minHeight: "100vh", background: "linear-gradient(160deg, #0c1222 0%, #0f172a 40%, #14102a 100%)", color: "var(--text-primary)", fontFamily: "'Noto Sans TC', 'Noto Sans', -apple-system, sans-serif", padding: "0 0 100px", position: "relative" }}>
+    <div style={{ "--text-primary": "#e2e8f0", "--text-secondary": "#94a3b8", "--text-dim": "#64748b", "--card-bg": "rgba(15,23,42,0.6)", "--border": "rgba(148,163,184,0.1)", "--surface": "rgba(15,23,42,0.4)", minHeight: "100vh", background: "linear-gradient(160deg, #0c1222 0%, #0f172a 40%, #14102a 100%)", color: "var(--text-primary)", fontFamily: "'Noto Sans TC', 'Noto Sans', -apple-system, sans-serif", padding: "0 0 100px", position: "relative", boxShadow: isAdmin ? "inset 0 0 0 3px #ef4444, inset 0 0 40px rgba(239,68,68,0.15)" : "none" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&family=Space+Mono:wght@400;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -854,8 +1087,20 @@ export default function VolleyballMatcher() {
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         @keyframes toastIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes glow { 0%, 100% { box-shadow: 0 0 12px rgba(245,158,11,0.3); } 50% { box-shadow: 0 0 24px rgba(245,158,11,0.5); } }
+        @keyframes adminPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
       `}</style>
+
+      {/* Admin mode banner */}
+      {isAdmin && (
+        <div style={{ position: "sticky", top: 0, zIndex: 500, background: "linear-gradient(90deg, #ef4444, #dc2626)", color: "#fff", padding: "8px 16px", textAlign: "center", fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 2px 12px rgba(239,68,68,0.3)" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 6, animation: "adminPulse 2s ease infinite" }}>
+            <ShieldIcon/> 管理模式中
+          </span>
+          <span style={{ opacity: 0.7, fontSize: 11, fontWeight: 400 }}>| 你現在擁有最高權限</span>
+          <button onClick={handleAdminLogout} style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", padding: "3px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", marginLeft: 8 }}>登出</button>
+        </div>
+      )}
 
       <div style={{ padding: "32px 24px 24px", background: "linear-gradient(180deg, rgba(15,23,42,0.9) 0%, transparent 100%)", borderBottom: "1px solid var(--border)", marginBottom: 20 }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
@@ -910,7 +1155,7 @@ export default function VolleyballMatcher() {
           )}
           {!loading && sorted.map((s, i) => (
             <div key={s.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal}/>
+              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal} onWaitlist={handleWaitlist} onCancelWaitlist={handleCancelWaitlist} hasWaitlisted={waitlistedSessions.has(s.id)} isAdmin={isAdmin} onAdminDelete={handleAdminDelete} onAdminAdjust={handleAdminAdjust}/>
             </div>
           ))}
         </div>
@@ -936,6 +1181,8 @@ export default function VolleyballMatcher() {
       <EditSessionModal open={showEditModal} onClose={() => { setShowEditModal(false); setEditTarget(null); }} session={editTarget?.session} courtName={editTarget?.courtName} area={editTarget?.area} onSave={handleSaveEdit} onCloseSession={handleCloseSession}/>
 
       <CommentModal open={showCommentModal} onClose={() => { setShowCommentModal(false); setCommentTarget(null); }} session={commentTarget} onSubmit={handleAddComment}/>
+
+      <AdminLoginModal open={showAdminLoginModal} onClose={() => setShowAdminLoginModal(false)} onLogin={handleAdminLogin}/>
 
       {showToast && (
         <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.3)" : "0 8px 32px rgba(34,197,94,0.3)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5 }}>{showToast.msg}</div>
