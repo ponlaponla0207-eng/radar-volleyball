@@ -31,7 +31,7 @@ function getDateLabel(offset) {
 }
 function buildDates() {
   const result = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 3; i++) {
     const d = new Date(); d.setDate(d.getDate() + i);
     result.push({ label: getDateLabel(i), value: formatDate(d) });
   }
@@ -39,11 +39,8 @@ function buildDates() {
 }
 function getToday() { return formatDate(new Date()); }
 const DATES = buildDates();
-const TIME_SLOTS = [
-  "06:00–08:00","08:00–10:00","10:00–12:00","12:00–14:00",
-  "14:00–16:00","16:00–18:00","18:00–20:00","18:30–20:30",
-  "19:00–21:00","19:30–21:30","20:00–22:00","20:30–22:00",
-];
+const HOURS = [];
+for (let h = 6; h <= 23; h++) { for (let m = 0; m < 60; m += 30) { HOURS.push(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`); } }
 
 function getStatus(session) {
   const { registered, min, max } = session;
@@ -121,7 +118,7 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit }) => {
             </span>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 13, color: "var(--text-secondary)", marginBottom: 10 }}>
-            <span>📍 {area}</span><span>🕐 {session.time}</span><span>🏐 {session.level}</span><span>💰 ${session.fee}/人</span><span>👤 主揪：{session.host}</span>
+            <span>📍 {area}</span><span>🕐 {session.time} 開始</span><span>🏐 {session.level}</span><span>💰 ${session.fee}/人</span><span>👤 主揪：{session.host}</span>
           </div>
           {session.notes && <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 8, fontStyle: "italic" }}>📝 {session.notes}</div>}
           {session.signupUrl && <div style={{ fontSize: 11, marginBottom: 8, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>🔗 點擊報名按鈕將前往外部報名頁面</div>}
@@ -130,7 +127,7 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit }) => {
             {isFormed && !isFull && <span style={{ fontSize: 13, color: "#22c55e", fontWeight: 500 }}>✅ 已成團，還可加入 {session.max - session.registered} 人</span>}
             {isFull && <span style={{ fontSize: 13, color: "#94a3b8" }}>已額滿</span>}
             {!isFull && (
-              <button onClick={() => { if (session.signupUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } else { onJoin(session.id); } }}
+              <button onClick={() => { if (session.signupUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } onJoin(session.id); }}
                 style={{ padding: "7px 20px", borderRadius: 10, border: "none", background: isFormed ? "rgba(34,197,94,0.12)" : `linear-gradient(135deg, ${status.color}, ${status.color}dd)`, color: isFormed ? "#22c55e" : "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
@@ -200,9 +197,10 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave }) =
 
   useEffect(() => {
     if (open && session) {
+      const st = (session.time || "19:00").split("\u2013")[0];
       setForm({
         courtName: courtName || "", area: area || "",
-        date: session.date, time: session.time,
+        date: session.date, startTime: st,
         currentPeople: String(session.registered), maxPeople: String(session.max),
         level: session.level, fee: String(session.fee),
         hostName: session.host, signupUrl: session.signupUrl || "", notes: session.notes || "",
@@ -224,7 +222,7 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave }) =
     if (Object.keys(e).length > 0) return;
     onSave(session.id, {
       courtName: form.courtName.trim(), area: form.area.trim(),
-      date: form.date, time: form.time,
+      date: form.date, time: form.startTime,
       registered: Number(form.currentPeople), max: Number(form.maxPeople),
       level: form.level, fee: Number(form.fee),
       host: form.hostName.trim(), signupUrl: form.signupUrl.trim(), notes: form.notes.trim(),
@@ -240,9 +238,9 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave }) =
         <select value={form[field]} onChange={(e) => setForm({...form, [field]: e.target.value})} style={{...inputStyle, cursor: "pointer"}}>
           {LEVELS_INPUT.map(l => <option key={l} value={l}>{l}</option>)}
         </select>
-      ) : type === "select-time" ? (
+      ) : type === "select-hours" ? (
         <select value={form[field]} onChange={(e) => setForm({...form, [field]: e.target.value})} style={{...inputStyle, cursor: "pointer"}}>
-          {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
+          {HOURS.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
       ) : type === "select-date" ? (
         <select value={form[field]} onChange={(e) => setForm({...form, [field]: e.target.value})} style={{...inputStyle, cursor: "pointer"}}>
@@ -278,7 +276,7 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave }) =
 
             <div style={{ display: "flex", gap: 12 }}>
               <F label="日期 *" field="date" type="select-date"/>
-              <F label="時段 *" field="time" type="select-time"/>
+              <F label="開始時間 *" field="startTime" type="select-hours"/>
             </div>
 
             <div style={{ display: "flex", gap: 12 }}>
@@ -321,7 +319,7 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave }) =
    Create Session Modal (with password)
    ════════════════════════════════════════════ */
 const CreateSessionModal = ({ open, onClose, onSubmit }) => {
-  const [form, setForm] = useState({ courtName: "", area: "", date: getToday(), time: "19:00–21:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" });
+  const [form, setForm] = useState({ courtName: "", area: "", date: getToday(), startTime: "19:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" });
   const [errors, setErrors] = useState({});
   const [step, setStep] = useState(1);
 
@@ -333,8 +331,8 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
     if (Number(form.currentPeople) > Number(form.maxPeople)) e.currentPeople = "不能超過上限人數";
     setErrors(e);
     if (Object.keys(e).length > 0) return;
-    onSubmit({ courtName: form.courtName.trim(), area: form.area.trim(), date: form.date, time: form.time, registered: Number(form.currentPeople), max: Number(form.maxPeople), min: 12, level: form.level, fee: Number(form.fee), host: form.hostName.trim(), signupUrl: form.signupUrl.trim(), notes: form.notes.trim(), password: form.password });
-    setForm({ courtName: "", area: "", date: getToday(), time: "19:00–21:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" });
+    onSubmit({ courtName: form.courtName.trim(), area: form.area.trim(), date: form.date, time: form.startTime, registered: Number(form.currentPeople), max: Number(form.maxPeople), min: 12, level: form.level, fee: Number(form.fee), host: form.hostName.trim(), signupUrl: form.signupUrl.trim(), notes: form.notes.trim(), password: form.password });
+    setForm({ courtName: "", area: "", date: getToday(), startTime: "19:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" });
     setStep(1); setErrors({});
   };
 
@@ -390,7 +388,7 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
             <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeIn 0.3s ease" }}>
               <div style={{ display: "flex", gap: 12 }}>
                 <div style={{ flex: 1 }}><label style={labelStyle}>日期 *</label><select value={form.date} onChange={(e) => setForm({...form, date: e.target.value})} style={{...inputStyle, cursor: "pointer"}}>{DATES.map(d => <option key={d.value} value={d.value}>{d.label} ({d.value.slice(5).replace("-","/")})</option>)}</select></div>
-                <div style={{ flex: 1 }}><label style={labelStyle}>時段 *</label><select value={form.time} onChange={(e) => setForm({...form, time: e.target.value})} style={{...inputStyle, cursor: "pointer"}}>{TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+                <div style={{ flex: 1 }}><label style={labelStyle}>開始時間 *</label><select value={form.startTime} onChange={(e) => setForm({...form, startTime: e.target.value})} style={{...inputStyle, cursor: "pointer"}}>{HOURS.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
               </div>
               <div style={{ display: "flex", gap: 12 }}>
                 <div style={{ flex: 1 }}>
@@ -456,13 +454,13 @@ export default function VolleyballMatcher() {
   const [editTarget, setEditTarget] = useState(null); // { session, courtName, area }
   const nextId = useRef(100);
 
-  const toast = (msg) => { setShowToast(msg); setTimeout(() => setShowToast(null), 2500); };
+  const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
   const handleJoin = (sessionId) => {
     if (joinedSessions.has(sessionId)) return;
     const nj = new Set(joinedSessions); nj.add(sessionId); setJoinedSessions(nj);
     setCourts(prev => prev.map(c => ({...c, sessions: c.sessions.map(s => s.id === sessionId ? {...s, registered: s.registered + 1} : s)})));
-    toast("報名成功！已通知主揪 🎉");
+    toast("請記得到主揪的報名頁面 +1，待主揪與您確認後才算報名成功喔！", 4000, "warn");
   };
 
   const handleCreateSession = (data) => {
@@ -589,9 +587,9 @@ export default function VolleyballMatcher() {
           <StatBadge value={formed.length} label="已成團" color="#22c55e"/>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "flex-start", overflowX: "auto", paddingBottom: 4 }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "center" }}>
           {DATES.map(d => (
-            <button key={d.value} onClick={() => setSelectedDate(d.value)} style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid", borderColor: selectedDate === d.value ? "#f59e0b" : "var(--border)", background: selectedDate === d.value ? "rgba(245,158,11,0.12)" : "transparent", color: selectedDate === d.value ? "#f59e0b" : "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", flexShrink: 0 }}>
+            <button key={d.value} onClick={() => setSelectedDate(d.value)} style={{ padding: "8px 20px", borderRadius: 10, border: "1px solid", borderColor: selectedDate === d.value ? "#f59e0b" : "var(--border)", background: selectedDate === d.value ? "rgba(245,158,11,0.12)" : "transparent", color: selectedDate === d.value ? "#f59e0b" : "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
               {d.label}<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 4 }}>{d.value.slice(5).replace("-","/")}</span>
             </button>
           ))}
@@ -644,7 +642,7 @@ export default function VolleyballMatcher() {
       <EditSessionModal open={showEditModal} onClose={() => { setShowEditModal(false); setEditTarget(null); }} session={editTarget?.session} courtName={editTarget?.courtName} area={editTarget?.area} onSave={handleSaveEdit}/>
 
       {showToast && (
-        <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "12px 28px", borderRadius: 14, background: "rgba(34,197,94,0.95)", color: "#fff", fontSize: 14, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: "0 8px 32px rgba(34,197,94,0.3)" }}>{showToast}</div>
+        <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.3)" : "0 8px 32px rgba(34,197,94,0.3)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5 }}>{showToast.msg}</div>
       )}
     </div>
   );
