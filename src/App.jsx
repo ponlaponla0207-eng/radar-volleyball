@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, serverTimestamp, increment, deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, serverTimestamp, increment, deleteDoc, arrayUnion } from "firebase/firestore";
 
 // ════════════════════════════════════════════
 // Firebase 設定 — 請在 firebase.google.com 註冊後貼上你的設定
@@ -58,6 +58,18 @@ const DATES = buildDates();
 const HOURS = [];
 for (let h = 6; h <= 23; h++) { for (let m = 0; m < 60; m += 30) { HOURS.push(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`); } }
 
+// Relative time formatter: "剛剛", "3 分鐘前", "2 小時前", "昨天 14:30", "4/16 14:30"
+function formatRelativeTime(ts) {
+  if (!ts) return "";
+  const date = typeof ts === "number" ? new Date(ts) : ts;
+  const diff = (Date.now() - date.getTime()) / 1000;
+  if (diff < 60) return "剛剛";
+  if (diff < 3600) return `${Math.floor(diff/60)} 分鐘前`;
+  if (diff < 86400) return `${Math.floor(diff/3600)} 小時前`;
+  if (diff < 172800) return `昨天 ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+  return `${date.getMonth()+1}/${date.getDate()} ${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+}
+
 function getStatus(session) {
   const { registered, min, max } = session;
   if (registered >= max) return { label: "已滿", color: "#94a3b8", bg: "rgba(148,163,184,0.12)" };
@@ -80,6 +92,8 @@ const PlusIcon = () => (<svg width="18" height="18" viewBox="0 0 20 20" fill="no
 const CloseIcon = () => (<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg>);
 const EditIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z"/></svg>);
 const LockIcon = () => (<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" opacity="0.6"><path d="M8 1a3 3 0 00-3 3v2H4a1 1 0 00-1 1v6a1 1 0 001 1h8a1 1 0 001-1V7a1 1 0 00-1-1h-1V4a3 3 0 00-3-3zm-1.5 3a1.5 1.5 0 113 0v2h-3V4z"/></svg>);
+const ChatIcon = () => (<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" opacity="0.8"><path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H6l-3 3V3z"/></svg>);
+const ChevronIcon = ({ open }) => (<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}><polyline points="3 4.5 6 7.5 9 4.5"/></svg>);
 
 /* ── Shared styles ── */
 const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, background: "rgba(15,23,42,0.8)", border: "1px solid rgba(148,163,184,0.15)", color: "#e2e8f0", fontSize: 14, outline: "none", transition: "border-color 0.2s", fontFamily: "inherit" };
@@ -107,11 +121,16 @@ const ProgressRing = ({ current, min, max }) => {
 };
 
 /* ── Session Card ── */
-const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined }) => {
+const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment }) => {
   const status = getStatus(session);
   const need = Math.max(0, session.min - session.registered);
   const isFull = session.registered >= session.max;
   const isFormed = session.registered >= session.min;
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const comments = session.comments || [];
+  const commentCount = comments.length;
+  // Sort comments by createdAt descending (newest first)
+  const sortedComments = [...comments].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   return (
     <div style={{ background: "var(--card-bg)", borderRadius: 16, padding: "20px 22px", border: "1px solid var(--border)", position: "relative", overflow: "hidden", transition: "all 0.25s ease" }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = status.color; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = `0 8px 24px ${status.bg}`; }}
@@ -157,6 +176,47 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
               >{isFormed ? "+ 我要加入" : "🙋 我要報名"}{session.signupUrl ? " ↗" : ""}</button>
+            )}
+          </div>
+
+          {/* Comments section */}
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed rgba(148,163,184,0.15)" }}>
+            <button onClick={() => setCommentsOpen(o => !o)}
+              style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: commentCount > 0 ? "#60a5fa" : "#64748b", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, width: "100%", justifyContent: "space-between" }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <ChatIcon/>
+                {commentCount > 0 ? (
+                  <>主揪留言 <span style={{ color: "#60a5fa", fontWeight: 700 }}>({commentCount})</span></>
+                ) : (
+                  <span style={{ color: "#64748b" }}>尚無主揪留言</span>
+                )}
+              </span>
+              <ChevronIcon open={commentsOpen}/>
+            </button>
+
+            {commentsOpen && (
+              <div style={{ marginTop: 10, animation: "fadeIn 0.2s ease" }}>
+                {sortedComments.length === 0 && (
+                  <div style={{ fontSize: 12, color: "#64748b", padding: "8px 0", textAlign: "center", fontStyle: "italic" }}>
+                    還沒有任何主揪留言
+                  </div>
+                )}
+                {sortedComments.map((c, idx) => (
+                  <div key={idx} style={{ padding: "10px 12px", marginBottom: 6, borderRadius: 10, background: "rgba(96,165,250,0.04)", border: "1px solid rgba(96,165,250,0.1)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, fontSize: 11, color: "#64748b" }}>
+                      <span style={{ fontWeight: 600, color: "#60a5fa" }}>👤 {c.author || session.host}</span>
+                      <span>{formatRelativeTime(c.createdAt)}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{c.text}</div>
+                  </div>
+                ))}
+                <button onClick={() => onAddComment(session)}
+                  style={{ width: "100%", marginTop: 6, padding: "8px", borderRadius: 10, border: "1px dashed rgba(96,165,250,0.3)", background: "rgba(96,165,250,0.04)", color: "#60a5fa", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                  onMouseEnter={(e) => { e.target.style.background = "rgba(96,165,250,0.1)"; }}
+                  onMouseLeave={(e) => { e.target.style.background = "rgba(96,165,250,0.04)"; }}
+                >+ 我是主揪，我要留言</button>
+              </div>
             )}
           </div>
         </div>
@@ -208,6 +268,99 @@ const PasswordModal = ({ open, onClose, onVerify, sessionId }) => {
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
           >確認</button>
         </div>
+      </div>
+    </>
+  );
+};
+
+/* ════════════════════════════════════════════
+   Comment Modal — verify password then post
+   ════════════════════════════════════════════ */
+const CommentModal = ({ open, onClose, session, onSubmit }) => {
+  const [pw, setPw] = useState("");
+  const [text, setText] = useState("");
+  const [error, setError] = useState("");
+  const [verified, setVerified] = useState(false);
+  const pwRef = useRef(null);
+  const textRef = useRef(null);
+
+  useEffect(() => {
+    if (open) {
+      setPw(""); setText(""); setError(""); setVerified(false);
+      setTimeout(() => pwRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  if (!open || !session) return null;
+
+  const tryVerify = () => {
+    if (pw === session.password) {
+      setVerified(true);
+      setError("");
+      setTimeout(() => textRef.current?.focus(), 100);
+    } else {
+      setError("密碼錯誤，請重新輸入");
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!text.trim()) { setError("留言內容不能為空"); return; }
+    if (text.length > 500) { setError("留言不能超過 500 字"); return; }
+    await onSubmit(session.id, text.trim(), session.host);
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(148,163,184,0.12)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <ChatIcon/>
+          <h3 style={{ fontSize: 17, fontWeight: 700, color: "#e2e8f0" }}>主揪留言</h3>
+        </div>
+        <p style={{ fontSize: 12, color: "#64748b", marginBottom: 16, lineHeight: 1.5 }}>
+          {verified ? `以「${session.host}」的身份發佈留言` : "請先輸入密碼驗證主揪身份"}
+        </p>
+
+        {!verified ? (
+          <>
+            <input ref={pwRef} type="password" value={pw} onChange={(e) => { setPw(e.target.value); setError(""); }}
+              placeholder="輸入密碼"
+              style={{ ...inputStyle, borderColor: error ? "#ef4444" : "rgba(148,163,184,0.15)", marginBottom: error ? 4 : 16 }}
+              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
+              onBlur={(e) => { e.target.style.borderColor = error ? "#ef4444" : "rgba(148,163,184,0.15)"; }}
+              onKeyDown={(e) => { if (e.key === "Enter") tryVerify(); }}
+            />
+            {error && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 12 }}>{error}</div>}
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+              <button onClick={tryVerify}
+                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+              >驗證</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <textarea ref={textRef} value={text} onChange={(e) => { setText(e.target.value); setError(""); }}
+              placeholder="例如：已湊到 10 人，再 2 人就可以打了！或：因下雨延到明天同時段，請大家注意..."
+              rows={4}
+              style={{ ...inputStyle, resize: "vertical", minHeight: 100, borderColor: error ? "#ef4444" : "rgba(148,163,184,0.15)", marginBottom: error ? 4 : 10 }}
+              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
+              onBlur={(e) => { e.target.style.borderColor = error ? "#ef4444" : "rgba(148,163,184,0.15)"; }}
+            />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#64748b", marginBottom: 14 }}>
+              <span>{error && <span style={{ color: "#ef4444" }}>{error}</span>}</span>
+              <span style={{ color: text.length > 500 ? "#ef4444" : "#64748b" }}>{text.length} / 500</span>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+              <button onClick={handleSubmit}
+                style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #60a5fa, #3b82f6)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(96,165,250,0.3)"; }}
+                onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "none"; }}
+              >💬 發佈留言</button>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
@@ -493,6 +646,8 @@ export default function VolleyballMatcher() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [commentTarget, setCommentTarget] = useState(null);
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
@@ -588,6 +743,26 @@ export default function VolleyballMatcher() {
     } catch (err) {
       console.error(err);
       toast("關閉失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  const handleOpenCommentModal = (session) => {
+    setCommentTarget(session);
+    setShowCommentModal(true);
+  };
+
+  const handleAddComment = async (sessionId, text, authorName) => {
+    try {
+      const newComment = { text, author: authorName, createdAt: Date.now() };
+      await updateDoc(doc(db, "sessions", sessionId), {
+        comments: arrayUnion(newComment),
+      });
+      setShowCommentModal(false);
+      setCommentTarget(null);
+      toast("留言已發佈 💬", 2500);
+    } catch (err) {
+      console.error(err);
+      toast("發佈失敗，請稍後再試", 3000, "warn");
     }
   };
 
@@ -735,7 +910,7 @@ export default function VolleyballMatcher() {
           )}
           {!loading && sorted.map((s, i) => (
             <div key={s.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)}/>
+              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal}/>
             </div>
           ))}
         </div>
@@ -759,6 +934,8 @@ export default function VolleyballMatcher() {
       <PasswordModal open={showPasswordModal} onClose={() => { setShowPasswordModal(false); setEditTarget(null); }} onVerify={handlePasswordVerify} sessionId={editTarget?.session?.id}/>
 
       <EditSessionModal open={showEditModal} onClose={() => { setShowEditModal(false); setEditTarget(null); }} session={editTarget?.session} courtName={editTarget?.courtName} area={editTarget?.area} onSave={handleSaveEdit} onCloseSession={handleCloseSession}/>
+
+      <CommentModal open={showCommentModal} onClose={() => { setShowCommentModal(false); setCommentTarget(null); }} session={commentTarget} onSubmit={handleAddComment}/>
 
       {showToast && (
         <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.3)" : "0 8px 32px rgba(34,197,94,0.3)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5 }}>{showToast.msg}</div>
