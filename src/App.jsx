@@ -210,7 +210,7 @@ const CopyIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="no
 const CheckIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 8 6.5 11.5 13 5"/></svg>);
 const ShareIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M12 2.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM2 8a2.5 2.5 0 105 0 2.5 2.5 0 00-5 0zm10 3a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/><path d="M9.7 6.9L5.3 9.5M9.7 11.1L5.3 8.5" stroke="currentColor" strokeWidth="1" fill="none"/></svg>);
 const BellIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5a4.5 4.5 0 00-4.5 4.5c0 2.5-1 4-1.5 4.5h12c-.5-.5-1.5-2-1.5-4.5A4.5 4.5 0 008 1.5zM6.5 12a1.5 1.5 0 003 0"/></svg>);
-
+const ThumbsUpIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M7.5 1.5c-.3 0-.5.2-.5.5v3c0 1.5-1 2.5-2.5 2.5H3v7h10l1.5-5.5v-1c0-.8-.7-1.5-1.5-1.5H9.5c-.3 0-.5-.2-.5-.5V3c0-.8-.7-1.5-1.5-1.5zM1 7.5h1v7H1v-7z"/></svg>);
 /* ── Shared styles ── */
 const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, background: "rgba(15,23,42,0.8)", border: "1px solid rgba(148,163,184,0.15)", color: "#e2e8f0", fontSize: 14, outline: "none", transition: "border-color 0.2s", fontFamily: "inherit" };
 const labelStyle = { fontSize: 12, color: "#94a3b8", marginBottom: 6, display: "block", fontWeight: 600, letterSpacing: "0.04em" };
@@ -1181,7 +1181,7 @@ const RadarChart = ({ skills, size = 120 }) => {
   );
 };
 
-const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser }) => {
+const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onRecommend }) => {
   const hasSkills = player.skills && Object.values(player.skills).some(v => v > 0);
   const isOwner = currentUser && player.uid === currentUser.uid;
   // Check if "want to play" is active
@@ -1261,6 +1261,17 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser }) => 
 
         {/* Win rate stats */}
         {(() => {
+    </div>
+          );
+        })()}
+
+        {/* === 推薦區塊（新增）=== */}
+        <RecommendSection player={player} currentUser={currentUser} onRecommend={onRecommend}/>
+      </div>
+    </div>
+  </div>
+  );
+};
           const stats = calcWinStats(player.weeklyRecords);
           if (!stats) return null;
           const { totalPlayed, totalWon, rate, thisWeek, trend, recent } = stats;
@@ -1298,7 +1309,127 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser }) => 
   </div>
   );
 };
+/* ════════════════════════════════════════════
+   Recommend Section — shown inside PlayerCard
+   ════════════════════════════════════════════ */
+const RecommendSection = ({ player, currentUser, onRecommend }) => {
+  const count = player.recommendCount || 0;
+  const recs = player.recommendations || [];
+  const isSelf = currentUser && player.uid === currentUser.uid;
+  const hasRecommended = currentUser && recs.some(r => r.fromUid === currentUser.uid);
 
+  // 按鈕狀態：未登入 | 自己 | 已推薦 | 可推薦
+  let btn;
+  if (!currentUser) {
+    btn = (
+      <button disabled title="登入後才能推薦"
+        style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(148,163,184,0.15)", background: "rgba(148,163,184,0.06)", color: "#64748b", fontSize: 12, fontWeight: 600, cursor: "not-allowed", display: "flex", alignItems: "center", gap: 5 }}>
+        🔒 登入後可推薦
+      </button>
+    );
+  } else if (isSelf) {
+    btn = null; // 不能推薦自己，不顯示按鈕
+  } else if (hasRecommended) {
+    btn = (
+      <button disabled title="你已推薦過這位球員"
+        style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(34,197,94,0.25)", background: "rgba(34,197,94,0.08)", color: "#22c55e", fontSize: 12, fontWeight: 700, cursor: "default", display: "flex", alignItems: "center", gap: 5 }}>
+        ✓ 已推薦
+      </button>
+    );
+  } else {
+    btn = (
+      <button onClick={() => onRecommend(player)}
+        style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(167,139,250,0.3)", background: "rgba(167,139,250,0.08)", color: "#a78bfa", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s" }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(167,139,250,0.18)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(167,139,250,0.08)"; }}>
+        👍 推薦他
+      </button>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 10, background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ fontSize: 16 }}>👍</span>
+        <span style={{ fontSize: 14, fontWeight: 800, color: "#a78bfa", fontFamily: "'Space Mono', monospace" }}>{count}</span>
+        <span style={{ fontSize: 12, color: "#94a3b8" }}>人推薦</span>
+      </div>
+      {btn}
+    </div>
+  );
+};
+
+/* ════════════════════════════════════════════
+   Recommend Modal — write one-line message
+   ════════════════════════════════════════════ */
+const RecommendModal = ({ open, onClose, player, currentUser, onSubmit }) => {
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (open) {
+      setMessage(""); setError(""); setSubmitting(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  if (!open || !player || !currentUser) return null;
+
+  const handleSubmit = async () => {
+    const msg = message.trim();
+    if (msg.length > 100) { setError("留言不能超過 100 字"); return; }
+    setSubmitting(true);
+    const result = await onSubmit(player.id, msg);
+    setSubmitting(false);
+    if (result?.error) {
+      setError(result.error);
+    } else {
+      onClose();
+    }
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(167,139,250,0.25)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <span style={{ fontSize: 22 }}>👍</span>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>推薦 {player.nickname}</h3>
+        </div>
+        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
+          留下一句話告訴大家為什麼推薦他（選填）。送出後無法修改或收回。
+        </p>
+
+        <label style={labelStyle}>推薦理由（選填，最多 100 字）</label>
+        <textarea ref={inputRef} value={message} onChange={(e) => { setMessage(e.target.value); setError(""); }}
+          placeholder="例：很會帶新手、一傳穩、陣型意識好..."
+          rows={3}
+          maxLength={120}
+          style={{ ...inputStyle, resize: "vertical", minHeight: 70, borderColor: error ? "#ef4444" : "rgba(148,163,184,0.15)", marginBottom: 4 }}
+          onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }}
+          onBlur={(e) => { e.target.style.borderColor = error ? "#ef4444" : "rgba(148,163,184,0.15)"; }}
+        />
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#64748b", marginBottom: 14 }}>
+          <span>{error && <span style={{ color: "#ef4444" }}>{error}</span>}</span>
+          <span style={{ color: message.length > 100 ? "#ef4444" : "#64748b" }}>{message.length} / 100</span>
+        </div>
+
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onClose} disabled={submitting}
+            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: submitting ? "not-allowed" : "pointer" }}>
+            取消
+          </button>
+          <button onClick={handleSubmit} disabled={submitting || message.length > 100}
+            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: submitting ? "rgba(148,163,184,0.15)" : "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: submitting ? "#64748b" : "#fff", fontSize: 14, fontWeight: 700, cursor: submitting ? "not-allowed" : "pointer", transition: "all 0.2s" }}>
+            {submitting ? "送出中..." : "👍 送出推薦"}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
 const CreatePlayerModal = ({ open, onClose, onSubmit }) => {
   const [form, setForm] = useState({ nickname: "", experience: "", level: "中階", area: "", position: "", height: "", gender: "", timeSlots: [], intro: "", password: "", skills: { serve: 0, receive: 0, attack: 0, set: 0, block: 0, fitness: 0 } });
   const [errors, setErrors] = useState({});
@@ -1828,6 +1959,8 @@ export default function VolleyballMatcher() {
   const [currentUser, setCurrentUser] = useState(null); // Firebase Auth user
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [recordTarget, setRecordTarget] = useState(null);
+  const [showRecommendModal, setShowRecommendModal] = useState(false);
+  const [recommendTarget, setRecommendTarget] = useState(null);
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
@@ -2004,7 +2137,53 @@ export default function VolleyballMatcher() {
       toast("記錄失敗", 3000, "warn");
     }
   };
+// 打開推薦 modal（未登入直接提示登入）
+  const handleOpenRecommendModal = (player) => {
+    if (!currentUser) {
+      toast("請先用 Google 登入才能推薦", 3000, "warn");
+      return;
+    }
+    if (player.uid === currentUser.uid) {
+      toast("不能推薦自己喔 😅", 2500, "warn");
+      return;
+    }
+    setRecommendTarget(player);
+    setShowRecommendModal(true);
+  };
 
+  // 送出推薦到 Firestore
+  const handleSubmitRecommendation = async (playerId, message) => {
+    if (!currentUser) return { error: "請先登入" };
+    try {
+      const player = players.find(p => p.id === playerId);
+      if (!player) return { error: "找不到這位球員" };
+      if (player.uid === currentUser.uid) return { error: "不能推薦自己" };
+
+      // 前端檢查：是否已經推薦過
+      // ⚠️ TODO(security): 這層檢查可被繞過，正式上線前應補 Firestore security rules
+      const existing = (player.recommendations || []).find(r => r.fromUid === currentUser.uid);
+      if (existing) return { error: "你已經推薦過這位球員了" };
+
+      const newRec = {
+        fromUid: currentUser.uid,
+        fromName: currentUser.displayName || "匿名",
+        fromPhoto: currentUser.photoURL || "",
+        message: message || "",
+        createdAt: Date.now(),
+      };
+
+      await updateDoc(doc(db, "players", playerId), {
+        recommendations: arrayUnion(newRec),
+        recommendCount: increment(1),
+      });
+
+      toast(`已推薦 ${player.nickname} 👍`);
+      return { ok: true };
+    } catch (err) {
+      console.error("推薦失敗：", err);
+      return { error: "推薦失敗，請稍後再試" };
+    }
+  };
   // Generate a 6-char random binding code
   const generateBindingCode = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // exclude confusing chars: 0OI1
@@ -2530,7 +2709,7 @@ export default function VolleyballMatcher() {
             })
             .map((p, i) => (
             <div key={p.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <PlayerCard player={p} onEdit={handleEditPlayerClick} onWantToPlay={handleWantToPlay} onRecord={handleOpenRecordModal} currentUser={currentUser}/>
+              <PlayerCard player={p} onEdit={handleEditPlayerClick} onWantToPlay={handleWantToPlay} onRecord={handleOpenRecordModal} currentUser={currentUser}/>onRecommend={handleOpenRecommendModal}/>
             </div>
           ))}
           {players.filter(p => playerFilterArea === "全部" || p.area === playerFilterArea).filter(p => playerFilterLevel === "全部" || p.level === playerFilterLevel).length === 0 && (
@@ -2585,7 +2764,7 @@ export default function VolleyballMatcher() {
       <CreatePlayerModal open={showCreatePlayerModal} onClose={() => setShowCreatePlayerModal(false)} onSubmit={handleCreatePlayer}/>
       <PasswordModal open={showPlayerPasswordModal} onClose={() => { setShowPlayerPasswordModal(false); setEditPlayerTarget(null); }} onVerify={handlePlayerPasswordVerify} sessionId={editPlayerTarget?.id}/>
       <EditPlayerModal open={showEditPlayerModal} onClose={() => { setShowEditPlayerModal(false); setEditPlayerTarget(null); }} player={editPlayerTarget} onSave={handleSavePlayer} onDelete={handleDeletePlayer}/>
-      <WeeklyRecordModal open={showRecordModal} onClose={() => { setShowRecordModal(false); setRecordTarget(null); }} player={recordTarget} onSave={handleSaveWeeklyRecord}/>
+      <WeeklyRecordModal open={showRecordModal} onClose={() => { setShowRecordModal(false); setRecordTarget(null); }} player={recordTarget} onSave={handleSaveWeeklyRecord}/><RecommendModal open={showRecommendModal} onClose={() => { setShowRecommendModal(false); setRecommendTarget(null); }} player={recommendTarget} currentUser={currentUser} onSubmit={handleSubmitRecommendation}/>
 
       {showToast && (
         <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.4)" : "0 8px 32px rgba(34,197,94,0.4)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
