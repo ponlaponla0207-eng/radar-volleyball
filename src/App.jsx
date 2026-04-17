@@ -25,6 +25,13 @@ const sessionsRef = collection(db, "sessions");
 // ════════════════════════════════════════════
 const ADMIN_PASSWORD = "0912662663";
 const ADMIN_SESSION_KEY = "vb_admin_session";
+// ════════════════════════════════════════════
+// LINE 通知設定 — 部署 Firebase Functions 後填入
+// ════════════════════════════════════════════
+const FUNCTIONS_BASE_URL = "https://sendlinenotification-njjh4do2yq-uc.a.run.app"; // Firebase Functions URL
+const LINE_OA_URL = "https://lin.ee/6SdN1hZ"; // LINE 官方帳號加好友連結
+const LINE_USER_KEY = "vb_line_user_id"; // localStorage key for LINE user ID
+
 // Helper to get date string offset from today
 function dayOffset(n) {
   const d = new Date(); d.setDate(d.getDate() + n);
@@ -174,6 +181,7 @@ const PlusSmallIcon = () => (<svg width="12" height="12" viewBox="0 0 12 12" fil
 const CopyIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="5" width="9" height="9" rx="1"/><path d="M11 5V3a1 1 0 00-1-1H3a1 1 0 00-1 1v7a1 1 0 001 1h2"/></svg>);
 const CheckIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 8 6.5 11.5 13 5"/></svg>);
 const ShareIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M12 2.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM2 8a2.5 2.5 0 105 0 2.5 2.5 0 00-5 0zm10 3a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/><path d="M9.7 6.9L5.3 9.5M9.7 11.1L5.3 8.5" stroke="currentColor" strokeWidth="1" fill="none"/></svg>);
+const BellIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5a4.5 4.5 0 00-4.5 4.5c0 2.5-1 4-1.5 4.5h12c-.5-.5-1.5-2-1.5-4.5A4.5 4.5 0 008 1.5zM6.5 12a1.5 1.5 0 003 0"/></svg>);
 
 /* ── Shared styles ── */
 const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, background: "rgba(15,23,42,0.8)", border: "1px solid rgba(148,163,184,0.15)", color: "#e2e8f0", fontSize: 14, outline: "none", transition: "border-color 0.2s", fontFamily: "inherit" };
@@ -716,9 +724,107 @@ const ShareModal = ({ open, onClose, data }) => {
 };
 
 /* ════════════════════════════════════════════
+   Notify Modal — send LINE notification
+   ════════════════════════════════════════════ */
+const NotifyModal = ({ open, onClose, session, onSend }) => {
+  const [notifyType, setNotifyType] = useState("formed");
+  const [customMessage, setCustomMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    if (open) { setNotifyType("formed"); setCustomMessage(""); setSending(false); setResult(null); }
+  }, [open]);
+
+  if (!open || !session) return null;
+
+  const handleSend = async () => {
+    setSending(true);
+    setResult(null);
+    const r = await onSend(session.id, notifyType, customMessage, session.password);
+    setResult(r);
+    setSending(false);
+  };
+
+  const types = [
+    { value: "formed", label: "🎉 成團通知", desc: "告訴大家這場已經成團了！" },
+    { value: "full", label: "📢 滿團通知", desc: "告訴大家這場已經額滿" },
+    { value: "custom", label: "✏️ 自訂訊息", desc: "例如：改期、場地更換、提醒攜帶..." },
+  ];
+
+  const isCustom = notifyType === "custom";
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(480px, 94vw)", maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(6,199,85,0.25)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <BellIcon/>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>LINE 通知</h3>
+        </div>
+        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
+          發送 LINE 訊息給所有 LINE 官方帳號好友（通知內容會包含場次資訊）
+        </p>
+
+        {/* Notify type selector */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+          {types.map(t => (
+            <label key={t.value} onClick={() => setNotifyType(t.value)}
+              style={{ padding: "12px 14px", borderRadius: 10, border: "1px solid", borderColor: notifyType === t.value ? "#06c755" : "rgba(148,163,184,0.15)", background: notifyType === t.value ? "rgba(6,199,85,0.08)" : "transparent", cursor: "pointer", transition: "all 0.2s" }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: notifyType === t.value ? "#06c755" : "#e2e8f0", marginBottom: 2 }}>{t.label}</div>
+              <div style={{ fontSize: 11, color: "#64748b" }}>{t.desc}</div>
+            </label>
+          ))}
+        </div>
+
+        {/* Custom message input */}
+        {isCustom && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 6, fontWeight: 600, letterSpacing: "0.04em" }}>✏️ 自訂訊息內容</div>
+            <textarea value={customMessage} onChange={(e) => setCustomMessage(e.target.value)}
+              placeholder="例如：因為下雨，今晚場次延到明天同一時間，請大家注意！"
+              rows={4}
+              style={{ width: "100%", padding: "12px 14px", borderRadius: 10, background: "rgba(15,23,42,0.8)", border: "1px solid rgba(148,163,184,0.2)", color: "#e2e8f0", fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 80, outline: "none", boxSizing: "border-box", fontFamily: "'Noto Sans TC', sans-serif" }}
+              onFocus={(e) => { e.target.style.borderColor = "#06c755"; }}
+              onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.2)"; }}
+            />
+            <div style={{ fontSize: 11, color: "#64748b", marginTop: 4, textAlign: "right" }}>{customMessage.length} / 500</div>
+          </div>
+        )}
+
+        {/* Result */}
+        {result && (
+          <div style={{ marginBottom: 14, padding: "12px", borderRadius: 10, background: result.error ? "rgba(239,68,68,0.08)" : "rgba(6,199,85,0.08)", border: `1px solid ${result.error ? "rgba(239,68,68,0.3)" : "rgba(6,199,85,0.3)"}`, fontSize: 13, color: result.error ? "#ef4444" : "#06c755", fontWeight: 600 }}>
+            {result.error
+              ? `❌ 發送失敗：${result.error}`
+              : `✅ ${result.message}`}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+          <button onClick={handleSend} disabled={sending || (isCustom && !customMessage.trim())}
+            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: sending ? "rgba(6,199,85,0.2)" : "linear-gradient(135deg, #06c755, #05a847)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: sending ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
+          >
+            {sending ? "發送中..." : "📣 發送通知"}
+          </button>
+        </div>
+
+        <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.15)", fontSize: 11, color: "#64748b", lineHeight: 1.6 }}>
+          💡 通知會發送給所有加了 LINE 官方帳號的好友，訊息會附上此場次的詳細資訊。{LINE_OA_URL && LINE_OA_URL !== "YOUR_LINE_OA_FRIEND_URL" && (
+            <span> 加好友連結：<a href={LINE_OA_URL} target="_blank" rel="noopener noreferrer" style={{ color: "#06c755" }}>{LINE_OA_URL}</a></span>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ════════════════════════════════════════════
    Edit Session Modal (all fields)
    ════════════════════════════════════════════ */
-const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onCloseSession, onShare }) => {
+const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onCloseSession, onShare, onNotify }) => {
   const [form, setForm] = useState({});
   const [errors, setErrors] = useState({});
 
@@ -853,13 +959,19 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onC
             </div>
 
             {/* Share to FB section */}
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
               <button
                 onClick={() => onShare && onShare({ ...form, courtName: form.courtName, area: form.area, date: form.date, time: form.time, registered: Number(form.registered), max: Number(form.max), level: form.level, fee: Number(form.fee), host: form.host, signupUrl: form.signupUrl, notes: form.notes })}
-                style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(96,165,250,0.3)", background: "rgba(96,165,250,0.08)", color: "#60a5fa", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                onMouseEnter={(e) => { e.target.style.background = "rgba(96,165,250,0.15)"; }}
-                onMouseLeave={(e) => { e.target.style.background = "rgba(96,165,250,0.08)"; }}
-              >🔗 分享到 FB 社團</button>
+                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(96,165,250,0.3)", background: "rgba(96,165,250,0.08)", color: "#60a5fa", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(96,165,250,0.15)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(96,165,250,0.08)"; }}
+              >🔗 分享到 FB</button>
+              <button
+                onClick={() => onNotify && onNotify(session)}
+                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(6,199,85,0.3)", background: "rgba(6,199,85,0.08)", color: "#06c755", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(6,199,85,0.15)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(6,199,85,0.08)"; }}
+              >📣 LINE 通知</button>
             </div>
 
             {/* Danger zone — close session */}
@@ -1044,6 +1156,8 @@ export default function VolleyballMatcher() {
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareData, setShareData] = useState(null);
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [notifyTarget, setNotifyTarget] = useState(null);
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
@@ -1293,6 +1407,27 @@ export default function VolleyballMatcher() {
     setShowShareModal(true);
   };
 
+  const handleOpenNotifyModal = (session) => {
+    setNotifyTarget(session);
+    setShowNotifyModal(true);
+  };
+
+  const handleSendLineNotification = async (sessionId, notifyType, customMessage, password) => {
+    try {
+      const resp = await fetch(FUNCTIONS_BASE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, notifyType, customMessage, password }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) return { error: data.error || "Unknown error" };
+      return data;
+    } catch (err) {
+      console.error("LINE notification error:", err);
+      return { error: "網路錯誤，請檢查網路連線或 Functions URL 設定" };
+    }
+  };
+
   const findSessionInfo = (sessionId) => {
     const s = sessions.find(s => s.id === sessionId);
     if (!s) return null;
@@ -1497,13 +1632,15 @@ export default function VolleyballMatcher() {
 
       <PasswordModal open={showPasswordModal} onClose={() => { setShowPasswordModal(false); setEditTarget(null); }} onVerify={handlePasswordVerify} sessionId={editTarget?.session?.id}/>
 
-      <EditSessionModal open={showEditModal} onClose={() => { setShowEditModal(false); setEditTarget(null); }} session={editTarget?.session} courtName={editTarget?.courtName} area={editTarget?.area} onSave={handleSaveEdit} onCloseSession={handleCloseSession} onShare={handleOpenShareModal}/>
+      <EditSessionModal open={showEditModal} onClose={() => { setShowEditModal(false); setEditTarget(null); }} session={editTarget?.session} courtName={editTarget?.courtName} area={editTarget?.area} onSave={handleSaveEdit} onCloseSession={handleCloseSession} onShare={handleOpenShareModal} onNotify={handleOpenNotifyModal}/>
 
       <CommentModal open={showCommentModal} onClose={() => { setShowCommentModal(false); setCommentTarget(null); }} session={commentTarget} onSubmit={handleAddComment}/>
 
       <AdminLoginModal open={showAdminLoginModal} onClose={() => setShowAdminLoginModal(false)} onLogin={handleAdminLogin}/>
 
       <ShareModal open={showShareModal} onClose={() => { setShowShareModal(false); setShareData(null); }} data={shareData}/>
+
+      <NotifyModal open={showNotifyModal} onClose={() => { setShowNotifyModal(false); setNotifyTarget(null); }} session={notifyTarget} onSend={handleSendLineNotification}/>
 
       {showToast && (
         <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.4)" : "0 8px 32px rgba(34,197,94,0.4)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
