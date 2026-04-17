@@ -1845,11 +1845,24 @@ const LoginChoiceModal = ({ open, onClose, onGoogle, onGuest, googleLoading }) =
    ════════════════════════════════════════════ */
 const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const btnRef = useRef(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+
+  // Recalculate dropdown position when opening
+  useEffect(() => {
+    if (menuOpen && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setMenuPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [menuOpen]);
 
   if (currentUser) {
     return (
-      <div style={{ position: "relative" }}>
-        <button onClick={() => setMenuOpen(o => !o)}
+      <>
+        <button ref={btnRef} onClick={() => setMenuOpen(o => !o)}
           style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px 4px 4px", borderRadius: 20, border: "1px solid rgba(34,197,94,0.25)", background: "rgba(34,197,94,0.08)", cursor: "pointer", transition: "all 0.2s" }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.15)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.08)"; }}
@@ -1865,8 +1878,8 @@ const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading }) 
         </button>
         {menuOpen && (
           <>
-            <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 700 }}/>
-            <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, zIndex: 701, minWidth: 200, background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 12, border: "1px solid rgba(148,163,184,0.15)", padding: "10px", boxShadow: "0 10px 30px rgba(0,0,0,0.4)", animation: "fadeIn 0.15s ease" }}>
+            <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 900 }}/>
+            <div style={{ position: "fixed", top: menuPos.top, right: menuPos.right, zIndex: 901, minWidth: 220, maxWidth: "calc(100vw - 24px)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", padding: "10px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", animation: "fadeIn 0.15s ease" }}>
               <div style={{ padding: "8px 10px", borderBottom: "1px dashed rgba(148,163,184,0.15)", marginBottom: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.displayName || "—"}</div>
                 <div style={{ fontSize: 10, color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.email || ""}</div>
@@ -1881,7 +1894,7 @@ const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading }) 
             </div>
           </>
         )}
-      </div>
+      </>
     );
   }
 
