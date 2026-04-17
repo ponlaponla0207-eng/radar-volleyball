@@ -1190,11 +1190,11 @@ const CreatePlayerModal = ({ open, onClose, onSubmit }) => {
   };
 
   if (!open) return null;
-  const F = ({ label, field, required, type, placeholder, err, children }) => (
-    <div style={{ marginBottom: 14 }}>
-      <label style={labelStyle}>{label}{required && " *"}</label>
-      {children || <input value={form[field]} onChange={(e) => { setForm({...form, [field]: e.target.value}); if (errors[field]) setErrors({...errors, [field]: ""}); }} type={type || "text"} placeholder={placeholder} style={{ ...inputStyle, borderColor: err ? "#ef4444" : "rgba(148,163,184,0.15)" }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = err ? "#ef4444" : "rgba(148,163,184,0.15)"; }}/>}
-      {err && <div style={{ fontSize: 11, color: "#ef4444", marginTop: 4 }}>{err}</div>}
+  const inp = (label, field, opts = {}) => (
+    <div style={{ marginBottom: 14 }} key={field}>
+      <label style={labelStyle}>{label}{opts.required && " *"}</label>
+      {opts.children || <input value={form[field]} onChange={(e) => { setForm(f => ({...f, [field]: e.target.value})); if (errors[field]) setErrors(er => ({...er, [field]: ""})); }} type={opts.type || "text"} placeholder={opts.placeholder} style={{ ...inputStyle, borderColor: errors[field] ? "#ef4444" : "rgba(148,163,184,0.15)" }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = errors[field] ? "#ef4444" : "rgba(148,163,184,0.15)"; }}/>}
+      {errors[field] && <div style={{ fontSize: 11, color: "#ef4444", marginTop: 4 }}>{errors[field]}</div>}
     </div>
   );
 
@@ -1209,23 +1209,23 @@ const CreatePlayerModal = ({ open, onClose, onSubmit }) => {
             <button onClick={onClose} style={{ background: "rgba(148,163,184,0.1)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#94a3b8", display: "flex" }}><CloseIcon/></button>
           </div>
 
-          <F label="暱稱" field="nickname" required placeholder="你想被怎麼稱呼？" err={errors.nickname}/>
+          {inp("暱稱", "nickname", { required: true, placeholder: "你想被怎麼稱呼？" })}
           <div style={{ display: "flex", gap: 10 }}>
-            <div style={{ flex: 1 }}><F label="球齡" field="experience" required placeholder="例：3年" err={errors.experience}/></div>
-            <div style={{ flex: 1 }}><F label="程度" field="level">{
-              <select value={form.level} onChange={(e) => setForm({...form, level: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}>{LEVELS_INPUT.map(l => <option key={l} value={l}>{l}</option>)}</select>
-            }</F></div>
+            <div style={{ flex: 1 }}>{inp("球齡", "experience", { required: true, placeholder: "例：3年" })}</div>
+            <div style={{ flex: 1 }}>{inp("程度", "level", { children:
+              <select value={form.level} onChange={(e) => setForm(f => ({...f, level: e.target.value}))} style={{ ...inputStyle, cursor: "pointer" }}>{LEVELS_INPUT.map(l => <option key={l} value={l}>{l}</option>)}</select>
+            })}</div>
           </div>
-          <F label="常打地區" field="area" required placeholder="例：大安區、信義區" err={errors.area}/>
+          {inp("常打地區", "area", { required: true, placeholder: "例：大安區、信義區" })}
           <div style={{ display: "flex", gap: 10 }}>
-            <div style={{ flex: 1 }}><F label="慣用位置（選填）" field="position">{
-              <select value={form.position} onChange={(e) => setForm({...form, position: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}><option value="">-- 選擇 --</option>{POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}</select>
-            }</F></div>
-            <div style={{ flex: 1 }}><F label="性別（選填）" field="gender">{
-              <select value={form.gender} onChange={(e) => setForm({...form, gender: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}><option value="">-- 選擇 --</option><option value="男">男</option><option value="女">女</option><option value="不透露">不透露</option></select>
-            }</F></div>
+            <div style={{ flex: 1 }}>{inp("慣用位置（選填）", "position", { children:
+              <select value={form.position} onChange={(e) => setForm(f => ({...f, position: e.target.value}))} style={{ ...inputStyle, cursor: "pointer" }}><option value="">-- 選擇 --</option>{POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}</select>
+            })}</div>
+            <div style={{ flex: 1 }}>{inp("性別（選填）", "gender", { children:
+              <select value={form.gender} onChange={(e) => setForm(f => ({...f, gender: e.target.value}))} style={{ ...inputStyle, cursor: "pointer" }}><option value="">-- 選擇 --</option><option value="男">男</option><option value="女">女</option><option value="不透露">不透露</option></select>
+            })}</div>
           </div>
-          <F label="身高 cm（選填）" field="height" type="number" placeholder="例：175"/>
+          {inp("身高 cm（選填）", "height", { type: "number", placeholder: "例：175" })}
 
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>可打時段（多選）</label>
@@ -1238,9 +1238,9 @@ const CreatePlayerModal = ({ open, onClose, onSubmit }) => {
             </div>
           </div>
 
-          <F label="自我介紹（選填）" field="intro">{
-            <textarea value={form.intro} onChange={(e) => setForm({...form, intro: e.target.value})} placeholder="例：週末固定打球，喜歡 6-2 陣型，歡迎約打！" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: 60 }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/>
-          }</F>
+          {inp("自我介紹（選填）", "intro", { children:
+            <textarea value={form.intro} onChange={(e) => setForm(f => ({...f, intro: e.target.value}))} placeholder="例：週末固定打球，喜歡 6-2 陣型，歡迎約打！" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: 60 }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/>
+          })}
 
           {/* Skill evaluation */}
           <div style={{ marginBottom: 18, padding: "16px", borderRadius: 14, background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
@@ -1277,7 +1277,7 @@ const CreatePlayerModal = ({ open, onClose, onSubmit }) => {
             ))}
           </div>
 
-          <F label="設定密碼（用來保護你的資料）" field="password" type="password" required placeholder="之後編輯/刪除時需要" err={errors.password}/>
+          {inp("設定密碼（用來保護你的資料）", "password", { type: "password", required: true, placeholder: "之後編輯/刪除時需要" })}
 
           <button onClick={handleSubmit}
             style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
@@ -1301,10 +1301,10 @@ const EditPlayerModal = ({ open, onClose, player, onSave, onDelete }) => {
   };
 
   if (!open || !player) return null;
-  const F = ({ label, field, type, placeholder, children }) => (
-    <div style={{ marginBottom: 14 }}>
+  const inp = (label, field, opts = {}) => (
+    <div style={{ marginBottom: 14 }} key={field}>
       <label style={labelStyle}>{label}</label>
-      {children || <input value={form[field] || ""} onChange={(e) => setForm({...form, [field]: e.target.value})} type={type || "text"} placeholder={placeholder} style={inputStyle} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/>}
+      {opts.children || <input value={form[field] || ""} onChange={(e) => setForm(f => ({...f, [field]: e.target.value}))} type={opts.type || "text"} placeholder={opts.placeholder} style={inputStyle} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/>}
     </div>
   );
 
@@ -1318,17 +1318,17 @@ const EditPlayerModal = ({ open, onClose, player, onSave, onDelete }) => {
             <h2 style={{ fontSize: 20, fontWeight: 800, color: "#a78bfa" }}>✏️ 編輯球員資料</h2>
             <button onClick={onClose} style={{ background: "rgba(148,163,184,0.1)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#94a3b8", display: "flex" }}><CloseIcon/></button>
           </div>
-          <F label="暱稱 *" field="nickname" placeholder="你想被怎麼稱呼？"/>
+          {inp("暱稱 *", "nickname", { placeholder: "你想被怎麼稱呼？" })}
           <div style={{ display: "flex", gap: 10 }}>
-            <div style={{ flex: 1 }}><F label="球齡 *" field="experience" placeholder="例：3年"/></div>
-            <div style={{ flex: 1 }}><F label="程度" field="level">{<select value={form.level} onChange={(e) => setForm({...form, level: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}>{LEVELS_INPUT.map(l => <option key={l} value={l}>{l}</option>)}</select>}</F></div>
+            <div style={{ flex: 1 }}>{inp("球齡 *", "experience", { placeholder: "例：3年" })}</div>
+            <div style={{ flex: 1 }}>{inp("程度", "level", { children: <select value={form.level} onChange={(e) => setForm(f => ({...f, level: e.target.value}))} style={{ ...inputStyle, cursor: "pointer" }}>{LEVELS_INPUT.map(l => <option key={l} value={l}>{l}</option>)}</select> })}</div>
           </div>
-          <F label="常打地區 *" field="area" placeholder="例：大安區"/>
+          {inp("常打地區 *", "area", { placeholder: "例：大安區" })}
           <div style={{ display: "flex", gap: 10 }}>
-            <div style={{ flex: 1 }}><F label="慣用位置" field="position">{<select value={form.position} onChange={(e) => setForm({...form, position: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}><option value="">--</option>{POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}</select>}</F></div>
-            <div style={{ flex: 1 }}><F label="性別" field="gender">{<select value={form.gender} onChange={(e) => setForm({...form, gender: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}><option value="">--</option><option value="男">男</option><option value="女">女</option><option value="不透露">不透露</option></select>}</F></div>
+            <div style={{ flex: 1 }}>{inp("慣用位置", "position", { children: <select value={form.position} onChange={(e) => setForm(f => ({...f, position: e.target.value}))} style={{ ...inputStyle, cursor: "pointer" }}><option value="">--</option>{POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}</select> })}</div>
+            <div style={{ flex: 1 }}>{inp("性別", "gender", { children: <select value={form.gender} onChange={(e) => setForm(f => ({...f, gender: e.target.value}))} style={{ ...inputStyle, cursor: "pointer" }}><option value="">--</option><option value="男">男</option><option value="女">女</option><option value="不透露">不透露</option></select> })}</div>
           </div>
-          <F label="身高 cm" field="height" type="number" placeholder="175"/>
+          {inp("身高 cm", "height", { type: "number", placeholder: "175" })}
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>可打時段</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -1337,7 +1337,7 @@ const EditPlayerModal = ({ open, onClose, player, onSave, onDelete }) => {
               ))}
             </div>
           </div>
-          <F label="自我介紹" field="intro">{<textarea value={form.intro} onChange={(e) => setForm({...form, intro: e.target.value})} placeholder="歡迎約打！" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: 60 }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/>}</F>
+          {inp("自我介紹", "intro", { children: <textarea value={form.intro} onChange={(e) => setForm(f => ({...f, intro: e.target.value}))} placeholder="歡迎約打！" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: 60 }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/> })}
 
           {/* Skill evaluation */}
           <div style={{ marginBottom: 18, padding: "16px", borderRadius: 14, background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
@@ -2046,7 +2046,7 @@ export default function VolleyballMatcher() {
           >🏐 場次揪團</button>
           <button onClick={() => setActiveTab("buddies")}
             style={{ flex: 1, padding: "12px", border: "none", background: activeTab === "buddies" ? "rgba(167,139,250,0.15)" : "transparent", color: activeTab === "buddies" ? "#a78bfa" : "var(--text-secondary)", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", borderBottom: activeTab === "buddies" ? "2px solid #a78bfa" : "2px solid transparent" }}
-          >🙋 排球夾伴 <span style={{ fontSize: 11, opacity: 0.7 }}>({players.length})</span></button>
+          >🙋 排球夥伴 <span style={{ fontSize: 11, opacity: 0.7 }}>({players.length})</span></button>
         </div>
       </div>
 
