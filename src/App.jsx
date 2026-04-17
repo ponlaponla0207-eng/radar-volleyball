@@ -35,6 +35,31 @@ const LINE_OA_URL = "https://lin.ee/6SdN1hZ"; // LINE 官方帳號加好友連�
 const LINE_USER_KEY = "vb_line_user_id"; // localStorage key for LINE user ID
 const WANT_TO_PLAY_HOURS = 6; // 「想打球」狀態維持 6 小時
 
+// Get ISO week string like "2026-W16"
+function getCurrentWeek() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  const weekNum = 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+  return `${d.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+}
+
+// Calculate stats from weeklyRecords
+function calcWinStats(records) {
+  if (!records || records.length === 0) return null;
+  const sorted = [...records].sort((a, b) => b.week.localeCompare(a.week));
+  const totalPlayed = sorted.reduce((s, r) => s + (r.played || 0), 0);
+  const totalWon = sorted.reduce((s, r) => s + (r.won || 0), 0);
+  const rate = totalPlayed > 0 ? Math.round((totalWon / totalPlayed) * 100) : 0;
+  const thisWeek = sorted[0];
+  const lastWeek = sorted[1];
+  const thisRate = thisWeek && thisWeek.played > 0 ? Math.round((thisWeek.won / thisWeek.played) * 100) : null;
+  const lastRate = lastWeek && lastWeek.played > 0 ? Math.round((lastWeek.won / lastWeek.played) * 100) : null;
+  const trend = thisRate !== null && lastRate !== null ? (thisRate > lastRate ? "up" : thisRate < lastRate ? "down" : "same") : null;
+  return { totalPlayed, totalWon, rate, thisWeek, trend, recent: sorted.slice(0, 8) };
+}
+
 // Helper to get date string offset from today
 function dayOffset(n) {
   const d = new Date(); d.setDate(d.getDate() + n);
@@ -1156,7 +1181,7 @@ const RadarChart = ({ skills, size = 120 }) => {
   );
 };
 
-const PlayerCard = ({ player, onEdit, onWantToPlay, currentUser }) => {
+const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser }) => {
   const hasSkills = player.skills && Object.values(player.skills).some(v => v > 0);
   const isOwner = currentUser && player.uid === currentUser.uid;
   // Check if "want to play" is active
@@ -1187,6 +1212,13 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, currentUser }) => {
           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.15)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.08)"; }}
         >🏐 想打球</button>
+      )}
+      {isOwner && (
+        <button onClick={() => onRecord(player)} title="記錄本週戰績"
+          style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#f59e0b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.08)"; }}
+        >📊 記錄</button>
       )}
       <button onClick={() => onEdit(player)} title="編輯"
         style={{ background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#64748b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
@@ -1226,6 +1258,41 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, currentUser }) => {
           </div>
         )}
         {player.intro && <div style={{ fontSize: 12, color: "var(--text-dim)", fontStyle: "italic", lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>💬 {player.intro}</div>}
+
+        {/* Win rate stats */}
+        {(() => {
+          const stats = calcWinStats(player.weeklyRecords);
+          if (!stats) return null;
+          const { totalPlayed, totalWon, rate, thisWeek, trend, recent } = stats;
+          return (
+            <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 10, background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.15)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b" }}>📊 勝率</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b", fontFamily: "'Space Mono', monospace" }}>{rate}%</span>
+                  <span style={{ fontSize: 11, color: "#64748b" }}>({totalPlayed} 場)</span>
+                  {trend === "up" && <span style={{ color: "#22c55e", fontSize: 12, fontWeight: 700 }}>↑</span>}
+                  {trend === "down" && <span style={{ color: "#ef4444", fontSize: 12, fontWeight: 700 }}>↓</span>}
+                </div>
+                {thisWeek && (
+                  <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 8, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontWeight: 600 }}>
+                    本週 {thisWeek.won}W {thisWeek.played - thisWeek.won}L
+                  </span>
+                )}
+              </div>
+              {/* Mini trend chart — last 8 weeks */}
+              {recent.length > 1 && (
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 28 }}>
+                  {recent.slice().reverse().map((r, i) => {
+                    const wr = r.played > 0 ? r.won / r.played : 0;
+                    const h = Math.max(4, wr * 24);
+                    return <div key={i} style={{ flex: 1, height: h, borderRadius: 2, background: wr >= 0.5 ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.4)", transition: "height 0.3s" }} title={`${r.week}: ${r.won}/${r.played}`}/>;
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </div>
   </div>
@@ -1348,6 +1415,115 @@ const CreatePlayerModal = ({ open, onClose, onSubmit }) => {
             onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
           >✅ 發佈球員資料</button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ════════════════════════════════════════════
+   Weekly Record Modal
+   ════════════════════════════════════════════ */
+const WeeklyRecordModal = ({ open, onClose, player, onSave }) => {
+  const week = getCurrentWeek();
+  const existing = player?.weeklyRecords?.find(r => r.week === week);
+  const [played, setPlayed] = useState("");
+  const [won, setWon] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (open && player) {
+      setPlayed(existing ? String(existing.played) : "");
+      setWon(existing ? String(existing.won) : "");
+      setError("");
+    }
+  }, [open, player]);
+
+  if (!open || !player) return null;
+
+  const handleSubmit = () => {
+    const p = Number(played), w = Number(won);
+    if (!played || p < 0) { setError("請輸入打了幾場"); return; }
+    if (!won && won !== "0" && won !== 0) { setError("請輸入贏了幾場"); return; }
+    if (w < 0) { setError("勝場不能為負數"); return; }
+    if (w > p) { setError("勝場不能超過總場數"); return; }
+    onSave(player.id, p, w);
+  };
+
+  const stats = calcWinStats(player.weeklyRecords);
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(245,158,11,0.25)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <span style={{ fontSize: 20 }}>📊</span>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>記錄本週戰績</h3>
+        </div>
+        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
+          {week}{existing ? "（已有紀錄，提交會覆蓋）" : ""}
+        </p>
+
+        {/* Current overall stats */}
+        {stats && (
+          <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+            <div style={{ flex: 1, textAlign: "center", padding: "8px", borderRadius: 8, background: "rgba(245,158,11,0.06)" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#f59e0b", fontFamily: "'Space Mono', monospace" }}>{stats.rate}%</div>
+              <div style={{ fontSize: 10, color: "#64748b" }}>總勝率</div>
+            </div>
+            <div style={{ flex: 1, textAlign: "center", padding: "8px", borderRadius: 8, background: "rgba(34,197,94,0.06)" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#22c55e", fontFamily: "'Space Mono', monospace" }}>{stats.totalWon}</div>
+              <div style={{ fontSize: 10, color: "#64748b" }}>總勝場</div>
+            </div>
+            <div style={{ flex: 1, textAlign: "center", padding: "8px", borderRadius: 8, background: "rgba(96,165,250,0.06)" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#60a5fa", fontFamily: "'Space Mono', monospace" }}>{stats.totalPlayed}</div>
+              <div style={{ fontSize: 10, color: "#64748b" }}>總場數</div>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>本週打了幾場 *</label>
+            <input type="number" min="0" max="50" value={played} onChange={(e) => { setPlayed(e.target.value); setError(""); }}
+              placeholder="例：5"
+              style={{ ...inputStyle, borderColor: error && !played ? "#ef4444" : "rgba(148,163,184,0.15)" }}
+              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
+              onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>贏了幾場 *</label>
+            <input type="number" min="0" max="50" value={won} onChange={(e) => { setWon(e.target.value); setError(""); }}
+              placeholder="例：3"
+              style={{ ...inputStyle, borderColor: error && (!won && won !== "0") ? "#ef4444" : "rgba(148,163,184,0.15)" }}
+              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
+              onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}
+            />
+          </div>
+        </div>
+
+        {/* Preview */}
+        {played && won !== "" && Number(played) > 0 && (
+          <div style={{ textAlign: "center", marginBottom: 14, padding: "10px", borderRadius: 10, background: "rgba(245,158,11,0.08)" }}>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "#f59e0b", fontFamily: "'Space Mono', monospace" }}>
+              {Math.round((Number(won) / Number(played)) * 100)}%
+            </span>
+            <span style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}>
+              {won}W {Number(played) - Number(won)}L
+            </span>
+          </div>
+        )}
+
+        {error && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 12 }}>{error}</div>}
+
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+          <button onClick={handleSubmit}
+            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
+            onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+          >📊 記錄戰績</button>
         </div>
       </div>
     </>
@@ -1650,6 +1826,8 @@ export default function VolleyballMatcher() {
   const [playerFilterArea, setPlayerFilterArea] = useState("全部");
   const [playerFilterLevel, setPlayerFilterLevel] = useState("全部");
   const [currentUser, setCurrentUser] = useState(null); // Firebase Auth user
+  const [showRecordModal, setShowRecordModal] = useState(false);
+  const [recordTarget, setRecordTarget] = useState(null);
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
@@ -1786,10 +1964,7 @@ export default function VolleyballMatcher() {
   };
 
   const handleWantToPlay = async (player) => {
-    // Only owner can toggle this
     if (!currentUser || player.uid !== currentUser.uid) {
-      // For password-based players, we'd need password verification
-      // For simplicity, only Google-logged-in users can use this feature
       toast("請先用 Google 登入才能使用此功能", 3000, "warn");
       return;
     }
@@ -1800,6 +1975,33 @@ export default function VolleyballMatcher() {
     } catch (err) {
       console.error(err);
       toast("設定失敗", 3000, "warn");
+    }
+  };
+
+  const handleOpenRecordModal = (player) => {
+    setRecordTarget(player);
+    setShowRecordModal(true);
+  };
+
+  const handleSaveWeeklyRecord = async (playerId, played, won) => {
+    try {
+      const week = getCurrentWeek();
+      const player = players.find(p => p.id === playerId);
+      if (!player) return;
+      const records = player.weeklyRecords || [];
+      // Replace existing record for this week, or add new
+      const updated = records.filter(r => r.week !== week);
+      updated.push({ week, played, won, recordedAt: Date.now() });
+      // Keep only last 52 weeks
+      updated.sort((a, b) => b.week.localeCompare(a.week));
+      const trimmed = updated.slice(0, 52);
+      await updateDoc(doc(db, "players", playerId), { weeklyRecords: trimmed });
+      setShowRecordModal(false);
+      setRecordTarget(null);
+      toast("本週戰績已記錄 📊");
+    } catch (err) {
+      console.error(err);
+      toast("記錄失敗", 3000, "warn");
     }
   };
 
@@ -2328,7 +2530,7 @@ export default function VolleyballMatcher() {
             })
             .map((p, i) => (
             <div key={p.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <PlayerCard player={p} onEdit={handleEditPlayerClick} onWantToPlay={handleWantToPlay} currentUser={currentUser}/>
+              <PlayerCard player={p} onEdit={handleEditPlayerClick} onWantToPlay={handleWantToPlay} onRecord={handleOpenRecordModal} currentUser={currentUser}/>
             </div>
           ))}
           {players.filter(p => playerFilterArea === "全部" || p.area === playerFilterArea).filter(p => playerFilterLevel === "全部" || p.level === playerFilterLevel).length === 0 && (
@@ -2383,6 +2585,7 @@ export default function VolleyballMatcher() {
       <CreatePlayerModal open={showCreatePlayerModal} onClose={() => setShowCreatePlayerModal(false)} onSubmit={handleCreatePlayer}/>
       <PasswordModal open={showPlayerPasswordModal} onClose={() => { setShowPlayerPasswordModal(false); setEditPlayerTarget(null); }} onVerify={handlePlayerPasswordVerify} sessionId={editPlayerTarget?.id}/>
       <EditPlayerModal open={showEditPlayerModal} onClose={() => { setShowEditPlayerModal(false); setEditPlayerTarget(null); }} player={editPlayerTarget} onSave={handleSavePlayer} onDelete={handleDeletePlayer}/>
+      <WeeklyRecordModal open={showRecordModal} onClose={() => { setShowRecordModal(false); setRecordTarget(null); }} player={recordTarget} onSave={handleSaveWeeklyRecord}/>
 
       {showToast && (
         <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.4)" : "0 8px 32px rgba(34,197,94,0.4)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
