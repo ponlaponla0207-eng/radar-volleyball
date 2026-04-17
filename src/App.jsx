@@ -256,7 +256,7 @@ const ProgressRing = ({ current, min, max }) => {
 };
 
 /* ── Session Card ── */
-const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment, onWaitlist, onCancelWaitlist, hasWaitlisted, isAdmin, onAdminDelete, onAdminAdjust }) => {
+const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment, onWaitlist, onCancelWaitlist, hasWaitlisted, isAdmin, onAdminDelete, onAdminAdjust, currentUser, onNotifyWanting, wantingCount }) => {
   const status = getStatus(session);
   const need = Math.max(0, session.min - session.registered);
   const isFull = session.registered >= session.max;
@@ -268,6 +268,8 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
   const commentCount = comments.length;
   // Sort comments by createdAt descending (newest first)
   const sortedComments = [...comments].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  // NEW: is the current user the organizer of this session?
+  const isOrganizer = currentUser && session.organizerUid && session.organizerUid === currentUser.uid;
   return (
     <div style={{ background: "var(--card-bg)", borderRadius: 16, padding: "20px 22px 20px 26px", border: "1px solid var(--border)", position: "relative", overflow: "hidden", transition: "all 0.25s ease" }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${status.color}55`; e.currentTarget.style.boxShadow = `0 8px 24px ${status.bg}`; }}
@@ -342,6 +344,19 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
               >{isFormed ? "+ 我要加入" : "🙋 我要報名"}{hasValidUrl ? " ↗" : ""}</button>
             )}
           </div>
+
+          {/* NEW: Organizer-only notify wanting players button */}
+          {isOrganizer && !isFormed && (
+            <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 10, background: "rgba(232,155,94,0.12)", border: "1px solid rgba(232,155,94,0.32)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 11, color: "#B56620", fontWeight: 700 }}>📢 這是你開的場，可以通知「想打球」的球員</span>
+              <button onClick={() => onNotifyWanting(session)}
+                disabled={!wantingCount}
+                style={{ marginLeft: "auto", padding: "6px 14px", borderRadius: 10, border: "none", background: wantingCount > 0 ? "linear-gradient(135deg, #E89B5E, #D4855F)" : "rgba(180,165,130,0.2)", color: wantingCount > 0 ? "#fff" : "#8A7F6A", fontSize: 11, fontWeight: 800, cursor: wantingCount > 0 ? "pointer" : "not-allowed", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { if (wantingCount > 0) e.target.style.transform = "scale(1.04)"; }}
+                onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+              >{wantingCount > 0 ? `📢 通知 (${wantingCount} 人想打球)` : "目前無人想打球"}</button>
+            </div>
+          )}
 
           {/* Admin controls (red bar) */}
           {isAdmin && (
@@ -2140,9 +2155,228 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
 
 
 /* ════════════════════════════════════════════
+   NotifyWantingPlayersModal — organizer selects who to notify
+   ════════════════════════════════════════════ */
+const NotifyWantingPlayersModal = ({ open, onClose, session, players, currentUser, onSend }) => {
+  const [selectedUids, setSelectedUids] = useState(new Set());
+  const [sending, setSending] = useState(false);
+
+  if (!open || !session) return null;
+
+  // Filter: only "want to play" players that are NOT the organizer
+  const wantingPlayers = players.filter(p => {
+    const isWanting = (p.wantToPlayUntil || 0) > Date.now();
+    const isNotMe = p.uid !== currentUser?.uid;
+    const hasUid = !!p.uid; // can only notify registered Google users
+    return isWanting && isNotMe && hasUid;
+  });
+
+  const toggleSelect = (uid) => {
+    setSelectedUids(prev => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedUids.size === wantingPlayers.length) {
+      setSelectedUids(new Set());
+    } else {
+      setSelectedUids(new Set(wantingPlayers.map(p => p.uid)));
+    }
+  };
+
+  const handleSend = async () => {
+    if (selectedUids.size === 0) return;
+    setSending(true);
+    try {
+      await onSend(session, Array.from(selectedUids), wantingPlayers);
+      setSelectedUids(new Set());
+      onClose();
+    } catch (err) {
+      console.error("Notify send failed:", err);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const needed = (session.minPlayers || session.min || 0) - (session.registered?.length || 0);
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(480px, 94vw)", maxHeight: "88vh", background: "#FFF9EC", borderRadius: 20, border: "1px solid rgba(232,155,94,0.35)", padding: "24px 22px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)", display: "flex", flexDirection: "column" }}>
+
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <span style={{ fontSize: 22 }}>📢</span>
+            <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1E3A5F" }}>通知「想打球」的夥伴</h3>
+          </div>
+          <div style={{ fontSize: 12, color: "#8A7F6A", lineHeight: 1.6 }}>
+            {session.venue || session.location} · {session.time}
+            {needed > 0 && <span style={{ color: "#E89B5E", fontWeight: 700 }}> · 還差 {needed} 人成團</span>}
+          </div>
+        </div>
+
+        {wantingPlayers.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "32px 20px", background: "rgba(248,242,229,0.5)", borderRadius: 12, border: "1px dashed rgba(180,165,130,0.3)" }}>
+            <div style={{ fontSize: 36, marginBottom: 8, opacity: 0.5 }}>💭</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#5A7B9A", marginBottom: 4 }}>目前沒有人「想打球」</div>
+            <div style={{ fontSize: 11, color: "#8A7F6A", lineHeight: 1.5 }}>只有開啟「想打球」狀態<br/>且用 Google 登入的球員會出現在這裡</div>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, padding: "0 4px" }}>
+              <span style={{ fontSize: 12, color: "#8A7F6A" }}>共 {wantingPlayers.length} 位想打球</span>
+              <button onClick={toggleSelectAll}
+                style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(232,155,94,0.35)", background: "transparent", color: "#E89B5E", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+              >{selectedUids.size === wantingPlayers.length ? "取消全選" : "全選"}</button>
+            </div>
+
+            <div style={{ flex: 1, overflowY: "auto", marginBottom: 14, maxHeight: 300, display: "flex", flexDirection: "column", gap: 6 }}>
+              {wantingPlayers.map(p => {
+                const selected = selectedUids.has(p.uid);
+                const remainH = Math.ceil(((p.wantToPlayUntil || 0) - Date.now()) / 3600000);
+                return (
+                  <label key={p.id}
+                    style={{ padding: "10px 12px", borderRadius: 10, background: selected ? "rgba(232,155,94,0.12)" : "rgba(255,249,236,0.5)", border: "1px solid", borderColor: selected ? "rgba(232,155,94,0.4)" : "rgba(180,165,130,0.18)", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", transition: "all 0.15s" }}
+                  >
+                    <input type="checkbox" checked={selected} onChange={() => toggleSelect(p.uid)}
+                      style={{ width: 18, height: 18, accentColor: "#E89B5E", cursor: "pointer", flexShrink: 0 }}/>
+                    {p.photoURL ? (
+                      <img src={p.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0 }}/>
+                    ) : (
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(196,167,136,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 14, fontWeight: 700, color: "#1E3A5F" }}>{(p.nickname || "?").charAt(0)}</div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#1E3A5F" }}>{p.nickname}</div>
+                      <div style={{ fontSize: 10, color: "#8A7F6A" }}>{p.area} · {p.level} · 剩 {remainH}h</div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(232,155,94,0.08)", border: "1px solid rgba(232,155,94,0.25)", marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: "#B56620", fontWeight: 700, marginBottom: 4 }}>📬 將發送以下通知：</div>
+              <div style={{ fontSize: 12, color: "#1E3A5F", lineHeight: 1.5 }}>
+                「{currentUser?.displayName || "主揪"} 邀請你加入：{session.venue || session.location} - {session.time}」
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={onClose}
+                style={{ flex: 1, padding: "11px", borderRadius: 10, border: "1px solid rgba(180,165,130,0.3)", background: "transparent", color: "#5A7B9A", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              >取消</button>
+              <button onClick={handleSend}
+                disabled={sending || selectedUids.size === 0}
+                style={{ flex: 2, padding: "11px", borderRadius: 10, border: "none", background: (sending || selectedUids.size === 0) ? "rgba(180,165,130,0.2)" : "linear-gradient(135deg, #E89B5E, #D4855F)", color: (sending || selectedUids.size === 0) ? "#8A7F6A" : "#fff", fontSize: 13, fontWeight: 800, cursor: (sending || selectedUids.size === 0) ? "not-allowed" : "pointer", transition: "all 0.2s" }}
+              >{sending ? "傳送中..." : `📢 通知 ${selectedUids.size} 位夥伴`}</button>
+            </div>
+          </>
+        )}
+
+      </div>
+    </>
+  );
+};
+
+
+/* ════════════════════════════════════════════
+   NotificationCenterModal — recipient views their notifications
+   ════════════════════════════════════════════ */
+const NotificationCenterModal = ({ open, onClose, notifications, onReadNotification, onDeleteAll }) => {
+  if (!open) return null;
+
+  const sorted = [...notifications].sort((a, b) => {
+    const aTime = a.createdAt?.seconds || a.createdAt?.toMillis?.() || 0;
+    const bTime = b.createdAt?.seconds || b.createdAt?.toMillis?.() || 0;
+    return bTime - aTime;
+  });
+
+  const unreadCount = notifications.filter(n => !n.readAt).length;
+
+  const formatRelTime = (ts) => {
+    if (!ts) return "";
+    const ms = ts.seconds ? ts.seconds * 1000 : ts.toMillis?.() || 0;
+    const diff = Date.now() - ms;
+    if (diff < 60000) return "剛剛";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} 分鐘前`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小時前`;
+    return `${Math.floor(diff / 86400000)} 天前`;
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(440px, 94vw)", maxHeight: "85vh", background: "#FFF9EC", borderRadius: 20, border: "1px solid rgba(232,155,94,0.35)", padding: "24px 22px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)", display: "flex", flexDirection: "column" }}>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 22 }}>🔔</span>
+            <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1E3A5F" }}>通知中心</h3>
+            {unreadCount > 0 && (
+              <span style={{ fontSize: 11, padding: "2px 10px", borderRadius: 12, background: "#C85A5A", color: "#fff", fontWeight: 700 }}>{unreadCount} 則新</span>
+            )}
+          </div>
+          {notifications.length > 0 && (
+            <button onClick={onDeleteAll}
+              style={{ padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(180,165,130,0.3)", background: "transparent", color: "#8A7F6A", fontSize: 10, fontWeight: 600, cursor: "pointer" }}
+            >🗑️ 清除全部</button>
+          )}
+        </div>
+
+        {sorted.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "48px 20px", background: "rgba(248,242,229,0.5)", borderRadius: 12, border: "1px dashed rgba(180,165,130,0.3)" }}>
+            <div style={{ fontSize: 44, marginBottom: 10, opacity: 0.5 }}>📭</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#5A7B9A", marginBottom: 6 }}>還沒有任何通知</div>
+            <div style={{ fontSize: 11, color: "#8A7F6A", lineHeight: 1.6 }}>
+              當主揪邀請你加入場次時<br/>你會在這邊看到通知
+            </div>
+          </div>
+        ) : (
+          <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+            {sorted.map((n) => {
+              const isUnread = !n.readAt;
+              return (
+                <div key={n.id} onClick={() => onReadNotification(n)}
+                  style={{ padding: "12px 14px", borderRadius: 12, background: isUnread ? "rgba(232,155,94,0.12)" : "rgba(255,249,236,0.5)", border: "1px solid", borderColor: isUnread ? "rgba(232,155,94,0.35)" : "rgba(180,165,130,0.18)", cursor: "pointer", transition: "all 0.15s", position: "relative" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateX(2px)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateX(0)"; }}
+                >
+                  {isUnread && (
+                    <span style={{ position: "absolute", top: 10, right: 10, width: 8, height: 8, borderRadius: "50%", background: "#C85A5A" }}/>
+                  )}
+                  <div style={{ fontSize: 12, color: "#E89B5E", fontWeight: 700, marginBottom: 4 }}>📢 {n.fromName || "主揪"} 邀請你加入場次</div>
+                  <div style={{ fontSize: 13, color: "#1E3A5F", fontWeight: 700, marginBottom: 2 }}>{n.sessionTitle}</div>
+                  <div style={{ fontSize: 11, color: "#5A7B9A", marginBottom: 6 }}>{n.sessionTime}</div>
+                  {n.needed > 0 && (
+                    <div style={{ fontSize: 11, color: "#B56620", fontWeight: 600 }}>🔥 還差 {n.needed} 人成團</div>
+                  )}
+                  <div style={{ fontSize: 10, color: "#8A7F6A", marginTop: 6 }}>{formatRelTime(n.createdAt)}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <button onClick={onClose}
+          style={{ marginTop: 14, padding: "11px", borderRadius: 10, border: "1px solid rgba(180,165,130,0.3)", background: "transparent", color: "#5A7B9A", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+        >關閉</button>
+
+      </div>
+    </>
+  );
+};
+
+
+
+/* ════════════════════════════════════════════
    Header Auth Indicator — top-right corner login button or user pill
    ════════════════════════════════════════════ */
-const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading, onOpenMemberCenter }) => {
+const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading, onOpenMemberCenter, unreadNotificationCount, onOpenNotificationCenter }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const btnRef = useRef(null);
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
@@ -2162,7 +2396,7 @@ const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading, on
     return (
       <>
         <button ref={btnRef} onClick={() => setMenuOpen(o => !o)}
-          style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px 4px 4px", borderRadius: 20, border: "1px solid rgba(127,168,124,0.32)", background: "rgba(127,168,124,0.15)", cursor: "pointer", transition: "all 0.2s" }}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px 4px 4px", borderRadius: 20, border: "1px solid rgba(127,168,124,0.32)", background: "rgba(127,168,124,0.15)", cursor: "pointer", transition: "all 0.2s", position: "relative" }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(127,168,124,0.25)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(127,168,124,0.15)"; }}
         >
@@ -2174,6 +2408,11 @@ const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading, on
             </span>
           )}
           <span style={{ fontSize: 11, color: "#7FA87C", fontWeight: 700 }}>已登入</span>
+          {unreadNotificationCount > 0 && (
+            <span style={{ position: "absolute", top: -2, right: -2, minWidth: 16, height: 16, padding: "0 4px", borderRadius: 8, background: "#C85A5A", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #FFF9EC" }}>
+              {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+            </span>
+          )}
         </button>
         {menuOpen && (
           <>
@@ -2183,6 +2422,19 @@ const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading, on
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#1E3A5F", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.displayName || "—"}</div>
                 <div style={{ fontSize: 10, color: "#8A7F6A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.email || ""}</div>
               </div>
+              <button onClick={() => { setMenuOpen(false); onOpenNotificationCenter(); }}
+                style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: unreadNotificationCount > 0 ? "linear-gradient(135deg, rgba(232,155,94,0.22), rgba(212,133,95,0.18))" : "transparent", color: unreadNotificationCount > 0 ? "#B56620" : "#5A7B9A", fontSize: 12, fontWeight: 700, cursor: "pointer", textAlign: "left", transition: "background 0.15s", marginBottom: 6, display: "flex", alignItems: "center", gap: 8, position: "relative" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = unreadNotificationCount > 0 ? "linear-gradient(135deg, rgba(232,155,94,0.3), rgba(212,133,95,0.25))" : "rgba(180,165,130,0.15)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = unreadNotificationCount > 0 ? "linear-gradient(135deg, rgba(232,155,94,0.22), rgba(212,133,95,0.18))" : "transparent"; }}
+              >
+                <span style={{ fontSize: 14 }}>🔔</span>
+                <span>通知中心</span>
+                {unreadNotificationCount > 0 && (
+                  <span style={{ marginLeft: "auto", minWidth: 20, padding: "1px 7px", borderRadius: 10, background: "#C85A5A", color: "#fff", fontSize: 10, fontWeight: 800, textAlign: "center" }}>
+                    {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                  </span>
+                )}
+              </button>
               <button onClick={() => { setMenuOpen(false); onOpenMemberCenter(); }}
                 style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, rgba(196,167,136,0.22), rgba(139,92,246,0.15))", color: "#C4A788", fontSize: 12, fontWeight: 700, cursor: "pointer", textAlign: "left", transition: "background 0.15s", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(196,167,136,0.32), rgba(139,92,246,0.25))"; }}
@@ -2779,6 +3031,12 @@ export default function VolleyballMatcher() {
   // NEW: member center state
   const [showMemberCenterModal, setShowMemberCenterModal] = useState(false);
 
+  // NEW: notifications state
+  const [notifications, setNotifications] = useState([]);
+  const [showNotificationCenterModal, setShowNotificationCenterModal] = useState(false);
+  const [showNotifyWantingModal, setShowNotifyWantingModal] = useState(false);
+  const [notifyWantingTarget, setNotifyWantingTarget] = useState(null); // session to notify "wanting to play" folks
+
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
   const [nowTick, setNowTick] = useState(Date.now());
@@ -2875,6 +3133,26 @@ export default function VolleyballMatcher() {
     return () => unsub2();
   }, []);
 
+  // NEW: Subscribe to notifications for current user
+  useEffect(() => {
+    if (!currentUser) {
+      setNotifications([]);
+      return;
+    }
+    const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const list = [];
+      snap.forEach(d => {
+        const data = d.data();
+        if (data.toUid === currentUser.uid) {
+          list.push({ id: d.id, ...data });
+        }
+      });
+      setNotifications(list);
+    }, (err) => console.error("Notifications 讀取錯誤：", err));
+    return () => unsub();
+  }, [currentUser]);
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user || null);
@@ -2960,6 +3238,79 @@ export default function VolleyballMatcher() {
   // NEW: open member center modal
   const handleOpenMemberCenter = () => {
     setShowMemberCenterModal(true);
+  };
+
+  // NEW: notification handlers
+  const handleOpenNotificationCenter = () => {
+    setShowNotificationCenterModal(true);
+  };
+
+  const handleOpenNotifyWanting = (session) => {
+    setNotifyWantingTarget(session);
+    setShowNotifyWantingModal(true);
+  };
+
+  // Send notifications to selected players
+  const handleSendNotifications = async (session, uids, wantingPlayers) => {
+    if (!currentUser || uids.length === 0) return;
+    try {
+      const registered = session.registered?.length || 0;
+      const minNeeded = session.minPlayers || session.min || 0;
+      const needed = Math.max(0, minNeeded - registered);
+      const sessionTitle = session.venue || session.location || "場次";
+      const sessionTime = session.time || "";
+
+      // Write one notification doc per recipient
+      await Promise.all(uids.map(uid =>
+        addDoc(collection(db, "notifications"), {
+          toUid: uid,
+          fromUid: currentUser.uid,
+          fromName: currentUser.displayName || "主揪",
+          sessionId: session.id,
+          sessionTitle,
+          sessionTime,
+          needed,
+          createdAt: serverTimestamp(),
+          readAt: null,
+        })
+      ));
+
+      toast(`✅ 已通知 ${uids.length} 位夥伴`, 2500);
+    } catch (err) {
+      console.error("Send notifications failed:", err);
+      toast("通知發送失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  // Mark notification as read + scroll to the session
+  const handleReadNotification = async (notif) => {
+    try {
+      if (!notif.readAt) {
+        await updateDoc(doc(db, "notifications", notif.id), {
+          readAt: serverTimestamp(),
+        });
+      }
+      setShowNotificationCenterModal(false);
+      // Switch to sessions tab so user can see the target session
+      setActiveTab("sessions");
+      toast("📍 已跳到場次分頁，滑動找找看你被邀請的場次", 2500);
+    } catch (err) {
+      console.error("Read notification failed:", err);
+    }
+  };
+
+  // Delete all my notifications
+  const handleDeleteAllNotifications = async () => {
+    if (!window.confirm("確定要清除全部通知嗎？此動作無法復原。")) return;
+    try {
+      await Promise.all(notifications.map(n =>
+        deleteDoc(doc(db, "notifications", n.id))
+      ));
+      toast("🗑️ 已清除所有通知", 2000);
+    } catch (err) {
+      console.error("Delete all notifications failed:", err);
+      toast("清除失敗", 2500, "warn");
+    }
   };
 
   // NEW: edit a specific historical week record — opens WeeklyRecordModal with prefilled data
@@ -3224,6 +3575,8 @@ export default function VolleyballMatcher() {
         host: data.host, signupUrl: data.signupUrl || "",
         notes: data.notes || "", password: data.password,
         createdAt: serverTimestamp(),
+        // NEW: store organizer UID so we can show "notify wanting players" button only to them
+        organizerUid: currentUser?.uid || null,
       });
       if (!AREAS_FILTER.includes(data.area)) AREAS_FILTER.push(data.area);
       setShowCreateModal(false);
@@ -3419,7 +3772,7 @@ export default function VolleyballMatcher() {
             <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 12, background: "rgba(232,155,94,0.18)", color: "#E89B5E", fontWeight: 700, letterSpacing: "0.1em", border: "1px solid rgba(232,155,94,0.28)" }}>TAIPEI</span>
             {/* NEW: Header auth indicator — always visible */}
             <div style={{ marginLeft: "auto" }}>
-              <HeaderAuthIndicator currentUser={currentUser} onLogin={handleHeaderLogin} onLogout={handleGoogleLogout} googleLoading={googleLoading} onOpenMemberCenter={handleOpenMemberCenter}/>
+              <HeaderAuthIndicator currentUser={currentUser} onLogin={handleHeaderLogin} onLogout={handleGoogleLogout} googleLoading={googleLoading} onOpenMemberCenter={handleOpenMemberCenter} unreadNotificationCount={notifications.filter(n => !n.readAt).length} onOpenNotificationCenter={handleOpenNotificationCenter}/>
             </div>
           </div>
           <p style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.5 }}>即時掌握台北各場館的排球場次，快速找到缺人的場，讓每一場都能順利開打</p>
@@ -3544,7 +3897,7 @@ export default function VolleyballMatcher() {
           )}
           {!loading && sorted.map((s, i) => (
             <div key={s.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal} onWaitlist={handleWaitlist} onCancelWaitlist={handleCancelWaitlist} hasWaitlisted={waitlistedSessions.has(s.id)} isAdmin={isAdmin} onAdminDelete={handleAdminDelete} onAdminAdjust={handleAdminAdjust}/>
+              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal} onWaitlist={handleWaitlist} onCancelWaitlist={handleCancelWaitlist} hasWaitlisted={waitlistedSessions.has(s.id)} isAdmin={isAdmin} onAdminDelete={handleAdminDelete} onAdminAdjust={handleAdminAdjust} currentUser={currentUser} onNotifyWanting={handleOpenNotifyWanting} wantingCount={players.filter(p => (p.wantToPlayUntil || 0) > Date.now() && p.uid && p.uid !== currentUser?.uid).length}/>
             </div>
           ))}
         </div>
@@ -3671,6 +4024,23 @@ export default function VolleyballMatcher() {
         onDelete={(playerId) => { setShowMemberCenterModal(false); handleDeletePlayer(playerId); }}
         onMergeDuplicates={handleMergeDuplicates}
         onEditRecord={(player, record) => { setShowMemberCenterModal(false); handleEditHistoricalRecord(player, record); }}
+      />
+
+      {/* NEW: Notification modals */}
+      <NotifyWantingPlayersModal
+        open={showNotifyWantingModal}
+        onClose={() => { setShowNotifyWantingModal(false); setNotifyWantingTarget(null); }}
+        session={notifyWantingTarget}
+        players={players}
+        currentUser={currentUser}
+        onSend={handleSendNotifications}
+      />
+      <NotificationCenterModal
+        open={showNotificationCenterModal}
+        onClose={() => setShowNotificationCenterModal(false)}
+        notifications={notifications}
+        onReadNotification={handleReadNotification}
+        onDeleteAll={handleDeleteAllNotifications}
       />
 
       {showToast && (
