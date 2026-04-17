@@ -1259,19 +1259,8 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onRec
         )}
         {player.intro && <div style={{ fontSize: 12, color: "var(--text-dim)", fontStyle: "italic", lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>💬 {player.intro}</div>}
 
-        {/* Win rate stats */}
+{/* Win rate stats */}
         {(() => {
-    </div>
-          );
-        })()}
-
-        {/* === 推薦區塊（新增）=== */}
-        <RecommendSection player={player} currentUser={currentUser} onRecommend={onRecommend}/>
-      </div>
-    </div>
-  </div>
-  );
-};
           const stats = calcWinStats(player.weeklyRecords);
           if (!stats) return null;
           const { totalPlayed, totalWon, rate, thisWeek, trend, recent } = stats;
@@ -1304,11 +1293,9 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onRec
             </div>
           );
         })()}
-      </div>
-    </div>
-  </div>
-  );
-};
+
+        {/* === 推薦區塊 === */}
+        <RecommendSection player={player} currentUser={currentUser} onRecommend={onRecommend}/>
 /* ════════════════════════════════════════════
    Recommend Section — shown inside PlayerCard
    ════════════════════════════════════════════ */
