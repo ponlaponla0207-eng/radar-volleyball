@@ -1296,6 +1296,11 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onRec
 
         {/* === 推薦區塊 === */}
         <RecommendSection player={player} currentUser={currentUser} onRecommend={onRecommend}/>
+        </div>
+    </div>
+  </div>
+  );
+};
 /* ════════════════════════════════════════════
    Recommend Section — shown inside PlayerCard
    ════════════════════════════════════════════ */
