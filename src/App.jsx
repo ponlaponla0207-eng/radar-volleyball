@@ -32,6 +32,7 @@ const ADMIN_SESSION_KEY = "vb_admin_session";
 const FUNCTIONS_BASE_URL = "https://sendlinenotification-njjh4do2yq-uc.a.run.app"; // Firebase Functions URL
 const LINE_OA_URL = "https://lin.ee/6SdN1hZ"; // LINE 官方帳號加好友連結
 const LINE_USER_KEY = "vb_line_user_id"; // localStorage key for LINE user ID
+const WANT_TO_PLAY_HOURS = 6; // 「想打球」狀態維持 6 小時
 
 // Helper to get date string offset from today
 function dayOffset(n) {
@@ -1120,21 +1121,46 @@ const RadarChart = ({ skills, size = 120 }) => {
   );
 };
 
-const PlayerCard = ({ player, onEdit }) => {
+const PlayerCard = ({ player, onEdit, onWantToPlay, currentUser }) => {
   const hasSkills = player.skills && Object.values(player.skills).some(v => v > 0);
-  return (
-  <div style={{ background: "var(--card-bg)", borderRadius: 16, padding: "18px 22px 18px 26px", border: "1px solid var(--border)", position: "relative", overflow: "hidden", transition: "all 0.25s ease" }}
-    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(167,139,250,0.4)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(167,139,250,0.08)"; }}
-    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "none"; }}
-  >
-    <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: "#a78bfa", opacity: 0.85 }}/>
-    <button onClick={() => onEdit(player)} title="編輯我的資料" style={{ position: "absolute", top: 10, right: 12, background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#64748b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(167,139,250,0.12)"; e.currentTarget.style.color = "#a78bfa"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(148,163,184,0.08)"; e.currentTarget.style.color = "#64748b"; }}
-    ><EditIcon /> 編輯</button>
+  const isOwner = currentUser && player.uid === currentUser.uid;
+  // Check if "want to play" is active
+  const wantExpiry = player.wantToPlayUntil || 0;
+  const isWanting = wantExpiry > Date.now();
+  const remainHours = isWanting ? Math.ceil((wantExpiry - Date.now()) / 3600000) : 0;
 
-    <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-      {/* Radar chart on the left */}
+  return (
+  <div style={{ background: "var(--card-bg)", borderRadius: 16, padding: "18px 22px 18px 26px", border: "1px solid", borderColor: isWanting ? "rgba(34,197,94,0.4)" : "var(--border)", position: "relative", overflow: "hidden", transition: "all 0.25s ease" }}
+    onMouseEnter={(e) => { e.currentTarget.style.borderColor = isWanting ? "rgba(34,197,94,0.6)" : "rgba(167,139,250,0.4)"; e.currentTarget.style.boxShadow = isWanting ? "0 8px 24px rgba(34,197,94,0.1)" : "0 8px 24px rgba(167,139,250,0.08)"; }}
+    onMouseLeave={(e) => { e.currentTarget.style.borderColor = isWanting ? "rgba(34,197,94,0.4)" : "var(--border)"; e.currentTarget.style.boxShadow = "none"; }}
+  >
+    <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: isWanting ? "#22c55e" : "#a78bfa", opacity: 0.85 }}/>
+
+    {/* Want to play badge */}
+    {isWanting && (
+      <div style={{ position: "absolute", top: 10, left: 26, display: "flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 12, background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", animation: "pulse 2s ease infinite" }}>
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", display: "inline-block" }}/>
+        <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>想打球！ 剩 {remainHours}h</span>
+      </div>
+    )}
+
+    {/* Edit / want-to-play buttons top-right */}
+    <div style={{ position: "absolute", top: 10, right: 12, display: "flex", gap: 4 }}>
+      {isOwner && !isWanting && (
+        <button onClick={() => onWantToPlay(player)} title="我想打球"
+          style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#22c55e", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.15)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.08)"; }}
+        >🏐 想打球</button>
+      )}
+      <button onClick={() => onEdit(player)} title="編輯"
+        style={{ background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#64748b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(167,139,250,0.12)"; e.currentTarget.style.color = "#a78bfa"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(148,163,184,0.08)"; e.currentTarget.style.color = "#64748b"; }}
+      ><EditIcon /> 編輯</button>
+    </div>
+
+    <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginTop: isWanting ? 28 : 0 }}>
       {hasSkills && (
         <div style={{ flexShrink: 0 }}>
           <RadarChart skills={player.skills} size={110}/>
@@ -1142,7 +1168,10 @@ const PlayerCard = ({ player, onEdit }) => {
       )}
       <div style={{ flex: 1, minWidth: 0, paddingRight: hasSkills ? 0 : 60 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-          {!hasSkills && <span style={{ fontSize: 28 }}>🏐</span>}
+          {/* Google avatar or default icon */}
+          {player.photoURL ? (
+            <img src={player.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(167,139,250,0.3)" }}/>
+          ) : !hasSkills && <span style={{ fontSize: 28 }}>🏐</span>}
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>{player.nickname}</div>
             <div style={{ fontSize: 11, color: "#a78bfa", fontWeight: 600 }}>{player.level}・球齡 {player.experience}</div>
@@ -1585,6 +1614,7 @@ export default function VolleyballMatcher() {
   const [showPlayerPasswordModal, setShowPlayerPasswordModal] = useState(false);
   const [playerFilterArea, setPlayerFilterArea] = useState("全部");
   const [playerFilterLevel, setPlayerFilterLevel] = useState("全部");
+  const [currentUser, setCurrentUser] = useState(null); // Firebase Auth user
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
@@ -1690,6 +1720,53 @@ export default function VolleyballMatcher() {
     }, (err) => console.error("Players 讀取錯誤：", err));
     return () => unsub2();
   }, []);
+
+  // Firebase Auth state listener
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user || null);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      toast("Google 登入成功 ✅");
+    } catch (err) {
+      if (err.code !== "auth/popup-closed-by-user") {
+        console.error(err);
+        toast("登入失敗，請稍後再試", 3000, "warn");
+      }
+    }
+  };
+
+  const handleGoogleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast("已登出", 2000);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleWantToPlay = async (player) => {
+    // Only owner can toggle this
+    if (!currentUser || player.uid !== currentUser.uid) {
+      // For password-based players, we'd need password verification
+      // For simplicity, only Google-logged-in users can use this feature
+      toast("請先用 Google 登入才能使用此功能", 3000, "warn");
+      return;
+    }
+    try {
+      const until = Date.now() + WANT_TO_PLAY_HOURS * 3600000;
+      await updateDoc(doc(db, "players", player.id), { wantToPlayUntil: until });
+      toast("已設定「想打球」狀態！6 小時後自動關閉 🏐");
+    } catch (err) {
+      console.error(err);
+      toast("設定失敗", 3000, "warn");
+    }
+  };
 
   // Generate a 6-char random binding code
   const generateBindingCode = () => {
@@ -1865,9 +1942,14 @@ export default function VolleyballMatcher() {
   // ── Player (buddy) handlers ──
   const handleCreatePlayer = async (data) => {
     try {
-      await addDoc(collection(db, "players"), {
-        ...data, createdAt: serverTimestamp(),
-      });
+      const playerData = { ...data, createdAt: serverTimestamp() };
+      // If Google logged in, bind the player to this account
+      if (currentUser) {
+        playerData.uid = currentUser.uid;
+        playerData.photoURL = currentUser.photoURL || "";
+        delete playerData.password; // No password needed for Google users
+      }
+      await addDoc(collection(db, "players"), playerData);
       setShowCreatePlayerModal(false);
       toast("球員資料已發佈！🏐");
     } catch (err) {
@@ -1878,7 +1960,14 @@ export default function VolleyballMatcher() {
 
   const handleEditPlayerClick = (player) => {
     setEditPlayerTarget(player);
-    setShowPlayerPasswordModal(true);
+    // Google user editing their own profile → skip password
+    if (currentUser && player.uid === currentUser.uid) {
+      setShowEditPlayerModal(true);
+    } else if (isAdmin) {
+      setShowEditPlayerModal(true);
+    } else {
+      setShowPlayerPasswordModal(true);
+    }
   };
 
   const handlePlayerPasswordVerify = (playerId, pw) => {
@@ -2143,10 +2232,33 @@ export default function VolleyballMatcher() {
 
       {/* ═══ Buddies Tab ═══ */}
       {activeTab === "buddies" && <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 16px" }}>
+
+        {/* Google login bar */}
+        <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 14, background: "var(--surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          {currentUser ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {currentUser.photoURL && <img src={currentUser.photoURL} alt="" style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid rgba(167,139,250,0.3)" }}/>}
+                <span style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600 }}>{currentUser.displayName}</span>
+                <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 600 }}>已登入</span>
+              </div>
+              <button onClick={handleGoogleLogout} style={{ padding: "5px 14px", borderRadius: 8, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>登出</button>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: 12, color: "var(--text-dim)" }}>登入 Google 可直接管理資料、使用「想打球」功能</span>
+              <button onClick={handleGoogleLogin} style={{ padding: "7px 16px", borderRadius: 10, border: "none", background: "#fff", color: "#333", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: "0 1px 4px rgba(0,0,0,0.15)" }}>
+                <svg width="14" height="14" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                Google 登入
+              </button>
+            </>
+          )}
+        </div>
+
         {/* Stats */}
         <div style={{ display: "flex", gap: 10, marginBottom: 20, justifyContent: "center", flexWrap: "wrap", animation: "slideUp 0.4s ease" }}>
           <StatBadge value={players.length} label="球員" color="#a78bfa"/>
-          <StatBadge value={players.filter(p => p.level === "中階" || p.level === "中高階").length} label="中階以上" color="#60a5fa"/>
+          <StatBadge value={players.filter(p => (p.wantToPlayUntil || 0) > Date.now()).length} label="想打球" color="#22c55e"/>
           <StatBadge value={[...new Set(players.map(p => p.area))].length} label="活躍地區" color="#f59e0b"/>
         </div>
 
@@ -2166,14 +2278,19 @@ export default function VolleyballMatcher() {
           </div>
         </div>
 
-        {/* Player list */}
+        {/* Player list — wanting-to-play sorted first */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {players
             .filter(p => playerFilterArea === "全部" || p.area === playerFilterArea)
             .filter(p => playerFilterLevel === "全部" || p.level === playerFilterLevel)
+            .sort((a, b) => {
+              const aWant = (a.wantToPlayUntil || 0) > Date.now() ? 1 : 0;
+              const bWant = (b.wantToPlayUntil || 0) > Date.now() ? 1 : 0;
+              return bWant - aWant;
+            })
             .map((p, i) => (
             <div key={p.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <PlayerCard player={p} onEdit={handleEditPlayerClick}/>
+              <PlayerCard player={p} onEdit={handleEditPlayerClick} onWantToPlay={handleWantToPlay} currentUser={currentUser}/>
             </div>
           ))}
           {players.filter(p => playerFilterArea === "全部" || p.area === playerFilterArea).filter(p => playerFilterLevel === "全部" || p.level === playerFilterLevel).length === 0 && (
@@ -2233,3 +2350,4 @@ export default function VolleyballMatcher() {
     </div>
   );
 }
+
