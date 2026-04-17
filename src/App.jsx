@@ -1059,6 +1059,332 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onC
 /* ════════════════════════════════════════════
    Create Session Modal (with password)
    ════════════════════════════════════════════ */
+/* ════════════════════════════════════════════
+   Player (Buddy) Components
+   ════════════════════════════════════════════ */
+const POSITIONS = ["舉球", "舉對", "大砲", "快攻", "自由", "不限"];
+const TIME_SLOTS = ["平日白天", "平日晚上", "週末白天", "週末晚上"];
+
+const SKILL_DIMS = [
+  { key: "serve", label: "發球", descs: ["低手發球為主，常掛網或出界", "穩定低手發球，嘗試上手但控制不佳", "上手發球穩定，能控制落點，偶爾飄球", "飄球穩定且有威脅，能針對弱點發球", "跳發或強飄具直接得分能力"] },
+  { key: "receive", label: "接球", descs: ["常漏接或判斷不到位，需隊友大量補位", "能接一般發球，但方向不穩定", "面對上手發球能穩定回傳到舉球位置", "面對飄球也能穩定接起，一傳到位率高", "各種強發球都能精準送到舉球員手上"] },
+  { key: "attack", label: "攻擊", descs: ["無法完成扣球，主要推球或拍球過網", "能基本扣球但時機不穩，常下網出界", "扣球有力道和成功率，能打直線斜線", "路線多變，能吊球輕扣，突破雙人攔網", "各位置都能攻擊，後排攻穩定，絕對得分力"] },
+  { key: "set", label: "舉球", descs: ["方向不穩，常持球或雙擊", "能舉基本高球，但高度方向不夠穩", "穩定舉高球到四號位和二號位", "能舉快攻和平拉開，有基本戰術意識", "各種球路精準，具欺敵能力和即時調整"] },
+  { key: "block", label: "攔網", descs: ["不太會跳攔網，時機對不上", "知道要攔但起跳常慢半拍", "能判斷攻擊位置及時起跳，製造壓迫", "讀懂舉球員意圖提前移位，雙人配合好", "覆蓋面積大，穩定攔死得分能力"] },
+  { key: "fitness", label: "體能", descs: ["跑不太動，站定點等球，兩局就需休息", "能基本跑位但速度不快，後段體力下降", "移動和反應夠用，能穩定打完兩小時", "橫移前後都快，整場體能穩定不掉", "爆發力續航力都強，能連續飛撲救球"] },
+];
+
+const LEVEL_TAGS = ["歡樂", "中下", "中階", "中上", "高階"];
+
+/* ── Radar Chart (SVG) ── */
+const RadarChart = ({ skills, size = 120 }) => {
+  if (!skills || Object.keys(skills).length === 0) return null;
+  const dims = SKILL_DIMS;
+  const cx = size / 2, cy = size / 2, maxR = size / 2 - 16;
+  const angleStep = (Math.PI * 2) / dims.length;
+  const getPoint = (i, val) => {
+    const a = angleStep * i - Math.PI / 2;
+    const r = (val / 5) * maxR;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  };
+
+  const gridLevels = [1, 2, 3, 4, 5];
+  const dataPoints = dims.map((d, i) => getPoint(i, skills[d.key] || 0));
+  const dataPath = dataPoints.map((p, i) => `${i === 0 ? "M" : "L"}${p[0]},${p[1]}`).join(" ") + " Z";
+  const avg = dims.reduce((s, d) => s + (skills[d.key] || 0), 0) / dims.length;
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: "block" }}>
+      {/* Grid */}
+      {gridLevels.map(lv => {
+        const pts = dims.map((_, i) => getPoint(i, lv));
+        return <polygon key={lv} points={pts.map(p => p.join(",")).join(" ")} fill="none" stroke="rgba(148,163,184,0.15)" strokeWidth="0.5"/>;
+      })}
+      {/* Axes */}
+      {dims.map((_, i) => {
+        const [x, y] = getPoint(i, 5);
+        return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(148,163,184,0.12)" strokeWidth="0.5"/>;
+      })}
+      {/* Data area */}
+      <polygon points={dataPoints.map(p => p.join(",")).join(" ")} fill="rgba(167,139,250,0.2)" stroke="#a78bfa" strokeWidth="1.5"/>
+      {/* Data dots */}
+      {dataPoints.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="2.5" fill="#a78bfa"/>)}
+      {/* Labels */}
+      {dims.map((d, i) => {
+        const [x, y] = getPoint(i, 6.2);
+        return <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="central" fill="#94a3b8" fontSize="10" fontFamily="'Noto Sans TC', sans-serif">{d.label}</text>;
+      })}
+      {/* Center avg */}
+      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#a78bfa" fontSize="13" fontWeight="700" fontFamily="'Space Mono', monospace">{avg.toFixed(1)}</text>
+    </svg>
+  );
+};
+
+const PlayerCard = ({ player, onEdit }) => {
+  const hasSkills = player.skills && Object.values(player.skills).some(v => v > 0);
+  return (
+  <div style={{ background: "var(--card-bg)", borderRadius: 16, padding: "18px 22px 18px 26px", border: "1px solid var(--border)", position: "relative", overflow: "hidden", transition: "all 0.25s ease" }}
+    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(167,139,250,0.4)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(167,139,250,0.08)"; }}
+    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.boxShadow = "none"; }}
+  >
+    <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: "#a78bfa", opacity: 0.85 }}/>
+    <button onClick={() => onEdit(player)} title="編輯我的資料" style={{ position: "absolute", top: 10, right: 12, background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#64748b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(167,139,250,0.12)"; e.currentTarget.style.color = "#a78bfa"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(148,163,184,0.08)"; e.currentTarget.style.color = "#64748b"; }}
+    ><EditIcon /> 編輯</button>
+
+    <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+      {/* Radar chart on the left */}
+      {hasSkills && (
+        <div style={{ flexShrink: 0 }}>
+          <RadarChart skills={player.skills} size={110}/>
+        </div>
+      )}
+      <div style={{ flex: 1, minWidth: 0, paddingRight: hasSkills ? 0 : 60 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          {!hasSkills && <span style={{ fontSize: 28 }}>🏐</span>}
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>{player.nickname}</div>
+            <div style={{ fontSize: 11, color: "#a78bfa", fontWeight: 600 }}>{player.level}・球齡 {player.experience}</div>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "6px 14px", fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>
+          <span>📍 {player.area}</span>
+          {player.position && <span>🧤 {player.position}</span>}
+          {player.height && <span>📏 {player.height} cm</span>}
+          {player.gender && <span>👤 {player.gender}</span>}
+        </div>
+        {player.timeSlots && player.timeSlots.length > 0 && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+            {player.timeSlots.map(t => (
+              <span key={t} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 12, background: "rgba(96,165,250,0.1)", color: "#60a5fa", fontWeight: 600 }}>{t}</span>
+            ))}
+          </div>
+        )}
+        {player.intro && <div style={{ fontSize: 12, color: "var(--text-dim)", fontStyle: "italic", lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>💬 {player.intro}</div>}
+      </div>
+    </div>
+  </div>
+  );
+};
+
+const CreatePlayerModal = ({ open, onClose, onSubmit }) => {
+  const [form, setForm] = useState({ nickname: "", experience: "", level: "中階", area: "", position: "", height: "", gender: "", timeSlots: [], intro: "", password: "", skills: { serve: 0, receive: 0, attack: 0, set: 0, block: 0, fitness: 0 } });
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => { if (open) { setForm({ nickname: "", experience: "", level: "中階", area: "", position: "", height: "", gender: "", timeSlots: [], intro: "", password: "", skills: { serve: 0, receive: 0, attack: 0, set: 0, block: 0, fitness: 0 } }); setErrors({}); } }, [open]);
+
+  const toggleSlot = (slot) => {
+    setForm(f => ({ ...f, timeSlots: f.timeSlots.includes(slot) ? f.timeSlots.filter(s => s !== slot) : [...f.timeSlots, slot] }));
+  };
+
+  const handleSubmit = () => {
+    const e = {};
+    if (!form.nickname.trim()) e.nickname = "必填";
+    if (!form.experience.trim()) e.experience = "必填";
+    if (!form.area.trim()) e.area = "必填";
+    if (!form.password) e.password = "必填（用來保護你的資料）";
+    setErrors(e);
+    if (Object.keys(e).length > 0) return;
+    onSubmit({ nickname: form.nickname.trim(), experience: form.experience.trim(), level: form.level, area: form.area.trim(), position: form.position || "", height: form.height || "", gender: form.gender || "", timeSlots: form.timeSlots, intro: form.intro.trim(), password: form.password, skills: form.skills });
+  };
+
+  if (!open) return null;
+  const F = ({ label, field, required, type, placeholder, err, children }) => (
+    <div style={{ marginBottom: 14 }}>
+      <label style={labelStyle}>{label}{required && " *"}</label>
+      {children || <input value={form[field]} onChange={(e) => { setForm({...form, [field]: e.target.value}); if (errors[field]) setErrors({...errors, [field]: ""}); }} type={type || "text"} placeholder={placeholder} style={{ ...inputStyle, borderColor: err ? "#ef4444" : "rgba(148,163,184,0.15)" }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = err ? "#ef4444" : "rgba(148,163,184,0.15)"; }}/>}
+      {err && <div style={{ fontSize: 11, color: "#ef4444", marginTop: 4 }}>{err}</div>}
+    </div>
+  );
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 901, maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: "24px 24px 0 0", border: "1px solid rgba(148,163,184,0.12)", borderBottom: "none", animation: "slideUpModal 0.35s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 -10px 60px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}><div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(148,163,184,0.25)" }}/></div>
+        <div style={{ padding: "8px 24px 32px", maxWidth: 520, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#a78bfa" }}>🙋 註冊球員資料</h2>
+            <button onClick={onClose} style={{ background: "rgba(148,163,184,0.1)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#94a3b8", display: "flex" }}><CloseIcon/></button>
+          </div>
+
+          <F label="暱稱" field="nickname" required placeholder="你想被怎麼稱呼？" err={errors.nickname}/>
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ flex: 1 }}><F label="球齡" field="experience" required placeholder="例：3年" err={errors.experience}/></div>
+            <div style={{ flex: 1 }}><F label="程度" field="level">{
+              <select value={form.level} onChange={(e) => setForm({...form, level: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}>{LEVELS_INPUT.map(l => <option key={l} value={l}>{l}</option>)}</select>
+            }</F></div>
+          </div>
+          <F label="常打地區" field="area" required placeholder="例：大安區、信義區" err={errors.area}/>
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ flex: 1 }}><F label="慣用位置（選填）" field="position">{
+              <select value={form.position} onChange={(e) => setForm({...form, position: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}><option value="">-- 選擇 --</option>{POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}</select>
+            }</F></div>
+            <div style={{ flex: 1 }}><F label="性別（選填）" field="gender">{
+              <select value={form.gender} onChange={(e) => setForm({...form, gender: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}><option value="">-- 選擇 --</option><option value="男">男</option><option value="女">女</option><option value="不透露">不透露</option></select>
+            }</F></div>
+          </div>
+          <F label="身高 cm（選填）" field="height" type="number" placeholder="例：175"/>
+
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>可打時段（多選）</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {TIME_SLOTS.map(slot => (
+                <button key={slot} onClick={() => toggleSlot(slot)}
+                  style={{ padding: "6px 14px", borderRadius: 10, border: "1px solid", borderColor: form.timeSlots.includes(slot) ? "#a78bfa" : "rgba(148,163,184,0.2)", background: form.timeSlots.includes(slot) ? "rgba(167,139,250,0.12)" : "transparent", color: form.timeSlots.includes(slot) ? "#a78bfa" : "var(--text-secondary)", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                >{slot}</button>
+              ))}
+            </div>
+          </div>
+
+          <F label="自我介紹（選填）" field="intro">{
+            <textarea value={form.intro} onChange={(e) => setForm({...form, intro: e.target.value})} placeholder="例：週末固定打球，喜歡 6-2 陣型，歡迎約打！" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: 60 }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/>
+          }</F>
+
+          {/* Skill evaluation */}
+          <div style={{ marginBottom: 18, padding: "16px", borderRadius: 14, background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#a78bfa" }}>📊 技能自評</span>
+              <span style={{ fontSize: 11, color: "#64748b" }}>選擇最符合你的描述</span>
+            </div>
+            {/* Preview radar */}
+            {Object.values(form.skills).some(v => v > 0) && (
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                <RadarChart skills={form.skills} size={140}/>
+              </div>
+            )}
+            {SKILL_DIMS.map(dim => (
+              <div key={dim.key} style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>{dim.label}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {dim.descs.map((desc, i) => {
+                    const lv = i + 1;
+                    const selected = form.skills[dim.key] === lv;
+                    return (
+                      <button key={lv} onClick={() => setForm(f => ({ ...f, skills: { ...f.skills, [dim.key]: selected ? 0 : lv } }))}
+                        style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 10px", borderRadius: 8, border: "1px solid", borderColor: selected ? "#a78bfa" : "rgba(148,163,184,0.12)", background: selected ? "rgba(167,139,250,0.12)" : "transparent", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+                        <span style={{ minWidth: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, background: selected ? "#a78bfa" : "rgba(148,163,184,0.1)", color: selected ? "#fff" : "#94a3b8", flexShrink: 0 }}>{lv}</span>
+                        <div>
+                          <span style={{ fontSize: 10, color: selected ? "#a78bfa" : "#64748b", fontWeight: 600 }}>{LEVEL_TAGS[i]}</span>
+                          <div style={{ fontSize: 12, color: selected ? "var(--text-primary)" : "var(--text-secondary)", lineHeight: 1.5 }}>{desc}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <F label="設定密碼（用來保護你的資料）" field="password" type="password" required placeholder="之後編輯/刪除時需要" err={errors.password}/>
+
+          <button onClick={handleSubmit}
+            style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
+            onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+          >✅ 發佈球員資料</button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+const EditPlayerModal = ({ open, onClose, player, onSave, onDelete }) => {
+  const [form, setForm] = useState({});
+  useEffect(() => {
+    if (open && player) setForm({ nickname: player.nickname || "", experience: player.experience || "", level: player.level || "中階", area: player.area || "", position: player.position || "", height: player.height || "", gender: player.gender || "", timeSlots: player.timeSlots || [], intro: player.intro || "", skills: player.skills || { serve: 0, receive: 0, attack: 0, set: 0, block: 0, fitness: 0 } });
+  }, [open, player]);
+
+  const toggleSlot = (slot) => {
+    setForm(f => ({ ...f, timeSlots: f.timeSlots.includes(slot) ? f.timeSlots.filter(s => s !== slot) : [...f.timeSlots, slot] }));
+  };
+
+  if (!open || !player) return null;
+  const F = ({ label, field, type, placeholder, children }) => (
+    <div style={{ marginBottom: 14 }}>
+      <label style={labelStyle}>{label}</label>
+      {children || <input value={form[field] || ""} onChange={(e) => setForm({...form, [field]: e.target.value})} type={type || "text"} placeholder={placeholder} style={inputStyle} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/>}
+    </div>
+  );
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 901, maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: "24px 24px 0 0", border: "1px solid rgba(148,163,184,0.12)", borderBottom: "none", animation: "slideUpModal 0.35s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 -10px 60px rgba(0,0,0,0.5)" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}><div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(148,163,184,0.25)" }}/></div>
+        <div style={{ padding: "8px 24px 32px", maxWidth: 520, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#a78bfa" }}>✏️ 編輯球員資料</h2>
+            <button onClick={onClose} style={{ background: "rgba(148,163,184,0.1)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#94a3b8", display: "flex" }}><CloseIcon/></button>
+          </div>
+          <F label="暱稱 *" field="nickname" placeholder="你想被怎麼稱呼？"/>
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ flex: 1 }}><F label="球齡 *" field="experience" placeholder="例：3年"/></div>
+            <div style={{ flex: 1 }}><F label="程度" field="level">{<select value={form.level} onChange={(e) => setForm({...form, level: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}>{LEVELS_INPUT.map(l => <option key={l} value={l}>{l}</option>)}</select>}</F></div>
+          </div>
+          <F label="常打地區 *" field="area" placeholder="例：大安區"/>
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ flex: 1 }}><F label="慣用位置" field="position">{<select value={form.position} onChange={(e) => setForm({...form, position: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}><option value="">--</option>{POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}</select>}</F></div>
+            <div style={{ flex: 1 }}><F label="性別" field="gender">{<select value={form.gender} onChange={(e) => setForm({...form, gender: e.target.value})} style={{ ...inputStyle, cursor: "pointer" }}><option value="">--</option><option value="男">男</option><option value="女">女</option><option value="不透露">不透露</option></select>}</F></div>
+          </div>
+          <F label="身高 cm" field="height" type="number" placeholder="175"/>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>可打時段</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {TIME_SLOTS.map(slot => (
+                <button key={slot} onClick={() => toggleSlot(slot)} style={{ padding: "6px 14px", borderRadius: 10, border: "1px solid", borderColor: form.timeSlots?.includes(slot) ? "#a78bfa" : "rgba(148,163,184,0.2)", background: form.timeSlots?.includes(slot) ? "rgba(167,139,250,0.12)" : "transparent", color: form.timeSlots?.includes(slot) ? "#a78bfa" : "var(--text-secondary)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{slot}</button>
+              ))}
+            </div>
+          </div>
+          <F label="自我介紹" field="intro">{<textarea value={form.intro} onChange={(e) => setForm({...form, intro: e.target.value})} placeholder="歡迎約打！" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: 60 }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/>}</F>
+
+          {/* Skill evaluation */}
+          <div style={{ marginBottom: 18, padding: "16px", borderRadius: 14, background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#a78bfa" }}>📊 技能自評</span>
+            </div>
+            {form.skills && Object.values(form.skills).some(v => v > 0) && (
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                <RadarChart skills={form.skills} size={140}/>
+              </div>
+            )}
+            {SKILL_DIMS.map(dim => (
+              <div key={dim.key} style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>{dim.label}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  {dim.descs.map((desc, i) => {
+                    const lv = i + 1;
+                    const selected = form.skills?.[dim.key] === lv;
+                    return (
+                      <button key={lv} onClick={() => setForm(f => ({ ...f, skills: { ...f.skills, [dim.key]: selected ? 0 : lv } }))}
+                        style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 10px", borderRadius: 8, border: "1px solid", borderColor: selected ? "#a78bfa" : "rgba(148,163,184,0.12)", background: selected ? "rgba(167,139,250,0.12)" : "transparent", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+                        <span style={{ minWidth: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, background: selected ? "#a78bfa" : "rgba(148,163,184,0.1)", color: selected ? "#fff" : "#94a3b8", flexShrink: 0 }}>{lv}</span>
+                        <div>
+                          <span style={{ fontSize: 10, color: selected ? "#a78bfa" : "#64748b", fontWeight: 600 }}>{LEVEL_TAGS[i]}</span>
+                          <div style={{ fontSize: 12, color: selected ? "var(--text-primary)" : "var(--text-secondary)", lineHeight: 1.5 }}>{desc}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={onClose} style={{ flex: 1, padding: "14px", borderRadius: 14, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+            <button onClick={() => onSave(player.id, form)} style={{ flex: 2, padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>💾 儲存</button>
+          </div>
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed rgba(239,68,68,0.15)" }}>
+            <button onClick={() => onDelete(player.id)} style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)", color: "#ef4444", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>🗑️ 刪除我的資料</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 const LAST_FORM_KEY = "vb_last_create_form";
 
 const CreateSessionModal = ({ open, onClose, onSubmit }) => {
@@ -1229,6 +1555,7 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
    Main App
    ════════════════════════════════════════════ */
 export default function VolleyballMatcher() {
+  const [activeTab, setActiveTab] = useState("sessions"); // "sessions" | "buddies"
   const [selectedDate, setSelectedDate] = useState(getToday());
   const [selectedArea, setSelectedArea] = useState("全部");
   const [selectedLevel, setSelectedLevel] = useState("全部");
@@ -1251,6 +1578,13 @@ export default function VolleyballMatcher() {
   const [notifyTarget, setNotifyTarget] = useState(null);
   const [bindingCode, setBindingCode] = useState(null);
   const [showBindingModal, setShowBindingModal] = useState(false);
+  const [players, setPlayers] = useState([]);
+  const [showCreatePlayerModal, setShowCreatePlayerModal] = useState(false);
+  const [showEditPlayerModal, setShowEditPlayerModal] = useState(false);
+  const [editPlayerTarget, setEditPlayerTarget] = useState(null);
+  const [showPlayerPasswordModal, setShowPlayerPasswordModal] = useState(false);
+  const [playerFilterArea, setPlayerFilterArea] = useState("全部");
+  const [playerFilterLevel, setPlayerFilterLevel] = useState("全部");
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
@@ -1345,6 +1679,17 @@ export default function VolleyballMatcher() {
     });
     return () => unsub();
   }, [isAdmin]);
+
+  // Subscribe to players collection
+  useEffect(() => {
+    const q2 = query(collection(db, "players"), orderBy("createdAt", "desc"));
+    const unsub2 = onSnapshot(q2, (snap) => {
+      const list = [];
+      snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+      setPlayers(list);
+    }, (err) => console.error("Players 讀取錯誤：", err));
+    return () => unsub2();
+  }, []);
 
   // Generate a 6-char random binding code
   const generateBindingCode = () => {
@@ -1517,6 +1862,58 @@ export default function VolleyballMatcher() {
     setShowShareModal(true);
   };
 
+  // ── Player (buddy) handlers ──
+  const handleCreatePlayer = async (data) => {
+    try {
+      await addDoc(collection(db, "players"), {
+        ...data, createdAt: serverTimestamp(),
+      });
+      setShowCreatePlayerModal(false);
+      toast("球員資料已發佈！🏐");
+    } catch (err) {
+      console.error(err);
+      toast("發佈失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  const handleEditPlayerClick = (player) => {
+    setEditPlayerTarget(player);
+    setShowPlayerPasswordModal(true);
+  };
+
+  const handlePlayerPasswordVerify = (playerId, pw) => {
+    const p = players.find(p => p.id === playerId);
+    if (!p || p.password !== pw) return false;
+    setShowPlayerPasswordModal(false);
+    setShowEditPlayerModal(true);
+    return true;
+  };
+
+  const handleSavePlayer = async (playerId, data) => {
+    try {
+      await updateDoc(doc(db, "players", playerId), data);
+      setShowEditPlayerModal(false);
+      setEditPlayerTarget(null);
+      toast("資料已更新 ✅");
+    } catch (err) {
+      console.error(err);
+      toast("更新失敗", 3000, "warn");
+    }
+  };
+
+  const handleDeletePlayer = async (playerId) => {
+    if (!window.confirm("確定要刪除你的球員資料嗎？此動作無法復原。")) return;
+    try {
+      await deleteDoc(doc(db, "players", playerId));
+      setShowEditPlayerModal(false);
+      setEditPlayerTarget(null);
+      toast("球員資料已刪除 🗑️");
+    } catch (err) {
+      console.error(err);
+      toast("刪除失敗", 3000, "warn");
+    }
+  };
+
   const handleOpenNotifyModal = (session) => {
     setNotifyTarget(session);
     setShowNotifyModal(true);
@@ -1641,7 +2038,20 @@ export default function VolleyballMatcher() {
         </div>
       </div>
 
+      {/* Tab switcher */}
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 16px" }}>
+        <div style={{ display: "flex", marginBottom: 20, borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)", background: "var(--surface)" }}>
+          <button onClick={() => setActiveTab("sessions")}
+            style={{ flex: 1, padding: "12px", border: "none", background: activeTab === "sessions" ? "rgba(245,158,11,0.15)" : "transparent", color: activeTab === "sessions" ? "#f59e0b" : "var(--text-secondary)", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", borderBottom: activeTab === "sessions" ? "2px solid #f59e0b" : "2px solid transparent" }}
+          >🏐 場次揪團</button>
+          <button onClick={() => setActiveTab("buddies")}
+            style={{ flex: 1, padding: "12px", border: "none", background: activeTab === "buddies" ? "rgba(167,139,250,0.15)" : "transparent", color: activeTab === "buddies" ? "#a78bfa" : "var(--text-secondary)", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", borderBottom: activeTab === "buddies" ? "2px solid #a78bfa" : "2px solid transparent" }}
+          >🙋 排球夾伴 <span style={{ fontSize: 11, opacity: 0.7 }}>({players.length})</span></button>
+        </div>
+      </div>
+
+      {/* ═══ Sessions Tab ═══ */}
+      {activeTab === "sessions" && <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 16px" }}>
         <div style={{ display: "flex", gap: 10, marginBottom: 20, justifyContent: "center", flexWrap: "wrap", animation: "slideUp 0.4s ease" }}>
           <StatBadge value={allSessions.length} label="場次" color="#60a5fa"/>
           <StatBadge value={totalPlayers} label="已報名" color="#a78bfa"/>
@@ -1729,14 +2139,70 @@ export default function VolleyballMatcher() {
             總共還差 <strong>{needPeople.reduce((sum,s) => sum + Math.max(0, s.min - s.registered), 0)}</strong> 人！
           </div>
         )}
-      </div>
+      </div>}
 
-      <button onClick={() => setShowCreateModal(true)}
-        title="我要開場"
-        style={{ position: "fixed", bottom: 24, right: 24, zIndex: 800, height: 60, padding: "0 22px", borderRadius: 30, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 24px rgba(245,158,11,0.4)", transition: "all 0.25s ease", animation: "glow 3s ease infinite", fontSize: 14, fontWeight: 700 }}
-        onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(245,158,11,0.55)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(245,158,11,0.4)"; }}
-      ><PlusIcon/><span>我要開場</span></button>
+      {/* ═══ Buddies Tab ═══ */}
+      {activeTab === "buddies" && <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 16px" }}>
+        {/* Stats */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 20, justifyContent: "center", flexWrap: "wrap", animation: "slideUp 0.4s ease" }}>
+          <StatBadge value={players.length} label="球員" color="#a78bfa"/>
+          <StatBadge value={players.filter(p => p.level === "中階" || p.level === "中高階").length} label="中階以上" color="#60a5fa"/>
+          <StatBadge value={[...new Set(players.map(p => p.area))].length} label="活躍地區" color="#f59e0b"/>
+        </div>
+
+        {/* Filters */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", padding: "12px 16px", background: "var(--surface)", borderRadius: 14, border: "1px solid var(--border)" }}>
+          <div style={{ flex: 1, minWidth: 120 }}>
+            <label style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, letterSpacing: "0.04em", fontWeight: 600 }}>📍 地區</label>
+            <select value={playerFilterArea} onChange={(e) => setPlayerFilterArea(e.target.value)}
+              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(15,23,42,0.8)", border: "1px solid var(--border)", color: playerFilterArea !== "全部" ? "#a78bfa" : "var(--text-primary)", fontSize: 13, fontWeight: playerFilterArea !== "全部" ? 600 : 400, cursor: "pointer" }}
+            ><option value="全部">全部</option>{[...new Set(players.map(p => p.area).filter(Boolean))].map(a => <option key={a} value={a}>{a}</option>)}</select>
+          </div>
+          <div style={{ flex: 1, minWidth: 120 }}>
+            <label style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, letterSpacing: "0.04em", fontWeight: 600 }}>🏐 程度</label>
+            <select value={playerFilterLevel} onChange={(e) => setPlayerFilterLevel(e.target.value)}
+              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(15,23,42,0.8)", border: "1px solid var(--border)", color: playerFilterLevel !== "全部" ? "#a78bfa" : "var(--text-primary)", fontSize: 13, fontWeight: playerFilterLevel !== "全部" ? 600 : 400, cursor: "pointer" }}
+            ><option value="全部">全部</option>{LEVELS_INPUT.map(l => <option key={l} value={l}>{l}</option>)}</select>
+          </div>
+        </div>
+
+        {/* Player list */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {players
+            .filter(p => playerFilterArea === "全部" || p.area === playerFilterArea)
+            .filter(p => playerFilterLevel === "全部" || p.level === playerFilterLevel)
+            .map((p, i) => (
+            <div key={p.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
+              <PlayerCard player={p} onEdit={handleEditPlayerClick}/>
+            </div>
+          ))}
+          {players.filter(p => playerFilterArea === "全部" || p.area === playerFilterArea).filter(p => playerFilterLevel === "全部" || p.level === playerFilterLevel).length === 0 && (
+            <div style={{ textAlign: "center", padding: "48px 24px", background: "rgba(15,23,42,0.3)", borderRadius: 16, border: "1px dashed rgba(148,163,184,0.15)" }}>
+              <div style={{ fontSize: 56, marginBottom: 12, opacity: 0.7 }}>🙋</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>還沒有球員資料</div>
+              <div style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 20 }}>成為第一個註冊的球員吧！</div>
+              <button onClick={() => setShowCreatePlayerModal(true)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>🙋 我要註冊</button>
+            </div>
+          )}
+        </div>
+      </div>}
+
+      {/* FAB — changes based on active tab */}
+      {activeTab === "sessions" ? (
+        <button onClick={() => setShowCreateModal(true)}
+          title="我要開場"
+          style={{ position: "fixed", bottom: 24, right: 24, zIndex: 800, height: 60, padding: "0 22px", borderRadius: 30, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 24px rgba(245,158,11,0.4)", transition: "all 0.25s ease", animation: "glow 3s ease infinite", fontSize: 14, fontWeight: 700 }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(245,158,11,0.55)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(245,158,11,0.4)"; }}
+        ><PlusIcon/><span>我要開場</span></button>
+      ) : (
+        <button onClick={() => setShowCreatePlayerModal(true)}
+          title="我要註冊"
+          style={{ position: "fixed", bottom: 24, right: 24, zIndex: 800, height: 60, padding: "0 22px", borderRadius: 30, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 24px rgba(167,139,250,0.4)", transition: "all 0.25s ease", animation: "glow 3s ease infinite", fontSize: 14, fontWeight: 700 }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(167,139,250,0.55)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(167,139,250,0.4)"; }}
+        ><PlusIcon/><span>我要註冊</span></button>
+      )}
 
       <CreateSessionModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onSubmit={handleCreateSession}/>
 
@@ -1753,6 +2219,10 @@ export default function VolleyballMatcher() {
       <NotifyModal open={showNotifyModal} onClose={() => { setShowNotifyModal(false); setNotifyTarget(null); }} session={notifyTarget} onSend={handleSendLineNotification}/>
 
       <BindingCodeModal open={showBindingModal} onClose={() => { setShowBindingModal(false); setBindingCode(null); }} code={bindingCode}/>
+
+      <CreatePlayerModal open={showCreatePlayerModal} onClose={() => setShowCreatePlayerModal(false)} onSubmit={handleCreatePlayer}/>
+      <PasswordModal open={showPlayerPasswordModal} onClose={() => { setShowPlayerPasswordModal(false); setEditPlayerTarget(null); }} onVerify={handlePlayerPasswordVerify} sessionId={editPlayerTarget?.id}/>
+      <EditPlayerModal open={showEditPlayerModal} onClose={() => { setShowEditPlayerModal(false); setEditPlayerTarget(null); }} player={editPlayerTarget} onSave={handleSavePlayer} onDelete={handleDeletePlayer}/>
 
       {showToast && (
         <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.4)" : "0 8px 32px rgba(34,197,94,0.4)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
