@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, updateDoc, doc, setDoc, onSnapshot, query, orderBy, serverTimestamp, increment, deleteDoc, arrayUnion } from "firebase/firestore";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "firebase/auth";
+import logoImg from "./logo.png";
 // ════════════════════════════════════════════
 // Firebase 設定 — 請在 firebase.google.com 註冊後貼上你的設定
 // ════════════════════════════════════════════
@@ -1670,7 +1671,7 @@ const ShareCardModal = ({ open, onClose, player }) => {
       cursorY += boxH + 40;
     }
 
-    // Bottom footer (dark bar)
+    // Bottom footer (light bar)
     const footerH = isVertical ? 110 : 90;
     ctx.fillStyle = "#FFF9EC";
     ctx.fillRect(0, H - footerH, W, footerH);
@@ -3393,7 +3394,7 @@ export default function VolleyballMatcher() {
         <div style={{ position: "absolute", bottom: -60, left: -30, width: 140, height: 140, borderRadius: "50%", background: "radial-gradient(circle, rgba(196,167,136,0.15), transparent 70%)", pointerEvents: "none" }}/>
         <div style={{ maxWidth: 720, margin: "0 auto", position: "relative" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
-            <div style={{ color: "#E89B5E" }}><VolleyballIcon/></div>
+            <img src={logoImg} alt="排球揪團雷達" style={{ width: 52, height: 52, borderRadius: 12, objectFit: "contain", flexShrink: 0 }}/>
             <h1 style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.02em", background: "linear-gradient(135deg, #E89B5E, #D4855F)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>排球揪團雷達</h1>
             <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 12, background: "rgba(232,155,94,0.18)", color: "#E89B5E", fontWeight: 700, letterSpacing: "0.1em", border: "1px solid rgba(232,155,94,0.28)" }}>TAIPEI</span>
             {/* NEW: Header auth indicator — always visible */}
