@@ -25,6 +25,7 @@ const sessionsRef = collection(db, "sessions");
 // ════════════════════════════════════════════
 const ADMIN_PASSWORD = "0912662663";
 const ADMIN_SESSION_KEY = "vb_admin_session";
+
 // ════════════════════════════════════════════
 // LINE 通知設定 — 部署 Firebase Functions 後填入
 // ════════════════════════════════════════════
@@ -763,7 +764,10 @@ const NotifyModal = ({ open, onClose, session, onSend }) => {
           <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>LINE 通知</h3>
         </div>
         <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
-          發送 LINE 訊息給所有 LINE 官方帳號好友（通知內容會包含場次資訊）
+          發送 LINE 訊息給此場次已綁定的報名者
+          <span style={{ display: "block", marginTop: 6, color: (2 - (session.notifyCount || 0)) <= 0 ? "#ef4444" : "#f59e0b", fontWeight: 600 }}>
+            📢 剩餘通知次數：{Math.max(0, 2 - (session.notifyCount || 0))} / 2
+          </span>
         </p>
 
         {/* Notify type selector */}
@@ -804,18 +808,75 @@ const NotifyModal = ({ open, onClose, session, onSend }) => {
         {/* Actions */}
         <div style={{ display: "flex", gap: 10 }}>
           <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
-          <button onClick={handleSend} disabled={sending || (isCustom && !customMessage.trim())}
-            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: sending ? "rgba(6,199,85,0.2)" : "linear-gradient(135deg, #06c755, #05a847)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: sending ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
+          <button onClick={handleSend} disabled={sending || (isCustom && !customMessage.trim()) || (2 - (session.notifyCount || 0)) <= 0}
+            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: (sending || (2 - (session.notifyCount || 0)) <= 0) ? "rgba(148,163,184,0.15)" : "linear-gradient(135deg, #06c755, #05a847)", color: (sending || (2 - (session.notifyCount || 0)) <= 0) ? "#64748b" : "#fff", fontSize: 14, fontWeight: 700, cursor: (sending || (2 - (session.notifyCount || 0)) <= 0) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
           >
-            {sending ? "發送中..." : "📣 發送通知"}
+            {(2 - (session.notifyCount || 0)) <= 0 ? "已達通知上限" : sending ? "發送中..." : "📣 發送通知"}
           </button>
         </div>
 
         <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.15)", fontSize: 11, color: "#64748b", lineHeight: 1.6 }}>
-          💡 通知會發送給所有加了 LINE 官方帳號的好友，訊息會附上此場次的詳細資訊。{LINE_OA_URL && LINE_OA_URL !== "YOUR_LINE_OA_FRIEND_URL" && (
-            <span> 加好友連結：<a href={LINE_OA_URL} target="_blank" rel="noopener noreferrer" style={{ color: "#06c755" }}>{LINE_OA_URL}</a></span>
-          )}
+          💡 通知只會發送給此場次有綁定 LINE 的報名者（目前 <strong style={{ color: "#06c755" }}>{(session.lineUserIds || []).length}</strong> 人已綁定）。報名者需要在報名後輸入綁定碼才能收到通知。
         </div>
+      </div>
+    </>
+  );
+};
+
+/* ════════════════════════════════════════════
+   Binding Code Modal — show after registration
+   ════════════════════════════════════════════ */
+const BindingCodeModal = ({ open, onClose, code }) => {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => { if (open) setCopied(false); }, [open]);
+
+  if (!open || !code) return null;
+
+  const handleCopy = async () => {
+    try { await navigator.clipboard.writeText(code); } catch {
+      const ta = document.createElement("textarea"); ta.value = code; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch {} document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(400px, 92vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(6,199,85,0.25)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)", textAlign: "center" }}>
+        <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0", marginBottom: 6 }}>報名成功！</h3>
+        <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20, lineHeight: 1.6 }}>
+          請記得到主揪的報名頁面 +1，待主揪確認後才算報名成功。<br/>
+          如果想收到 LINE 通知（成團、改期等），請完成以下綁定：
+        </p>
+
+        {/* Step 1 */}
+        <div style={{ textAlign: "left", marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: "rgba(6,199,85,0.06)", border: "1px solid rgba(6,199,85,0.2)" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#06c755", marginBottom: 8 }}>Step 1：加 LINE 官方帳號好友</div>
+          <a href={LINE_OA_URL} target="_blank" rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, background: "#06c755", color: "#fff", fontSize: 13, fontWeight: 700, textDecoration: "none" }}
+          >加入好友 →</a>
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>如果已經加過好友可跳過此步驟</div>
+        </div>
+
+        {/* Step 2 */}
+        <div style={{ textAlign: "left", marginBottom: 20, padding: "14px 16px", borderRadius: 12, background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.2)" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#60a5fa", marginBottom: 10 }}>Step 2：在 LINE 聊天室輸入以下綁定碼</div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
+            <span style={{ fontSize: 32, fontWeight: 900, letterSpacing: "0.2em", fontFamily: "'Space Mono', monospace", color: "#e2e8f0", background: "rgba(15,23,42,0.8)", padding: "8px 20px", borderRadius: 10, border: "1px solid rgba(148,163,184,0.2)" }}>{code}</span>
+            <button onClick={handleCopy}
+              style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: copied ? "#22c55e" : "#60a5fa", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            >{copied ? "✓ 已複製" : "複製"}</button>
+          </div>
+          <div style={{ fontSize: 11, color: "#64748b" }}>綁定碼有效期限 24 小時</div>
+        </div>
+
+        <button onClick={onClose}
+          style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+        >知道了</button>
       </div>
     </>
   );
@@ -998,10 +1059,34 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onC
 /* ════════════════════════════════════════════
    Create Session Modal (with password)
    ════════════════════════════════════════════ */
+const LAST_FORM_KEY = "vb_last_create_form";
+
 const CreateSessionModal = ({ open, onClose, onSubmit }) => {
-  const [form, setForm] = useState({ courtName: "", area: "", date: getToday(), startTime: "19:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" });
+  const defaultForm = { courtName: "", area: "", date: getToday(), startTime: "19:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" };
+
+  // Load saved form from localStorage, but always use fresh date/time
+  const loadSavedForm = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LAST_FORM_KEY));
+      if (saved) {
+        return { ...defaultForm, ...saved, date: getToday(), startTime: saved.startTime || "19:00" };
+      }
+    } catch {}
+    return defaultForm;
+  };
+
+  const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState({});
   const [step, setStep] = useState(1);
+
+  // Load saved form when modal opens
+  useEffect(() => {
+    if (open) {
+      setForm(loadSavedForm());
+      setStep(1);
+      setErrors({});
+    }
+  }, [open]);
 
   const handleSubmit = () => {
     const e = {};
@@ -1011,8 +1096,14 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
     if (Number(form.currentPeople) > Number(form.maxPeople)) e.currentPeople = "不能超過上限人數";
     setErrors(e);
     if (Object.keys(e).length > 0) return;
+
+    // Save form to localStorage for next time (exclude password for security)
+    try {
+      const toSave = { courtName: form.courtName, area: form.area, startTime: form.startTime, currentPeople: form.currentPeople, maxPeople: form.maxPeople, level: form.level, fee: form.fee, hostName: form.hostName, signupUrl: form.signupUrl, notes: form.notes };
+      localStorage.setItem(LAST_FORM_KEY, JSON.stringify(toSave));
+    } catch {}
+
     onSubmit({ courtName: form.courtName.trim(), area: form.area.trim(), date: form.date, time: form.startTime, registered: Number(form.currentPeople), max: Number(form.maxPeople), min: 12, level: form.level, fee: Number(form.fee), host: form.hostName.trim(), signupUrl: form.signupUrl.trim(), notes: form.notes.trim(), password: form.password });
-    setForm({ courtName: "", area: "", date: getToday(), startTime: "19:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" });
     setStep(1); setErrors({});
   };
 
@@ -1158,6 +1249,8 @@ export default function VolleyballMatcher() {
   const [shareData, setShareData] = useState(null);
   const [showNotifyModal, setShowNotifyModal] = useState(false);
   const [notifyTarget, setNotifyTarget] = useState(null);
+  const [bindingCode, setBindingCode] = useState(null);
+  const [showBindingModal, setShowBindingModal] = useState(false);
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
@@ -1253,16 +1346,33 @@ export default function VolleyballMatcher() {
     return () => unsub();
   }, [isAdmin]);
 
+  // Generate a 6-char random binding code
+  const generateBindingCode = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // exclude confusing chars: 0OI1
+    let code = "";
+    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  };
+
   const handleJoin = async (sessionId) => {
     if (joinedSessions.has(sessionId)) return;
     const nj = new Set(joinedSessions); nj.add(sessionId);
     setJoinedSessions(nj); saveJoined(nj);
     try {
       await updateDoc(doc(db, "sessions", sessionId), { registered: increment(1) });
-      toast("請記得到主揪的報名頁面 +1，待主揪與您確認後才算報名成功喔！", 4000, "warn");
+
+      // Generate and save binding code
+      const code = generateBindingCode();
+      await setDoc(doc(db, "bindingCodes", code), {
+        sessionId,
+        createdAt: serverTimestamp(),
+        used: false,
+      });
+
+      setBindingCode(code);
+      setShowBindingModal(true);
     } catch (err) {
       console.error(err);
-      // Rollback on error
       const rollback = new Set(joinedSessions);
       setJoinedSessions(rollback); saveJoined(rollback);
       toast("報名失敗，請稍後再試", 3000, "warn");
@@ -1641,6 +1751,8 @@ export default function VolleyballMatcher() {
       <ShareModal open={showShareModal} onClose={() => { setShowShareModal(false); setShareData(null); }} data={shareData}/>
 
       <NotifyModal open={showNotifyModal} onClose={() => { setShowNotifyModal(false); setNotifyTarget(null); }} session={notifyTarget} onSend={handleSendLineNotification}/>
+
+      <BindingCodeModal open={showBindingModal} onClose={() => { setShowBindingModal(false); setBindingCode(null); }} code={bindingCode}/>
 
       {showToast && (
         <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.4)" : "0 8px 32px rgba(34,197,94,0.4)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
