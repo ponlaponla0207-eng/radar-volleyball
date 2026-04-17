@@ -2701,7 +2701,7 @@ export default function VolleyballMatcher() {
             })
             .map((p, i) => (
             <div key={p.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <PlayerCard player={p} onEdit={handleEditPlayerClick} onWantToPlay={handleWantToPlay} onRecord={handleOpenRecordModal} currentUser={currentUser}/>onRecommend={handleOpenRecommendModal}/>
+<PlayerCard player={p} onEdit={handleEditPlayerClick} onWantToPlay={handleWantToPlay} onRecord={handleOpenRecordModal} currentUser={currentUser} onRecommend={handleOpenRecommendModal}/>
             </div>
           ))}
           {players.filter(p => playerFilterArea === "全部" || p.area === playerFilterArea).filter(p => playerFilterLevel === "全部" || p.level === playerFilterLevel).length === 0 && (
