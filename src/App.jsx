@@ -180,10 +180,10 @@ function generatePostText(data) {
 
 function getStatus(session) {
   const { registered, min, max } = session;
-  if (registered >= max) return { label: "已滿", color: "#94a3b8", bg: "rgba(148,163,184,0.12)" };
-  if (registered >= min) return { label: "已成團", color: "#22c55e", bg: "rgba(34,197,94,0.10)" };
-  if (registered >= min - 3) return { label: "即將成團", color: "#f59e0b", bg: "rgba(245,158,11,0.10)" };
-  return { label: "募集中", color: "#ef4444", bg: "rgba(239,68,68,0.08)" };
+  if (registered >= max) return { label: "已滿", color: "#5A7B9A", bg: "rgba(180,165,130,0.18)" };
+  if (registered >= min) return { label: "已成團", color: "#7FA87C", bg: "rgba(127,168,124,0.10)" };
+  if (registered >= min - 3) return { label: "即將成團", color: "#E89B5E", bg: "rgba(232,155,94,0.10)" };
+  return { label: "募集中", color: "#C85A5A", bg: "rgba(200,90,90,0.15)" };
 }
 function getStatusPriority(s) {
   if (s.registered >= s.max) return 4;
@@ -212,8 +212,8 @@ const ShareIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="c
 const BellIcon = () => (<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5a4.5 4.5 0 00-4.5 4.5c0 2.5-1 4-1.5 4.5h12c-.5-.5-1.5-2-1.5-4.5A4.5 4.5 0 008 1.5zM6.5 12a1.5 1.5 0 003 0"/></svg>);
 
 /* ── Shared styles ── */
-const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, background: "rgba(15,23,42,0.8)", border: "1px solid rgba(148,163,184,0.15)", color: "#e2e8f0", fontSize: 14, outline: "none", transition: "border-color 0.2s", fontFamily: "inherit" };
-const labelStyle = { fontSize: 12, color: "#94a3b8", marginBottom: 6, display: "block", fontWeight: 600, letterSpacing: "0.04em" };
+const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, background: "rgba(255,249,236,0.95)", border: "1px solid rgba(180,165,130,0.22)", color: "#1E3A5F", fontSize: 14, outline: "none", transition: "border-color 0.2s", fontFamily: "inherit" };
+const labelStyle = { fontSize: 12, color: "#5A7B9A", marginBottom: 6, display: "block", fontWeight: 600, letterSpacing: "0.04em" };
 
 /* ── Progress Ring ── */
 const ProgressRing = ({ current, min, max }) => {
@@ -232,8 +232,8 @@ const ProgressRing = ({ current, min, max }) => {
   return (
     <div key={bumpKey} style={{ position: "relative", width: radius*2, height: radius*2, flexShrink: 0, animation: bumpKey > 0 ? "ringBump 0.4s ease" : undefined }}>
       <svg width={radius*2} height={radius*2} style={{ transform: "rotate(-90deg)" }}>
-        <circle stroke="rgba(148,163,184,0.15)" fill="transparent" strokeWidth={stroke} r={nr} cx={radius} cy={radius}/>
-        <circle stroke="rgba(148,163,184,0.25)" fill="transparent" strokeWidth={stroke} strokeDasharray={`2 ${circ-2}`} strokeDashoffset={-minOffset+1} r={nr} cx={radius} cy={radius} strokeLinecap="butt"/>
+        <circle stroke="rgba(180,165,130,0.22)" fill="transparent" strokeWidth={stroke} r={nr} cx={radius} cy={radius}/>
+        <circle stroke="rgba(180,165,130,0.35)" fill="transparent" strokeWidth={stroke} strokeDasharray={`2 ${circ-2}`} strokeDashoffset={-minOffset+1} r={nr} cx={radius} cy={radius} strokeLinecap="butt"/>
         <circle stroke={status.color} fill="transparent" strokeWidth={stroke} strokeDasharray={`${circ} ${circ}`} strokeDashoffset={offset} r={nr} cx={radius} cy={radius} strokeLinecap="round" style={{ transition: "stroke-dashoffset 0.6s ease" }}/>
       </svg>
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>
@@ -265,9 +265,9 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
       {/* Left-side accent bar (bold and tall, more noticeable) */}
       <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: status.color, opacity: 0.85 }}/>
       {/* Edit button top-right */}
-      <button onClick={() => onEdit(session)} title="主揪編輯" style={{ position: "absolute", top: 10, right: 12, background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#64748b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.12)"; e.currentTarget.style.color = "#f59e0b"; e.currentTarget.style.borderColor = "rgba(245,158,11,0.25)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(148,163,184,0.08)"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.borderColor = "rgba(148,163,184,0.12)"; }}
+      <button onClick={() => onEdit(session)} title="主揪編輯" style={{ position: "absolute", top: 10, right: 12, background: "rgba(180,165,130,0.12)", border: "1px solid rgba(180,165,130,0.18)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#8A7F6A", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(232,155,94,0.22)"; e.currentTarget.style.color = "#E89B5E"; e.currentTarget.style.borderColor = "rgba(232,155,94,0.3)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(180,165,130,0.12)"; e.currentTarget.style.color = "#8A7F6A"; e.currentTarget.style.borderColor = "rgba(180,165,130,0.18)"; }}
       ><EditIcon /> 編輯</button>
 
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -279,13 +279,13 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
               {!isFormed && !isFull && <FireIcon/>}{status.label}
             </span>
             {hasJoined && (
-              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(96,165,250,0.12)", color: "#60a5fa", fontWeight: 600 }}>✓ 你已報名</span>
+              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(90,143,168,0.22)", color: "#5A8FA8", fontWeight: 600 }}>✓ 你已報名</span>
             )}
             {hasWaitlisted && (
-              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(168,85,247,0.12)", color: "#a855f7", fontWeight: 600 }}>🕐 你在候補中</span>
+              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(184,149,111,0.22)", color: "#B8956F", fontWeight: 600 }}>🕐 你在候補中</span>
             )}
             {session.closed && (
-              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(239,68,68,0.12)", color: "#ef4444", fontWeight: 600 }}>🚫 已關閉</span>
+              <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: "rgba(200,90,90,0.22)", color: "#C85A5A", fontWeight: 600 }}>🚫 已關閉</span>
             )}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "6px 14px", fontSize: 13, color: "var(--text-secondary)", marginBottom: 10 }}>
@@ -296,36 +296,36 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
             <span style={{ gridColumn: "1 / -1", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>👤 主揪：{session.host}</span>
           </div>
           {session.notes && <div style={{ fontSize: 12, color: "var(--text-dim)", marginBottom: 8, fontStyle: "italic" }}>📝 {session.notes}</div>}
-          {hasValidUrl && !hasJoined && !hasWaitlisted && <div style={{ fontSize: 11, marginBottom: 8, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>🔗 點擊報名按鈕將前往外部報名頁面</div>}
+          {hasValidUrl && !hasJoined && !hasWaitlisted && <div style={{ fontSize: 11, marginBottom: 8, color: "#8A7F6A", display: "flex", alignItems: "center", gap: 4 }}>🔗 點擊報名按鈕將前往外部報名頁面</div>}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
             {!isFormed && !isFull && <span style={{ fontSize: 13, color: status.color, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><PersonIcon/> 還差 {need} 人成團</span>}
-            {isFormed && !isFull && <span style={{ fontSize: 13, color: "#22c55e", fontWeight: 500 }}>✅ 已成團，還可加入 {session.max - session.registered} 人</span>}
+            {isFormed && !isFull && <span style={{ fontSize: 13, color: "#7FA87C", fontWeight: 500 }}>✅ 已成團，還可加入 {session.max - session.registered} 人</span>}
             {isFull && (
-              <span style={{ fontSize: 13, color: "#94a3b8" }}>
-                已額滿{waitlist > 0 && <span style={{ color: "#a855f7", marginLeft: 6 }}>· 候補 {waitlist} 人</span>}
+              <span style={{ fontSize: 13, color: "#5A7B9A" }}>
+                已額滿{waitlist > 0 && <span style={{ color: "#B8956F", marginLeft: 6 }}>· 候補 {waitlist} 人</span>}
               </span>
             )}
             {hasJoined ? (
               <button onClick={() => onCancel(session.id)}
-                style={{ padding: "7px 18px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#ef4444", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
-                onMouseEnter={(e) => { e.target.style.background = "rgba(239,68,68,0.15)"; }}
-                onMouseLeave={(e) => { e.target.style.background = "rgba(239,68,68,0.08)"; }}
+                style={{ padding: "7px 18px", borderRadius: 10, border: "1px solid rgba(200,90,90,0.35)", background: "rgba(200,90,90,0.15)", color: "#C85A5A", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { e.target.style.background = "rgba(200,90,90,0.25)"; }}
+                onMouseLeave={(e) => { e.target.style.background = "rgba(200,90,90,0.15)"; }}
               >✕ 取消報名</button>
             ) : hasWaitlisted ? (
               <button onClick={() => onCancelWaitlist(session.id)}
-                style={{ padding: "7px 18px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#ef4444", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
-                onMouseEnter={(e) => { e.target.style.background = "rgba(239,68,68,0.15)"; }}
-                onMouseLeave={(e) => { e.target.style.background = "rgba(239,68,68,0.08)"; }}
+                style={{ padding: "7px 18px", borderRadius: 10, border: "1px solid rgba(200,90,90,0.35)", background: "rgba(200,90,90,0.15)", color: "#C85A5A", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
+                onMouseEnter={(e) => { e.target.style.background = "rgba(200,90,90,0.25)"; }}
+                onMouseLeave={(e) => { e.target.style.background = "rgba(200,90,90,0.15)"; }}
               >✕ 取消候補</button>
             ) : isFull ? (
               <button onClick={() => { if (hasValidUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } onWaitlist(session.id); }}
-                style={{ padding: "7px 18px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #a855f7, #8b5cf6)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
+                style={{ padding: "7px 18px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #B8956F, #A88B6B)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
               >🕐 我要候補{hasValidUrl ? " ↗" : ""}</button>
             ) : (
               <button onClick={() => { if (hasValidUrl) { window.open(session.signupUrl, "_blank", "noopener,noreferrer"); } onJoin(session.id); }}
-                style={{ padding: "7px 20px", borderRadius: 10, border: "none", background: isFormed ? "rgba(34,197,94,0.12)" : `linear-gradient(135deg, ${status.color}, ${status.color}dd)`, color: isFormed ? "#22c55e" : "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
+                style={{ padding: "7px 20px", borderRadius: 10, border: "none", background: isFormed ? "rgba(127,168,124,0.22)" : `linear-gradient(135deg, ${status.color}, ${status.color}dd)`, color: isFormed ? "#7FA87C" : "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
               >{isFormed ? "+ 我要加入" : "🙋 我要報名"}{hasValidUrl ? " ↗" : ""}</button>
@@ -334,43 +334,43 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
 
           {/* Admin controls (red bar) */}
           {isAdmin && (
-            <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 10, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
-              <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 10, background: "rgba(200,90,90,0.12)", border: "1px solid rgba(200,90,90,0.28)" }}>
+              <div style={{ fontSize: 11, color: "#C85A5A", fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}>
                 <ShieldIcon/> 管理者控制
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#94a3b8" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#5A7B9A" }}>
                   <span>報名：</span>
                   <button onClick={() => onAdminAdjust(session.id, "registered", -1)}
-                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(148,163,184,0.2)", background: "rgba(15,23,42,0.8)", color: "#e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.2)"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.4)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15,23,42,0.8)"; e.currentTarget.style.borderColor = "rgba(148,163,184,0.2)"; }}
+                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(180,165,130,0.28)", background: "rgba(255,249,236,0.95)", color: "#1E3A5F", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,90,90,0.28)"; e.currentTarget.style.borderColor = "rgba(200,90,90,0.4)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,249,236,0.95)"; e.currentTarget.style.borderColor = "rgba(180,165,130,0.28)"; }}
                   ><MinusIcon/></button>
-                  <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: "#e2e8f0", minWidth: 20, textAlign: "center" }}>{session.registered}</span>
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: "#1E3A5F", minWidth: 20, textAlign: "center" }}>{session.registered}</span>
                   <button onClick={() => onAdminAdjust(session.id, "registered", 1)}
-                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(148,163,184,0.2)", background: "rgba(15,23,42,0.8)", color: "#e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.2)"; e.currentTarget.style.borderColor = "rgba(34,197,94,0.4)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15,23,42,0.8)"; e.currentTarget.style.borderColor = "rgba(148,163,184,0.2)"; }}
+                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(180,165,130,0.28)", background: "rgba(255,249,236,0.95)", color: "#1E3A5F", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(127,168,124,0.28)"; e.currentTarget.style.borderColor = "rgba(127,168,124,0.4)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,249,236,0.95)"; e.currentTarget.style.borderColor = "rgba(180,165,130,0.28)"; }}
                   ><PlusSmallIcon/></button>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#94a3b8" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#5A7B9A" }}>
                   <span>候補：</span>
                   <button onClick={() => onAdminAdjust(session.id, "waitlist", -1)}
-                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(148,163,184,0.2)", background: "rgba(15,23,42,0.8)", color: "#e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.2)"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.4)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15,23,42,0.8)"; e.currentTarget.style.borderColor = "rgba(148,163,184,0.2)"; }}
+                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(180,165,130,0.28)", background: "rgba(255,249,236,0.95)", color: "#1E3A5F", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,90,90,0.28)"; e.currentTarget.style.borderColor = "rgba(200,90,90,0.4)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,249,236,0.95)"; e.currentTarget.style.borderColor = "rgba(180,165,130,0.28)"; }}
                   ><MinusIcon/></button>
-                  <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: "#e2e8f0", minWidth: 20, textAlign: "center" }}>{session.waitlist || 0}</span>
+                  <span style={{ fontFamily: "'Space Mono', monospace", fontWeight: 700, color: "#1E3A5F", minWidth: 20, textAlign: "center" }}>{session.waitlist || 0}</span>
                   <button onClick={() => onAdminAdjust(session.id, "waitlist", 1)}
-                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(148,163,184,0.2)", background: "rgba(15,23,42,0.8)", color: "#e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.2)"; e.currentTarget.style.borderColor = "rgba(34,197,94,0.4)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(15,23,42,0.8)"; e.currentTarget.style.borderColor = "rgba(148,163,184,0.2)"; }}
+                    style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid rgba(180,165,130,0.28)", background: "rgba(255,249,236,0.95)", color: "#1E3A5F", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(127,168,124,0.28)"; e.currentTarget.style.borderColor = "rgba(127,168,124,0.4)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,249,236,0.95)"; e.currentTarget.style.borderColor = "rgba(180,165,130,0.28)"; }}
                   ><PlusSmallIcon/></button>
                 </div>
                 <button onClick={() => onAdminDelete(session)}
-                  style={{ marginLeft: "auto", padding: "5px 10px", borderRadius: 8, border: "1px solid rgba(239,68,68,0.4)", background: "rgba(239,68,68,0.1)", color: "#ef4444", fontSize: 11, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, transition: "all 0.2s" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.2)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; }}
+                  style={{ marginLeft: "auto", padding: "5px 10px", borderRadius: 8, border: "1px solid rgba(200,90,90,0.4)", background: "rgba(200,90,90,0.18)", color: "#C85A5A", fontSize: 11, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, transition: "all 0.2s" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,90,90,0.28)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(200,90,90,0.18)"; }}
                 >
                   <TrashIcon/> 刪除場次
                 </button>
@@ -379,18 +379,18 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
           )}
 
           {/* Comments section */}
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed rgba(148,163,184,0.15)" }}>
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed rgba(180,165,130,0.22)" }}>
             <button onClick={() => setCommentsOpen(o => !o)}
-              style={{ background: commentCount > 0 ? "rgba(96,165,250,0.05)" : "transparent", border: "none", padding: "6px 10px", borderRadius: 8, cursor: "pointer", color: commentCount > 0 ? "#60a5fa" : "#64748b", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, width: "100%", justifyContent: "space-between", transition: "all 0.2s" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = commentCount > 0 ? "rgba(96,165,250,0.1)" : "rgba(148,163,184,0.06)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = commentCount > 0 ? "rgba(96,165,250,0.05)" : "transparent"; }}
+              style={{ background: commentCount > 0 ? "rgba(90,143,168,0.10)" : "transparent", border: "none", padding: "6px 10px", borderRadius: 8, cursor: "pointer", color: commentCount > 0 ? "#5A8FA8" : "#8A7F6A", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, width: "100%", justifyContent: "space-between", transition: "all 0.2s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = commentCount > 0 ? "rgba(90,143,168,0.18)" : "rgba(180,165,130,0.10)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = commentCount > 0 ? "rgba(90,143,168,0.10)" : "transparent"; }}
             >
               <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <ChatIcon/>
                 {commentCount > 0 ? (
-                  <>主揪留言 <span style={{ color: "#60a5fa", fontWeight: 700 }}>({commentCount})</span></>
+                  <>主揪留言 <span style={{ color: "#5A8FA8", fontWeight: 700 }}>({commentCount})</span></>
                 ) : (
-                  <span style={{ color: "#64748b" }}>尚無主揪留言</span>
+                  <span style={{ color: "#8A7F6A" }}>尚無主揪留言</span>
                 )}
               </span>
               <ChevronIcon open={commentsOpen}/>
@@ -399,23 +399,23 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
             {commentsOpen && (
               <div style={{ marginTop: 10, animation: "fadeIn 0.2s ease" }}>
                 {sortedComments.length === 0 && (
-                  <div style={{ fontSize: 12, color: "#64748b", padding: "8px 0", textAlign: "center", fontStyle: "italic" }}>
+                  <div style={{ fontSize: 12, color: "#8A7F6A", padding: "8px 0", textAlign: "center", fontStyle: "italic" }}>
                     還沒有任何主揪留言
                   </div>
                 )}
                 {sortedComments.map((c, idx) => (
-                  <div key={idx} style={{ padding: "10px 12px", marginBottom: 6, borderRadius: 10, background: "rgba(96,165,250,0.04)", border: "1px solid rgba(96,165,250,0.1)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, fontSize: 11, color: "#64748b" }}>
-                      <span style={{ fontWeight: 600, color: "#60a5fa" }}>👤 {c.author || session.host}</span>
+                  <div key={idx} style={{ padding: "10px 12px", marginBottom: 6, borderRadius: 10, background: "rgba(90,143,168,0.08)", border: "1px solid rgba(90,143,168,0.18)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, fontSize: 11, color: "#8A7F6A" }}>
+                      <span style={{ fontWeight: 600, color: "#5A8FA8" }}>👤 {c.author || session.host}</span>
                       <span>{formatRelativeTime(c.createdAt)}</span>
                     </div>
                     <div style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{c.text}</div>
                   </div>
                 ))}
                 <button onClick={() => onAddComment(session)}
-                  style={{ width: "100%", marginTop: 6, padding: "8px", borderRadius: 10, border: "1px dashed rgba(96,165,250,0.3)", background: "rgba(96,165,250,0.04)", color: "#60a5fa", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-                  onMouseEnter={(e) => { e.target.style.background = "rgba(96,165,250,0.1)"; }}
-                  onMouseLeave={(e) => { e.target.style.background = "rgba(96,165,250,0.04)"; }}
+                  style={{ width: "100%", marginTop: 6, padding: "8px", borderRadius: 10, border: "1px dashed rgba(90,143,168,0.35)", background: "rgba(90,143,168,0.08)", color: "#5A8FA8", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                  onMouseEnter={(e) => { e.target.style.background = "rgba(90,143,168,0.18)"; }}
+                  onMouseLeave={(e) => { e.target.style.background = "rgba(90,143,168,0.08)"; }}
                 >+ 我是主揪，我要留言</button>
               </div>
             )}
@@ -456,25 +456,25 @@ const PasswordModal = ({ open, onClose, onVerify, sessionId }) => {
   if (!open) return null;
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(380px, 90vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(148,163,184,0.12)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.25)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(380px, 90vw)", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(180,165,130,0.18)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
           <LockIcon/>
-          <h3 style={{ fontSize: 17, fontWeight: 700, color: "#e2e8f0" }}>主揪驗證</h3>
+          <h3 style={{ fontSize: 17, fontWeight: 700, color: "#1E3A5F" }}>主揪驗證</h3>
         </div>
-        <p style={{ fontSize: 13, color: "#64748b", marginBottom: 16, lineHeight: 1.5 }}>請輸入開場時設定的密碼才能編輯此場次</p>
+        <p style={{ fontSize: 13, color: "#8A7F6A", marginBottom: 16, lineHeight: 1.5 }}>請輸入開場時設定的密碼才能編輯此場次</p>
         <input ref={inputRef} type="password" value={pw} onChange={(e) => { setPw(e.target.value); setError(""); }}
           placeholder="輸入密碼"
-          style={{ ...inputStyle, borderColor: error ? "#ef4444" : "rgba(148,163,184,0.15)", marginBottom: error ? 4 : 16 }}
-          onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
-          onBlur={(e) => { e.target.style.borderColor = error ? "#ef4444" : "rgba(148,163,184,0.15)"; }}
+          style={{ ...inputStyle, borderColor: error ? "#C85A5A" : "rgba(180,165,130,0.22)", marginBottom: error ? 4 : 16 }}
+          onFocus={(e) => { e.target.style.borderColor = "#E89B5E"; }}
+          onBlur={(e) => { e.target.style.borderColor = error ? "#C85A5A" : "rgba(180,165,130,0.22)"; }}
           onKeyDown={(e) => { if (e.key === "Enter") { const ok = onVerify(sessionId, pw); if (!ok) setError("密碼錯誤，請重新輸入"); } }}
         />
-        {error && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 12 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: "#C85A5A", marginBottom: 12 }}>{error}</div>}
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
           <button onClick={() => { const ok = onVerify(sessionId, pw); if (!ok) setError("密碼錯誤，請重新輸入"); }}
-            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
             onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
           >確認</button>
@@ -522,13 +522,13 @@ const CommentModal = ({ open, onClose, session, onSubmit }) => {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(148,163,184,0.12)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.25)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(180,165,130,0.18)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <ChatIcon/>
-          <h3 style={{ fontSize: 17, fontWeight: 700, color: "#e2e8f0" }}>主揪留言</h3>
+          <h3 style={{ fontSize: 17, fontWeight: 700, color: "#1E3A5F" }}>主揪留言</h3>
         </div>
-        <p style={{ fontSize: 12, color: "#64748b", marginBottom: 16, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: "#8A7F6A", marginBottom: 16, lineHeight: 1.5 }}>
           {verified ? `以「${session.host}」的身份發佈留言` : "請先輸入密碼驗證主揪身份"}
         </p>
 
@@ -536,16 +536,16 @@ const CommentModal = ({ open, onClose, session, onSubmit }) => {
           <>
             <input ref={pwRef} type="password" value={pw} onChange={(e) => { setPw(e.target.value); setError(""); }}
               placeholder="輸入密碼"
-              style={{ ...inputStyle, borderColor: error ? "#ef4444" : "rgba(148,163,184,0.15)", marginBottom: error ? 4 : 16 }}
-              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
-              onBlur={(e) => { e.target.style.borderColor = error ? "#ef4444" : "rgba(148,163,184,0.15)"; }}
+              style={{ ...inputStyle, borderColor: error ? "#C85A5A" : "rgba(180,165,130,0.22)", marginBottom: error ? 4 : 16 }}
+              onFocus={(e) => { e.target.style.borderColor = "#E89B5E"; }}
+              onBlur={(e) => { e.target.style.borderColor = error ? "#C85A5A" : "rgba(180,165,130,0.22)"; }}
               onKeyDown={(e) => { if (e.key === "Enter") tryVerify(); }}
             />
-            {error && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 12 }}>{error}</div>}
+            {error && <div style={{ fontSize: 12, color: "#C85A5A", marginBottom: 12 }}>{error}</div>}
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+              <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
               <button onClick={tryVerify}
-                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
               >驗證</button>
             </div>
           </>
@@ -554,19 +554,19 @@ const CommentModal = ({ open, onClose, session, onSubmit }) => {
             <textarea ref={textRef} value={text} onChange={(e) => { setText(e.target.value); setError(""); }}
               placeholder="例如：已湊到 10 人，再 2 人就可以打了！或：因下雨延到明天同時段，請大家注意..."
               rows={4}
-              style={{ ...inputStyle, resize: "vertical", minHeight: 100, borderColor: error ? "#ef4444" : "rgba(148,163,184,0.15)", marginBottom: error ? 4 : 10 }}
-              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
-              onBlur={(e) => { e.target.style.borderColor = error ? "#ef4444" : "rgba(148,163,184,0.15)"; }}
+              style={{ ...inputStyle, resize: "vertical", minHeight: 100, borderColor: error ? "#C85A5A" : "rgba(180,165,130,0.22)", marginBottom: error ? 4 : 10 }}
+              onFocus={(e) => { e.target.style.borderColor = "#E89B5E"; }}
+              onBlur={(e) => { e.target.style.borderColor = error ? "#C85A5A" : "rgba(180,165,130,0.22)"; }}
             />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#64748b", marginBottom: 14 }}>
-              <span>{error && <span style={{ color: "#ef4444" }}>{error}</span>}</span>
-              <span style={{ color: text.length > 500 ? "#ef4444" : "#64748b" }}>{text.length} / 500</span>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#8A7F6A", marginBottom: 14 }}>
+              <span>{error && <span style={{ color: "#C85A5A" }}>{error}</span>}</span>
+              <span style={{ color: text.length > 500 ? "#C85A5A" : "#8A7F6A" }}>{text.length} / 500</span>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+              <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
               <button onClick={handleSubmit}
-                style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #60a5fa, #3b82f6)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(96,165,250,0.3)"; }}
+                style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #5A8FA8, #3D6B80)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(90,143,168,0.35)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "none"; }}
               >💬 發佈留言</button>
             </div>
@@ -599,27 +599,27 @@ const AdminLoginModal = ({ open, onClose, onLogin }) => {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(380px, 90vw)", background: "linear-gradient(180deg, #2a1515, #1a0a0a)", borderRadius: 20, border: "1px solid rgba(239,68,68,0.3)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(239,68,68,0.2)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, color: "#ef4444" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.35)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(380px, 90vw)", background: "linear-gradient(180deg, #FDE9E9, #F8DADA)", borderRadius: 20, border: "1px solid rgba(200,90,90,0.35)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(200,90,90,0.28)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, color: "#C85A5A" }}>
           <ShieldIcon/>
-          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#ef4444" }}>管理者登入</h3>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#C85A5A" }}>管理者登入</h3>
         </div>
-        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: "#5A7B9A", marginBottom: 16, lineHeight: 1.5 }}>
           此為高權限模式，可刪除、編輯任何場次。請輸入管理者密碼。
         </p>
         <input ref={inputRef} type="password" value={pw} onChange={(e) => { setPw(e.target.value); setError(""); }}
           placeholder="管理者密碼"
-          style={{ ...inputStyle, borderColor: error ? "#ef4444" : "rgba(239,68,68,0.3)", marginBottom: error ? 4 : 16 }}
-          onFocus={(e) => { e.target.style.borderColor = "#ef4444"; }}
-          onBlur={(e) => { e.target.style.borderColor = error ? "#ef4444" : "rgba(239,68,68,0.3)"; }}
+          style={{ ...inputStyle, borderColor: error ? "#C85A5A" : "rgba(200,90,90,0.35)", marginBottom: error ? 4 : 16 }}
+          onFocus={(e) => { e.target.style.borderColor = "#C85A5A"; }}
+          onBlur={(e) => { e.target.style.borderColor = error ? "#C85A5A" : "rgba(200,90,90,0.35)"; }}
           onKeyDown={(e) => { if (e.key === "Enter") tryLogin(); }}
         />
-        {error && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 12 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: "#C85A5A", marginBottom: 12 }}>{error}</div>}
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
           <button onClick={tryLogin}
-            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #C85A5A, #A84040)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
             onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
           >登入</button>
@@ -686,13 +686,13 @@ const ShareModal = ({ open, onClose, data, onNotifyWantToPlay, wantToPlayCount }
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(520px, 94vw)", maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(96,165,250,0.2)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(520px, 94vw)", maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(90,143,168,0.28)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
           <span style={{ fontSize: 22 }}>🎉</span>
-          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>場次已發佈！</h3>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1E3A5F" }}>場次已發佈！</h3>
         </div>
-        <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 18, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 13, color: "#5A7B9A", marginBottom: 18, lineHeight: 1.5 }}>
           幫你準備好了揪團文字，複製後可直接貼到 FB 社團發文。
         </p>
 
@@ -700,15 +700,15 @@ const ShareModal = ({ open, onClose, data, onNotifyWantToPlay, wantToPlayCount }
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 6, fontWeight: 600, letterSpacing: "0.04em" }}>📝 揪團文字預覽（可編輯）</div>
           <textarea value={text} onChange={(e) => setText(e.target.value)} rows={14}
-            style={{ width: "100%", padding: "12px 14px", borderRadius: 10, background: "rgba(15,23,42,0.8)", border: "1px solid rgba(148,163,184,0.2)", color: "#e2e8f0", fontSize: 13, lineHeight: 1.7, fontFamily: "'Noto Sans TC', monospace", resize: "vertical", minHeight: 200, outline: "none", boxSizing: "border-box" }}
-            onFocus={(e) => { e.target.style.borderColor = "#60a5fa"; }}
-            onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.2)"; }}
+            style={{ width: "100%", padding: "12px 14px", borderRadius: 10, background: "rgba(255,249,236,0.95)", border: "1px solid rgba(180,165,130,0.28)", color: "#1E3A5F", fontSize: 13, lineHeight: 1.7, fontFamily: "'Noto Sans TC', monospace", resize: "vertical", minHeight: 200, outline: "none", boxSizing: "border-box" }}
+            onFocus={(e) => { e.target.style.borderColor = "#5A8FA8"; }}
+            onBlur={(e) => { e.target.style.borderColor = "rgba(180,165,130,0.28)"; }}
           />
         </div>
 
         {/* Copy button */}
         <button onClick={handleCopy}
-          style={{ width: "100%", padding: "12px", borderRadius: 12, border: "none", background: copied ? "linear-gradient(135deg, #22c55e, #16a34a)" : "linear-gradient(135deg, #60a5fa, #3b82f6)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 18, transition: "all 0.2s" }}
+          style={{ width: "100%", padding: "12px", borderRadius: 12, border: "none", background: copied ? "linear-gradient(135deg, #7FA87C, #5B7A59)" : "linear-gradient(135deg, #5A8FA8, #3D6B80)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 18, transition: "all 0.2s" }}
           onMouseEnter={(e) => { if (!copied) e.target.style.transform = "scale(1.02)"; }}
           onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
         >
@@ -719,7 +719,7 @@ const ShareModal = ({ open, onClose, data, onNotifyWantToPlay, wantToPlayCount }
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 6, fontWeight: 600, letterSpacing: "0.04em" }}>📢 選擇要發佈的 FB 社團</div>
           <select value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)}
-            style={{ width: "100%", padding: "10px 12px", borderRadius: 10, background: "rgba(15,23,42,0.8)", border: "1px solid rgba(148,163,184,0.2)", color: "#e2e8f0", fontSize: 13, cursor: "pointer", outline: "none" }}
+            style={{ width: "100%", padding: "10px 12px", borderRadius: 10, background: "rgba(255,249,236,0.95)", border: "1px solid rgba(180,165,130,0.28)", color: "#1E3A5F", fontSize: 13, cursor: "pointer", outline: "none" }}
           >
             <option value="">-- 請選擇社團 --</option>
             {FB_GROUPS.map(g => <option key={g.url} value={g.url}>{g.name}</option>)}
@@ -729,41 +729,41 @@ const ShareModal = ({ open, onClose, data, onNotifyWantToPlay, wantToPlayCount }
           {selectedGroup === "custom" && (
             <input type="text" value={customUrl} onChange={(e) => setCustomUrl(e.target.value)}
               placeholder="貼上 FB 社團網址..."
-              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, background: "rgba(15,23,42,0.8)", border: "1px solid", borderColor: customUrl && !isValidUrl(customUrl) ? "#ef4444" : "rgba(148,163,184,0.2)", color: "#e2e8f0", fontSize: 13, marginTop: 8, outline: "none", boxSizing: "border-box" }}
-              onFocus={(e) => { if (!customUrl || isValidUrl(customUrl)) e.target.style.borderColor = "#60a5fa"; }}
-              onBlur={(e) => { e.target.style.borderColor = customUrl && !isValidUrl(customUrl) ? "#ef4444" : "rgba(148,163,184,0.2)"; }}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, background: "rgba(255,249,236,0.95)", border: "1px solid", borderColor: customUrl && !isValidUrl(customUrl) ? "#C85A5A" : "rgba(180,165,130,0.28)", color: "#1E3A5F", fontSize: 13, marginTop: 8, outline: "none", boxSizing: "border-box" }}
+              onFocus={(e) => { if (!customUrl || isValidUrl(customUrl)) e.target.style.borderColor = "#5A8FA8"; }}
+              onBlur={(e) => { e.target.style.borderColor = customUrl && !isValidUrl(customUrl) ? "#C85A5A" : "rgba(180,165,130,0.28)"; }}
             />
           )}
           {selectedGroup === "custom" && customUrl && !isValidUrl(customUrl) && (
-            <div style={{ fontSize: 11, color: "#ef4444", marginTop: 4 }}>⚠️ 請輸入有效的網址（http:// 或 https:// 開頭）</div>
+            <div style={{ fontSize: 11, color: "#C85A5A", marginTop: 4 }}>⚠️ 請輸入有效的網址（http:// 或 https:// 開頭）</div>
           )}
         </div>
 
         {/* Actions */}
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>稍後再說</button>
+          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>稍後再說</button>
           <button onClick={handleOpenFb} disabled={!canOpen}
-            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: canOpen ? "linear-gradient(135deg, #1877f2, #0e5fc9)" : "rgba(148,163,184,0.1)", color: canOpen ? "#fff" : "#64748b", fontSize: 14, fontWeight: 700, cursor: canOpen ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
+            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: canOpen ? "linear-gradient(135deg, #3D6B80, #2D5460)" : "rgba(180,165,130,0.15)", color: canOpen ? "#fff" : "#8A7F6A", fontSize: 14, fontWeight: 700, cursor: canOpen ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
             onMouseEnter={(e) => { if (canOpen) e.target.style.transform = "scale(1.02)"; }}
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
           >🔗 前往 FB 社團貼文</button>
         </div>
 
-        <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", fontSize: 11, color: "#f59e0b", lineHeight: 1.5 }}>
+        <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(232,155,94,0.15)", border: "1px solid rgba(232,155,94,0.25)", fontSize: 11, color: "#E89B5E", lineHeight: 1.5 }}>
           💡 <strong>小提示：</strong>按「複製文字」→ 再按「前往 FB 社團貼文」→ 在 FB 社團點發文並貼上即可。
         </div>
 
         {/* Notify wanting-to-play players via LINE */}
-        <div style={{ marginTop: 12, padding: "14px 16px", borderRadius: 12, background: "rgba(6,199,85,0.06)", border: "1px solid rgba(6,199,85,0.2)" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#06c755", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ marginTop: 12, padding: "14px 16px", borderRadius: 12, background: "rgba(91,156,96,0.12)", border: "1px solid rgba(91,156,96,0.28)" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#5B9C60", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
             📣 通知 LINE 好友有新場次
-            {wantToPlayCount > 0 && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>🟢 {wantToPlayCount} 人想打球</span>}
+            {wantToPlayCount > 0 && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: "rgba(127,168,124,0.25)", color: "#7FA87C" }}>🟢 {wantToPlayCount} 人想打球</span>}
           </div>
-          <p style={{ fontSize: 11, color: "#64748b", marginBottom: 10, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 11, color: "#8A7F6A", marginBottom: 10, lineHeight: 1.5 }}>
             透過 LINE 通知所有加了官方帳號的好友，讓他們知道有新場次可以報名。
           </p>
           {notifyResult && (
-            <div style={{ marginBottom: 8, padding: "8px 10px", borderRadius: 8, background: notifyResult.error ? "rgba(239,68,68,0.08)" : "rgba(6,199,85,0.08)", fontSize: 12, color: notifyResult.error ? "#ef4444" : "#06c755", fontWeight: 600 }}>
+            <div style={{ marginBottom: 8, padding: "8px 10px", borderRadius: 8, background: notifyResult.error ? "rgba(200,90,90,0.15)" : "rgba(91,156,96,0.15)", fontSize: 12, color: notifyResult.error ? "#C85A5A" : "#5B9C60", fontWeight: 600 }}>
               {notifyResult.error ? `❌ ${notifyResult.error}` : `✅ ${notifyResult.message}`}
             </div>
           )}
@@ -777,7 +777,7 @@ const ShareModal = ({ open, onClose, data, onNotifyWantToPlay, wantToPlayCount }
               setNotifying(false);
             }}
             disabled={notifySent || notifying}
-            style={{ width: "100%", padding: "10px", borderRadius: 10, border: "none", background: notifySent ? "rgba(148,163,184,0.1)" : notifying ? "rgba(6,199,85,0.2)" : "linear-gradient(135deg, #06c755, #05a847)", color: notifySent ? "#64748b" : "#fff", fontSize: 13, fontWeight: 700, cursor: notifySent ? "not-allowed" : "pointer", transition: "all 0.2s" }}
+            style={{ width: "100%", padding: "10px", borderRadius: 10, border: "none", background: notifySent ? "rgba(180,165,130,0.15)" : notifying ? "rgba(91,156,96,0.28)" : "linear-gradient(135deg, #5B9C60, #467A4B)", color: notifySent ? "#8A7F6A" : "#fff", fontSize: 13, fontWeight: 700, cursor: notifySent ? "not-allowed" : "pointer", transition: "all 0.2s" }}
           >{notifySent ? "✅ 已通知" : notifying ? "發送中..." : "📣 發送 LINE 通知"}</button>
         </div>
       </div>
@@ -818,15 +818,15 @@ const NotifyModal = ({ open, onClose, session, onSend }) => {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(480px, 94vw)", maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(6,199,85,0.25)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(480px, 94vw)", maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(91,156,96,0.3)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
           <BellIcon/>
-          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>LINE 通知</h3>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1E3A5F" }}>LINE 通知</h3>
         </div>
-        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: "#5A7B9A", marginBottom: 16, lineHeight: 1.5 }}>
           發送 LINE 訊息給此場次已綁定的報名者
-          <span style={{ display: "block", marginTop: 6, color: (2 - (session.notifyCount || 0)) <= 0 ? "#ef4444" : "#f59e0b", fontWeight: 600 }}>
+          <span style={{ display: "block", marginTop: 6, color: (2 - (session.notifyCount || 0)) <= 0 ? "#C85A5A" : "#E89B5E", fontWeight: 600 }}>
             📢 剩餘通知次數：{Math.max(0, 2 - (session.notifyCount || 0))} / 2
           </span>
         </p>
@@ -835,9 +835,9 @@ const NotifyModal = ({ open, onClose, session, onSend }) => {
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
           {types.map(t => (
             <label key={t.value} onClick={() => setNotifyType(t.value)}
-              style={{ padding: "12px 14px", borderRadius: 10, border: "1px solid", borderColor: notifyType === t.value ? "#06c755" : "rgba(148,163,184,0.15)", background: notifyType === t.value ? "rgba(6,199,85,0.08)" : "transparent", cursor: "pointer", transition: "all 0.2s" }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: notifyType === t.value ? "#06c755" : "#e2e8f0", marginBottom: 2 }}>{t.label}</div>
-              <div style={{ fontSize: 11, color: "#64748b" }}>{t.desc}</div>
+              style={{ padding: "12px 14px", borderRadius: 10, border: "1px solid", borderColor: notifyType === t.value ? "#5B9C60" : "rgba(180,165,130,0.22)", background: notifyType === t.value ? "rgba(91,156,96,0.15)" : "transparent", cursor: "pointer", transition: "all 0.2s" }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: notifyType === t.value ? "#5B9C60" : "#1E3A5F", marginBottom: 2 }}>{t.label}</div>
+              <div style={{ fontSize: 11, color: "#8A7F6A" }}>{t.desc}</div>
             </label>
           ))}
         </div>
@@ -849,17 +849,17 @@ const NotifyModal = ({ open, onClose, session, onSend }) => {
             <textarea value={customMessage} onChange={(e) => setCustomMessage(e.target.value)}
               placeholder="例如：因為下雨，今晚場次延到明天同一時間，請大家注意！"
               rows={4}
-              style={{ width: "100%", padding: "12px 14px", borderRadius: 10, background: "rgba(15,23,42,0.8)", border: "1px solid rgba(148,163,184,0.2)", color: "#e2e8f0", fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 80, outline: "none", boxSizing: "border-box", fontFamily: "'Noto Sans TC', sans-serif" }}
-              onFocus={(e) => { e.target.style.borderColor = "#06c755"; }}
-              onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.2)"; }}
+              style={{ width: "100%", padding: "12px 14px", borderRadius: 10, background: "rgba(255,249,236,0.95)", border: "1px solid rgba(180,165,130,0.28)", color: "#1E3A5F", fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 80, outline: "none", boxSizing: "border-box", fontFamily: "'Noto Sans TC', sans-serif" }}
+              onFocus={(e) => { e.target.style.borderColor = "#5B9C60"; }}
+              onBlur={(e) => { e.target.style.borderColor = "rgba(180,165,130,0.28)"; }}
             />
-            <div style={{ fontSize: 11, color: "#64748b", marginTop: 4, textAlign: "right" }}>{customMessage.length} / 500</div>
+            <div style={{ fontSize: 11, color: "#8A7F6A", marginTop: 4, textAlign: "right" }}>{customMessage.length} / 500</div>
           </div>
         )}
 
         {/* Result */}
         {result && (
-          <div style={{ marginBottom: 14, padding: "12px", borderRadius: 10, background: result.error ? "rgba(239,68,68,0.08)" : "rgba(6,199,85,0.08)", border: `1px solid ${result.error ? "rgba(239,68,68,0.3)" : "rgba(6,199,85,0.3)"}`, fontSize: 13, color: result.error ? "#ef4444" : "#06c755", fontWeight: 600 }}>
+          <div style={{ marginBottom: 14, padding: "12px", borderRadius: 10, background: result.error ? "rgba(200,90,90,0.15)" : "rgba(91,156,96,0.15)", border: `1px solid ${result.error ? "rgba(200,90,90,0.35)" : "rgba(91,156,96,0.3)"}`, fontSize: 13, color: result.error ? "#C85A5A" : "#5B9C60", fontWeight: 600 }}>
             {result.error
               ? `❌ 發送失敗：${result.error}`
               : `✅ ${result.message}`}
@@ -868,16 +868,16 @@ const NotifyModal = ({ open, onClose, session, onSend }) => {
 
         {/* Actions */}
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
           <button onClick={handleSend} disabled={sending || (isCustom && !customMessage.trim()) || (2 - (session.notifyCount || 0)) <= 0}
-            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: (sending || (2 - (session.notifyCount || 0)) <= 0) ? "rgba(148,163,184,0.15)" : "linear-gradient(135deg, #06c755, #05a847)", color: (sending || (2 - (session.notifyCount || 0)) <= 0) ? "#64748b" : "#fff", fontSize: 14, fontWeight: 700, cursor: (sending || (2 - (session.notifyCount || 0)) <= 0) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
+            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: (sending || (2 - (session.notifyCount || 0)) <= 0) ? "rgba(180,165,130,0.22)" : "linear-gradient(135deg, #5B9C60, #467A4B)", color: (sending || (2 - (session.notifyCount || 0)) <= 0) ? "#8A7F6A" : "#fff", fontSize: 14, fontWeight: 700, cursor: (sending || (2 - (session.notifyCount || 0)) <= 0) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
           >
             {(2 - (session.notifyCount || 0)) <= 0 ? "已達通知上限" : sending ? "發送中..." : "📣 發送通知"}
           </button>
         </div>
 
-        <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.15)", fontSize: 11, color: "#64748b", lineHeight: 1.6 }}>
-          💡 通知只會發送給此場次有綁定 LINE 的報名者（目前 <strong style={{ color: "#06c755" }}>{(session.lineUserIds || []).length}</strong> 人已綁定）。報名者需要在報名後輸入綁定碼才能收到通知。
+        <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(90,143,168,0.12)", border: "1px solid rgba(90,143,168,0.25)", fontSize: 11, color: "#8A7F6A", lineHeight: 1.6 }}>
+          💡 通知只會發送給此場次有綁定 LINE 的報名者（目前 <strong style={{ color: "#5B9C60" }}>{(session.lineUserIds || []).length}</strong> 人已綁定）。報名者需要在報名後輸入綁定碼才能收到通知。
         </div>
       </div>
     </>
@@ -905,38 +905,38 @@ const BindingCodeModal = ({ open, onClose, code }) => {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(400px, 92vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(6,199,85,0.25)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)", textAlign: "center" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(400px, 92vw)", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(91,156,96,0.3)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)", textAlign: "center" }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
-        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0", marginBottom: 6 }}>報名成功！</h3>
-        <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 20, lineHeight: 1.6 }}>
+        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1E3A5F", marginBottom: 6 }}>報名成功！</h3>
+        <p style={{ fontSize: 13, color: "#5A7B9A", marginBottom: 20, lineHeight: 1.6 }}>
           請記得到主揪的報名頁面 +1，待主揪確認後才算報名成功。<br/>
           如果想收到 LINE 通知（成團、改期等），請完成以下綁定：
         </p>
 
         {/* Step 1 */}
-        <div style={{ textAlign: "left", marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: "rgba(6,199,85,0.06)", border: "1px solid rgba(6,199,85,0.2)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#06c755", marginBottom: 8 }}>Step 1：加 LINE 官方帳號好友</div>
+        <div style={{ textAlign: "left", marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: "rgba(91,156,96,0.12)", border: "1px solid rgba(91,156,96,0.28)" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#5B9C60", marginBottom: 8 }}>Step 1：加 LINE 官方帳號好友</div>
           <a href={LINE_OA_URL} target="_blank" rel="noopener noreferrer"
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, background: "#06c755", color: "#fff", fontSize: 13, fontWeight: 700, textDecoration: "none" }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, background: "#5B9C60", color: "#fff", fontSize: 13, fontWeight: 700, textDecoration: "none" }}
           >加入好友 →</a>
-          <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>如果已經加過好友可跳過此步驟</div>
+          <div style={{ fontSize: 11, color: "#8A7F6A", marginTop: 6 }}>如果已經加過好友可跳過此步驟</div>
         </div>
 
         {/* Step 2 */}
-        <div style={{ textAlign: "left", marginBottom: 20, padding: "14px 16px", borderRadius: 12, background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.2)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#60a5fa", marginBottom: 10 }}>Step 2：在 LINE 聊天室輸入以下綁定碼</div>
+        <div style={{ textAlign: "left", marginBottom: 20, padding: "14px 16px", borderRadius: 12, background: "rgba(90,143,168,0.12)", border: "1px solid rgba(90,143,168,0.28)" }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#5A8FA8", marginBottom: 10 }}>Step 2：在 LINE 聊天室輸入以下綁定碼</div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
-            <span style={{ fontSize: 32, fontWeight: 900, letterSpacing: "0.2em", fontFamily: "'Space Mono', monospace", color: "#e2e8f0", background: "rgba(15,23,42,0.8)", padding: "8px 20px", borderRadius: 10, border: "1px solid rgba(148,163,184,0.2)" }}>{code}</span>
+            <span style={{ fontSize: 32, fontWeight: 900, letterSpacing: "0.2em", fontFamily: "'Space Mono', monospace", color: "#1E3A5F", background: "rgba(255,249,236,0.95)", padding: "8px 20px", borderRadius: 10, border: "1px solid rgba(180,165,130,0.28)" }}>{code}</span>
             <button onClick={handleCopy}
-              style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: copied ? "#22c55e" : "#60a5fa", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+              style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: copied ? "#7FA87C" : "#5A8FA8", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
             >{copied ? "✓ 已複製" : "複製"}</button>
           </div>
-          <div style={{ fontSize: 11, color: "#64748b" }}>綁定碼有效期限 24 小時</div>
+          <div style={{ fontSize: 11, color: "#8A7F6A" }}>綁定碼有效期限 24 小時</div>
         </div>
 
         <button onClick={onClose}
-          style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+          style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
         >知道了</button>
       </div>
     </>
@@ -1002,26 +1002,26 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onC
           {DATES.map(d => <option key={d.value} value={d.value}>{d.label} ({d.value.slice(5).replace("-","/")})</option>)}
         </select>
       ) : type === "textarea" ? (
-        <textarea value={form[field] || ""} onChange={(e) => setForm({...form, [field]: e.target.value})} placeholder={placeholder} rows={2} style={{...inputStyle, resize: "vertical", minHeight: 56, borderColor: err ? "#ef4444" : "rgba(148,163,184,0.15)"}} onFocus={(e)=>{e.target.style.borderColor="#f59e0b";}} onBlur={(e)=>{e.target.style.borderColor=err?"#ef4444":"rgba(148,163,184,0.15)";}}/>
+        <textarea value={form[field] || ""} onChange={(e) => setForm({...form, [field]: e.target.value})} placeholder={placeholder} rows={2} style={{...inputStyle, resize: "vertical", minHeight: 56, borderColor: err ? "#C85A5A" : "rgba(180,165,130,0.22)"}} onFocus={(e)=>{e.target.style.borderColor="#E89B5E";}} onBlur={(e)=>{e.target.style.borderColor=err?"#C85A5A":"rgba(180,165,130,0.22)";}}/>
       ) : (
         <input type={type||"text"} min={min} max={max} step={step} value={form[field]||""} onChange={(e) => setForm({...form, [field]: e.target.value})} placeholder={placeholder}
-          style={{...inputStyle, borderColor: err ? "#ef4444" : "rgba(148,163,184,0.15)"}}
-          onFocus={(e)=>{e.target.style.borderColor="#f59e0b";}} onBlur={(e)=>{e.target.style.borderColor=err?"#ef4444":"rgba(148,163,184,0.15)";}}
+          style={{...inputStyle, borderColor: err ? "#C85A5A" : "rgba(180,165,130,0.22)"}}
+          onFocus={(e)=>{e.target.style.borderColor="#E89B5E";}} onBlur={(e)=>{e.target.style.borderColor=err?"#C85A5A":"rgba(180,165,130,0.22)";}}
         />
       )}
-      {err && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{err}</span>}
+      {err && <span style={{ fontSize: 11, color: "#C85A5A", marginTop: 4, display: "block" }}>{err}</span>}
     </div>
   );
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 901, maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: "24px 24px 0 0", border: "1px solid rgba(148,163,184,0.12)", borderBottom: "none", animation: "slideUpModal 0.35s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 -10px 60px rgba(0,0,0,0.5)" }}>
-        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}><div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(148,163,184,0.25)" }}/></div>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.25)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 901, maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: "24px 24px 0 0", border: "1px solid rgba(180,165,130,0.18)", borderBottom: "none", animation: "slideUpModal 0.35s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 -10px 60px rgba(30,58,95,0.20)" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}><div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(180,165,130,0.35)" }}/></div>
         <div style={{ padding: "8px 24px 32px", maxWidth: 520, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#f59e0b" }}>✏️ 編輯場次</h2>
-            <button onClick={onClose} style={{ background: "rgba(148,163,184,0.1)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#94a3b8", display: "flex" }}><CloseIcon/></button>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#E89B5E" }}>✏️ 編輯場次</h2>
+            <button onClick={onClose} style={{ background: "rgba(180,165,130,0.15)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#5A7B9A", display: "flex" }}><CloseIcon/></button>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1040,7 +1040,7 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onC
             </div>
 
             {Number(form.currentPeople) >= 0 && Number(form.currentPeople) < 12 && (
-              <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", fontSize: 13, color: "#f59e0b" }}>
+              <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(232,155,94,0.15)", border: "1px solid rgba(232,155,94,0.25)", fontSize: 13, color: "#E89B5E" }}>
                 🔥 還差 <strong>{12 - Number(form.currentPeople)}</strong> 人可以成團
               </div>
             )}
@@ -1055,27 +1055,27 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onC
               <input value={form.signupUrl || ""} onChange={(e) => setForm({...form, signupUrl: e.target.value})} placeholder="https://..."
                 style={{
                   ...inputStyle,
-                  borderColor: form.signupUrl && !isValidUrl(form.signupUrl) ? "#ef4444" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#22c55e" : "rgba(148,163,184,0.15)")
+                  borderColor: form.signupUrl && !isValidUrl(form.signupUrl) ? "#C85A5A" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#7FA87C" : "rgba(180,165,130,0.22)")
                 }}
-                onFocus={(e)=>{ if (!form.signupUrl) e.target.style.borderColor = "#f59e0b"; }}
-                onBlur={(e)=>{ e.target.style.borderColor = form.signupUrl && !isValidUrl(form.signupUrl) ? "#ef4444" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#22c55e" : "rgba(148,163,184,0.15)"); }}
+                onFocus={(e)=>{ if (!form.signupUrl) e.target.style.borderColor = "#E89B5E"; }}
+                onBlur={(e)=>{ e.target.style.borderColor = form.signupUrl && !isValidUrl(form.signupUrl) ? "#C85A5A" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#7FA87C" : "rgba(180,165,130,0.22)"); }}
               />
               {form.signupUrl && !isValidUrl(form.signupUrl) ? (
-                <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>⚠️ 這不是有效的網址，請以 http:// 或 https:// 開頭（留空也 OK）</span>
+                <span style={{ fontSize: 11, color: "#C85A5A", marginTop: 4, display: "block" }}>⚠️ 這不是有效的網址，請以 http:// 或 https:// 開頭（留空也 OK）</span>
               ) : form.signupUrl && isValidUrl(form.signupUrl) ? (
-                <span style={{ fontSize: 11, color: "#22c55e", marginTop: 4, display: "block" }}>✓ 網址格式正確</span>
+                <span style={{ fontSize: 11, color: "#7FA87C", marginTop: 4, display: "block" }}>✓ 網址格式正確</span>
               ) : (
-                <span style={{ fontSize: 11, color: "#64748b", marginTop: 4, display: "block" }}>貼上 FB 社團、LINE 群組或其他報名頁面的網址</span>
+                <span style={{ fontSize: 11, color: "#8A7F6A", marginTop: 4, display: "block" }}>貼上 FB 社團、LINE 群組或其他報名頁面的網址</span>
               )}
             </div>
 
             <F label="備註（選填）" field="notes" type="textarea" placeholder="例：需自備球鞋..."/>
 
             <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-              <button onClick={onClose} style={{ flex: 1, padding: "14px", borderRadius: 14, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+              <button onClick={onClose} style={{ flex: 1, padding: "14px", borderRadius: 14, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
               <button onClick={handleSave}
-                style={{ flex: 2, padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(245,158,11,0.3)"; }}
+                style={{ flex: 2, padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(232,155,94,0.3)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "none"; }}
               >💾 儲存變更</button>
             </div>
@@ -1084,30 +1084,30 @@ const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onC
             <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
               <button
                 onClick={() => onShare && onShare({ ...form, courtName: form.courtName, area: form.area, date: form.date, time: form.time, registered: Number(form.registered), max: Number(form.max), level: form.level, fee: Number(form.fee), host: form.host, signupUrl: form.signupUrl, notes: form.notes })}
-                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(96,165,250,0.3)", background: "rgba(96,165,250,0.08)", color: "#60a5fa", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(96,165,250,0.15)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(96,165,250,0.08)"; }}
+                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(90,143,168,0.35)", background: "rgba(90,143,168,0.15)", color: "#5A8FA8", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(90,143,168,0.25)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(90,143,168,0.15)"; }}
               >🔗 分享到 FB</button>
               <button
                 onClick={() => onNotify && onNotify(session)}
-                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(6,199,85,0.3)", background: "rgba(6,199,85,0.08)", color: "#06c755", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(6,199,85,0.15)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(6,199,85,0.08)"; }}
+                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(91,156,96,0.3)", background: "rgba(91,156,96,0.15)", color: "#5B9C60", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(91,156,96,0.25)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(91,156,96,0.15)"; }}
               >📣 LINE 通知</button>
             </div>
 
             {/* Danger zone — close session */}
-            <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed rgba(239,68,68,0.15)" }}>
-              <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, letterSpacing: "0.04em" }}>危險區域</div>
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed rgba(200,90,90,0.25)" }}>
+              <div style={{ fontSize: 11, color: "#8A7F6A", marginBottom: 8, letterSpacing: "0.04em" }}>危險區域</div>
               <button
                 onClick={() => {
                   if (window.confirm("確定要關閉這個場次嗎？\n關閉後場次會立刻從列表中隱藏，資料仍會保留但無法再被報名。此動作無法在前端復原。")) {
                     onCloseSession(session.id);
                   }
                 }}
-                style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)", color: "#ef4444", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={(e) => { e.target.style.background = "rgba(239,68,68,0.12)"; }}
-                onMouseLeave={(e) => { e.target.style.background = "rgba(239,68,68,0.06)"; }}
+                style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(200,90,90,0.35)", background: "rgba(200,90,90,0.12)", color: "#C85A5A", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.background = "rgba(200,90,90,0.22)"; }}
+                onMouseLeave={(e) => { e.target.style.background = "rgba(200,90,90,0.12)"; }}
               >🚫 關閉此場次（立刻隱藏）</button>
             </div>
           </div>
@@ -1155,24 +1155,24 @@ const RadarChart = ({ skills, size = 120 }) => {
       {/* Grid */}
       {gridLevels.map(lv => {
         const pts = dims.map((_, i) => getPoint(i, lv));
-        return <polygon key={lv} points={pts.map(p => p.join(",")).join(" ")} fill="none" stroke="rgba(148,163,184,0.15)" strokeWidth="0.5"/>;
+        return <polygon key={lv} points={pts.map(p => p.join(",")).join(" ")} fill="none" stroke="rgba(180,165,130,0.22)" strokeWidth="0.5"/>;
       })}
       {/* Axes */}
       {dims.map((_, i) => {
         const [x, y] = getPoint(i, 5);
-        return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(148,163,184,0.12)" strokeWidth="0.5"/>;
+        return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(180,165,130,0.18)" strokeWidth="0.5"/>;
       })}
       {/* Data area */}
-      <polygon points={dataPoints.map(p => p.join(",")).join(" ")} fill="rgba(167,139,250,0.2)" stroke="#a78bfa" strokeWidth="1.5"/>
+      <polygon points={dataPoints.map(p => p.join(",")).join(" ")} fill="rgba(196,167,136,0.28)" stroke="#C4A788" strokeWidth="1.5"/>
       {/* Data dots */}
-      {dataPoints.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="2.5" fill="#a78bfa"/>)}
+      {dataPoints.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="2.5" fill="#C4A788"/>)}
       {/* Labels */}
       {dims.map((d, i) => {
         const [x, y] = getPoint(i, 6.2);
-        return <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="central" fill="#94a3b8" fontSize="10" fontFamily="'Noto Sans TC', sans-serif">{d.label}</text>;
+        return <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="central" fill="#5A7B9A" fontSize="10" fontFamily="'Noto Sans TC', sans-serif">{d.label}</text>;
       })}
       {/* Center avg */}
-      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#a78bfa" fontSize="13" fontWeight="700" fontFamily="'Space Mono', monospace">{avg.toFixed(1)}</text>
+      <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#C4A788" fontSize="13" fontWeight="700" fontFamily="'Space Mono', monospace">{avg.toFixed(1)}</text>
     </svg>
   );
 };
@@ -1187,17 +1187,17 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onSha
   const remainHours = isWanting ? Math.ceil((wantExpiry - Date.now()) / 3600000) : 0;
 
   return (
-  <div style={{ background: "var(--card-bg)", borderRadius: 16, padding: "18px 22px 18px 26px", border: "1px solid", borderColor: isWanting ? "rgba(34,197,94,0.4)" : "var(--border)", position: "relative", overflow: "hidden", transition: "all 0.25s ease" }}
-    onMouseEnter={(e) => { e.currentTarget.style.borderColor = isWanting ? "rgba(34,197,94,0.6)" : "rgba(167,139,250,0.4)"; e.currentTarget.style.boxShadow = isWanting ? "0 8px 24px rgba(34,197,94,0.1)" : "0 8px 24px rgba(167,139,250,0.08)"; }}
-    onMouseLeave={(e) => { e.currentTarget.style.borderColor = isWanting ? "rgba(34,197,94,0.4)" : "var(--border)"; e.currentTarget.style.boxShadow = "none"; }}
+  <div style={{ background: "var(--card-bg)", borderRadius: 16, padding: "18px 22px 18px 26px", border: "1px solid", borderColor: isWanting ? "rgba(127,168,124,0.4)" : "var(--border)", position: "relative", overflow: "hidden", transition: "all 0.25s ease" }}
+    onMouseEnter={(e) => { e.currentTarget.style.borderColor = isWanting ? "rgba(127,168,124,0.6)" : "rgba(196,167,136,0.4)"; e.currentTarget.style.boxShadow = isWanting ? "0 8px 24px rgba(127,168,124,0.18)" : "0 8px 24px rgba(196,167,136,0.15)"; }}
+    onMouseLeave={(e) => { e.currentTarget.style.borderColor = isWanting ? "rgba(127,168,124,0.4)" : "var(--border)"; e.currentTarget.style.boxShadow = "none"; }}
   >
-    <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: isWanting ? "#22c55e" : "#a78bfa", opacity: 0.85 }}/>
+    <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: isWanting ? "#7FA87C" : "#C4A788", opacity: 0.85 }}/>
 
     {/* Want to play badge */}
     {isWanting && (
-      <div style={{ position: "absolute", top: 10, left: 26, display: "flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 12, background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", animation: "pulse 2s ease infinite" }}>
-        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", display: "inline-block" }}/>
-        <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>想打球！ 剩 {remainHours}h</span>
+      <div style={{ position: "absolute", top: 10, left: 26, display: "flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 12, background: "rgba(127,168,124,0.22)", border: "1px solid rgba(127,168,124,0.32)", animation: "pulse 2s ease infinite" }}>
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#7FA87C", display: "inline-block" }}/>
+        <span style={{ fontSize: 11, color: "#7FA87C", fontWeight: 700 }}>想打球！ 剩 {remainHours}h</span>
       </div>
     )}
 
@@ -1205,29 +1205,29 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onSha
     <div style={{ position: "absolute", top: 10, right: 12, display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
       {isOwner && !isWanting && (
         <button onClick={() => onWantToPlay(player)} title="我想打球"
-          style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#22c55e", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.15)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.08)"; }}
+          style={{ background: "rgba(127,168,124,0.15)", border: "1px solid rgba(127,168,124,0.28)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#7FA87C", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(127,168,124,0.25)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(127,168,124,0.15)"; }}
         >🏐 想打球</button>
       )}
       {isOwner && (
         <button onClick={() => onRecord(player)} title="記錄本週戰績"
-          style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#f59e0b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.08)"; }}
+          style={{ background: "rgba(232,155,94,0.15)", border: "1px solid rgba(232,155,94,0.28)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#E89B5E", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(232,155,94,0.25)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(232,155,94,0.15)"; }}
         >📊 記錄</button>
       )}
       {isOwner && (
         <button onClick={() => onShare(player)} title="下載戰績卡分享"
-          style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#f59e0b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.08)"; }}
+          style={{ background: "rgba(232,155,94,0.15)", border: "1px solid rgba(232,155,94,0.28)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#E89B5E", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(232,155,94,0.25)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(232,155,94,0.15)"; }}
         >📤 分享</button>
       )}
       <button onClick={() => onEdit(player)} title="編輯"
-        style={{ background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#64748b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(167,139,250,0.12)"; e.currentTarget.style.color = "#a78bfa"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(148,163,184,0.08)"; e.currentTarget.style.color = "#64748b"; }}
+        style={{ background: "rgba(180,165,130,0.12)", border: "1px solid rgba(180,165,130,0.18)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#8A7F6A", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(196,167,136,0.18)"; e.currentTarget.style.color = "#C4A788"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(180,165,130,0.12)"; e.currentTarget.style.color = "#8A7F6A"; }}
       ><EditIcon /> 編輯</button>
     </div>
 
@@ -1241,11 +1241,11 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onSha
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
           {/* Google avatar or default icon */}
           {player.photoURL ? (
-            <img src={player.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(167,139,250,0.3)" }}/>
+            <img src={player.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(196,167,136,0.3)" }}/>
           ) : !hasSkills && <span style={{ fontSize: 28 }}>🏐</span>}
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>{player.nickname}</div>
-            <div style={{ fontSize: 11, color: "#a78bfa", fontWeight: 600 }}>{player.level}・球齡 {player.experience}</div>
+            <div style={{ fontSize: 11, color: "#C4A788", fontWeight: 600 }}>{player.level}・球齡 {player.experience}</div>
           </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "6px 14px", fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>
@@ -1257,7 +1257,7 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onSha
         {player.timeSlots && player.timeSlots.length > 0 && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
             {player.timeSlots.map(t => (
-              <span key={t} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 12, background: "rgba(96,165,250,0.1)", color: "#60a5fa", fontWeight: 600 }}>{t}</span>
+              <span key={t} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 12, background: "rgba(90,143,168,0.18)", color: "#5A8FA8", fontWeight: 600 }}>{t}</span>
             ))}
           </div>
         )}
@@ -1269,17 +1269,17 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onSha
           if (!stats) return null;
           const { totalPlayed, totalWon, rate, thisWeek, trend, recent } = stats;
           return (
-            <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 10, background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.15)" }}>
+            <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 10, background: "rgba(232,155,94,0.08)", border: "1px solid rgba(232,155,94,0.25)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b" }}>📊 勝率</span>
-                  <span style={{ fontSize: 16, fontWeight: 800, color: "#f59e0b", fontFamily: "'Space Mono', monospace" }}>{rate}%</span>
-                  <span style={{ fontSize: 11, color: "#64748b" }}>({totalPlayed} 場)</span>
-                  {trend === "up" && <span style={{ color: "#22c55e", fontSize: 12, fontWeight: 700 }}>↑</span>}
-                  {trend === "down" && <span style={{ color: "#ef4444", fontSize: 12, fontWeight: 700 }}>↓</span>}
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#E89B5E" }}>📊 勝率</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: "#E89B5E", fontFamily: "'Space Mono', monospace" }}>{rate}%</span>
+                  <span style={{ fontSize: 11, color: "#8A7F6A" }}>({totalPlayed} 場)</span>
+                  {trend === "up" && <span style={{ color: "#7FA87C", fontSize: 12, fontWeight: 700 }}>↑</span>}
+                  {trend === "down" && <span style={{ color: "#C85A5A", fontSize: 12, fontWeight: 700 }}>↓</span>}
                 </div>
                 {thisWeek && (
-                  <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 8, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontWeight: 600 }}>
+                  <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 8, background: "rgba(232,155,94,0.18)", color: "#E89B5E", fontWeight: 600 }}>
                     本週 {thisWeek.won}W {thisWeek.played - thisWeek.won}L
                   </span>
                 )}
@@ -1290,7 +1290,7 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onSha
                   {recent.slice().reverse().map((r, i) => {
                     const wr = r.played > 0 ? r.won / r.played : 0;
                     const h = Math.max(4, wr * 24);
-                    return <div key={i} style={{ flex: 1, height: h, borderRadius: 2, background: wr >= 0.5 ? "rgba(34,197,94,0.5)" : "rgba(239,68,68,0.4)", transition: "height 0.3s" }} title={`${r.week}: ${r.won}/${r.played}`}/>;
+                    return <div key={i} style={{ flex: 1, height: h, borderRadius: 2, background: wr >= 0.5 ? "rgba(127,168,124,0.5)" : "rgba(200,90,90,0.4)", transition: "height 0.3s" }} title={`${r.week}: ${r.won}/${r.played}`}/>;
                   })}
                 </div>
               )}
@@ -1327,7 +1327,7 @@ function drawRadar(ctx, skills, cx, cy, radius) {
   const angleStep = (Math.PI * 2) / dims.length;
 
   // Grid polygons (5 levels)
-  ctx.strokeStyle = "#e2e8f0";
+  ctx.strokeStyle = "#1E3A5F";
   ctx.lineWidth = 1.5;
   for (let lv = 1; lv <= 5; lv++) {
     const r = (lv / 5) * radius;
@@ -1343,7 +1343,7 @@ function drawRadar(ctx, skills, cx, cy, radius) {
   }
 
   // Axes
-  ctx.strokeStyle = "#cbd5e1";
+  ctx.strokeStyle = "#3A5A7A";
   ctx.lineWidth = 1;
   for (let i = 0; i < dims.length; i++) {
     const a = angleStep * i - Math.PI / 2;
@@ -1364,14 +1364,14 @@ function drawRadar(ctx, skills, cx, cy, radius) {
     if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
   }
   ctx.closePath();
-  ctx.fillStyle = "rgba(245,158,11,0.25)";
+  ctx.fillStyle = "rgba(232,155,94,0.3)";
   ctx.fill();
-  ctx.strokeStyle = "#f59e0b";
+  ctx.strokeStyle = "#E89B5E";
   ctx.lineWidth = 3;
   ctx.stroke();
 
   // Data dots
-  ctx.fillStyle = "#f59e0b";
+  ctx.fillStyle = "#E89B5E";
   for (let i = 0; i < dims.length; i++) {
     const val = skills[dims[i].key] || 0;
     const r = (val / 5) * radius;
@@ -1398,7 +1398,7 @@ function drawRadar(ctx, skills, cx, cy, radius) {
 
   // Center avg
   const avg = dims.reduce((s, d) => s + (skills[d.key] || 0), 0) / dims.length;
-  ctx.fillStyle = "#ea580c";
+  ctx.fillStyle = "#B56620";
   ctx.font = `900 28px "Space Mono", "Menlo", monospace`;
   ctx.fillText(avg.toFixed(1), cx, cy);
 }
@@ -1417,7 +1417,7 @@ function drawTrendBars(ctx, records, x, y, w, h) {
     const bx = x + i * (barW + gap);
     const by = y + h - barH;
 
-    ctx.fillStyle = wr >= 0.5 ? "#86efac" : "#fca5a5";
+    ctx.fillStyle = wr >= 0.5 ? "#9FBB9D" : "#E89C9C";
     roundRect(ctx, bx, by, barW, barH, 3);
     ctx.fill();
   }
@@ -1455,14 +1455,14 @@ const ShareCardModal = ({ open, onClose, player }) => {
     ctx.imageSmoothingQuality = "high";
 
     // White background
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#FFF9EC";
     ctx.fillRect(0, 0, W, H);
 
     // Top orange accent strip
     const stripH = isVertical ? 24 : 20;
     const gradient = ctx.createLinearGradient(0, 0, W, 0);
-    gradient.addColorStop(0, "#f59e0b");
-    gradient.addColorStop(1, "#f97316");
+    gradient.addColorStop(0, "#E89B5E");
+    gradient.addColorStop(1, "#D4855F");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, W, stripH);
 
@@ -1487,13 +1487,13 @@ const ShareCardModal = ({ open, onClose, player }) => {
     ctx.fillText(initial, avatarX, avatarY + 4);
 
     const nameX = avatarX + avatarSize / 2 + 28;
-    ctx.fillStyle = "#0f172a";
+    ctx.fillStyle = "#FFF9EC";
     ctx.font = `900 ${isVertical ? 64 : 54}px "PingFang TC", "Microsoft JhengHei", sans-serif`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText(player.nickname || "—", nameX, cursorY + 10);
 
-    ctx.fillStyle = "#64748b";
+    ctx.fillStyle = "#8A7F6A";
     ctx.font = `600 ${isVertical ? 28 : 24}px "PingFang TC", "Microsoft JhengHei", sans-serif`;
     const metaParts = [];
     if (player.area) metaParts.push(`📍 ${player.area}`);
@@ -1527,7 +1527,7 @@ const ShareCardModal = ({ open, onClose, player }) => {
       ctx.textBaseline = "top";
       ctx.fillText("OVERALL WIN RATE", W / 2, cursorY + (isVertical ? 34 : 24));
 
-      ctx.fillStyle = "#ea580c";
+      ctx.fillStyle = "#B56620";
       const numSize = isVertical ? 180 : 130;
       ctx.font = `900 ${numSize}px "Space Mono", "Menlo", monospace`;
       ctx.textBaseline = "middle";
@@ -1554,7 +1554,7 @@ const ShareCardModal = ({ open, onClose, player }) => {
       ctx.fillStyle = "#f8fafc";
       roundRect(ctx, pad, cursorY, W - pad * 2, heroH, 24);
       ctx.fill();
-      ctx.fillStyle = "#94a3b8";
+      ctx.fillStyle = "#5A7B9A";
       ctx.font = `700 ${isVertical ? 28 : 22}px "PingFang TC", sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -1572,7 +1572,7 @@ const ShareCardModal = ({ open, onClose, player }) => {
       roundRect(ctx, pad, cursorY, radarW, radarH, 24);
       ctx.fill();
 
-      ctx.fillStyle = "#64748b";
+      ctx.fillStyle = "#8A7F6A";
       ctx.font = `800 ${isVertical ? 22 : 18}px "PingFang TC", sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
@@ -1595,7 +1595,7 @@ const ShareCardModal = ({ open, onClose, player }) => {
         ctx.textBaseline = "top";
         ctx.fillText("RECOMMENDED", rightX + rightW / 2, cursorY + 24);
 
-        ctx.fillStyle = "#ea580c";
+        ctx.fillStyle = "#B56620";
         ctx.font = `900 86px "Space Mono", "Menlo", monospace`;
         ctx.textBaseline = "middle";
         const recCount = player.recommendCount || 0;
@@ -1607,7 +1607,7 @@ const ShareCardModal = ({ open, onClose, player }) => {
         roundRect(ctx, rightX, trendY, rightW, trendH, 24);
         ctx.fill();
 
-        ctx.fillStyle = "#64748b";
+        ctx.fillStyle = "#8A7F6A";
         ctx.font = `800 16px "PingFang TC", sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
@@ -1616,7 +1616,7 @@ const ShareCardModal = ({ open, onClose, player }) => {
         if (stats && stats.recent.length > 1) {
           drawTrendBars(ctx, stats.recent, rightX + 30, trendY + 60, rightW - 60, trendH - 90);
         } else {
-          ctx.fillStyle = "#cbd5e1";
+          ctx.fillStyle = "#3A5A7A";
           ctx.font = `600 16px "PingFang TC", sans-serif`;
           ctx.fillText("資料不足", rightX + rightW / 2, trendY + trendH / 2);
         }
@@ -1635,7 +1635,7 @@ const ShareCardModal = ({ open, onClose, player }) => {
       roundRect(ctx, pad, cursorY, halfW, boxH, 24);
       ctx.fill();
 
-      ctx.fillStyle = "#64748b";
+      ctx.fillStyle = "#8A7F6A";
       ctx.font = `800 22px "PingFang TC", sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
@@ -1644,7 +1644,7 @@ const ShareCardModal = ({ open, onClose, player }) => {
       if (stats && stats.recent.length > 1) {
         drawTrendBars(ctx, stats.recent, pad + 40, cursorY + 80, halfW - 80, boxH - 120);
       } else {
-        ctx.fillStyle = "#cbd5e1";
+        ctx.fillStyle = "#3A5A7A";
         ctx.font = `600 20px "PingFang TC", sans-serif`;
         ctx.textBaseline = "middle";
         ctx.fillText("資料不足", pad + halfW / 2, cursorY + boxH / 2 + 20);
@@ -1661,7 +1661,7 @@ const ShareCardModal = ({ open, onClose, player }) => {
       ctx.textBaseline = "top";
       ctx.fillText("RECOMMENDED", recX + halfW / 2, cursorY + 24);
 
-      ctx.fillStyle = "#ea580c";
+      ctx.fillStyle = "#B56620";
       ctx.font = `900 110px "Space Mono", "Menlo", monospace`;
       ctx.textBaseline = "middle";
       const recCount = player.recommendCount || 0;
@@ -1672,20 +1672,20 @@ const ShareCardModal = ({ open, onClose, player }) => {
 
     // Bottom footer (dark bar)
     const footerH = isVertical ? 110 : 90;
-    ctx.fillStyle = "#0f172a";
+    ctx.fillStyle = "#FFF9EC";
     ctx.fillRect(0, H - footerH, W, footerH);
 
-    ctx.fillStyle = "#94a3b8";
+    ctx.fillStyle = "#5A7B9A";
     ctx.font = `700 ${isVertical ? 20 : 16}px "PingFang TC", sans-serif`;
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillText("POWERED BY", pad, H - footerH + (isVertical ? 28 : 22));
 
-    ctx.fillStyle = "#fbbf24";
+    ctx.fillStyle = "#E89B5E";
     ctx.font = `900 ${isVertical ? 34 : 28}px "PingFang TC", sans-serif`;
     ctx.fillText("排球揪團雷達", pad, H - footerH + (isVertical ? 56 : 46));
 
-    ctx.fillStyle = "#cbd5e1";
+    ctx.fillStyle = "#3A5A7A";
     ctx.font = `600 ${isVertical ? 22 : 18}px "PingFang TC", sans-serif`;
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
@@ -1714,53 +1714,53 @@ const ShareCardModal = ({ open, onClose, player }) => {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(480px, 94vw)", maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(245,158,11,0.25)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(480px, 94vw)", maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(232,155,94,0.3)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)" }}>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
           <span style={{ fontSize: 24 }}>📤</span>
-          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>分享我的戰績卡</h3>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1E3A5F" }}>分享我的戰績卡</h3>
         </div>
-        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: "#5A7B9A", marginBottom: 16, lineHeight: 1.5 }}>
           下載後可分享到 IG、LINE、FB 社團，讓更多朋友看到你的排球戰績。
         </p>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
           <button onClick={() => setSize("vertical")}
-            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid", borderColor: size === "vertical" ? "#f59e0b" : "rgba(148,163,184,0.2)", background: size === "vertical" ? "rgba(245,158,11,0.1)" : "transparent", color: size === "vertical" ? "#f59e0b" : "#94a3b8", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid", borderColor: size === "vertical" ? "#E89B5E" : "rgba(180,165,130,0.28)", background: size === "vertical" ? "rgba(232,155,94,0.18)" : "transparent", color: size === "vertical" ? "#E89B5E" : "#5A7B9A", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
             📱 直式<br/><span style={{ fontSize: 10, opacity: 0.7 }}>IG 限動 / LINE 相簿</span>
           </button>
           <button onClick={() => setSize("square")}
-            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid", borderColor: size === "square" ? "#f59e0b" : "rgba(148,163,184,0.2)", background: size === "square" ? "rgba(245,158,11,0.1)" : "transparent", color: size === "square" ? "#f59e0b" : "#94a3b8", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid", borderColor: size === "square" ? "#E89B5E" : "rgba(180,165,130,0.28)", background: size === "square" ? "rgba(232,155,94,0.18)" : "transparent", color: size === "square" ? "#E89B5E" : "#5A7B9A", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
             🟦 正方形<br/><span style={{ fontSize: 10, opacity: 0.7 }}>IG 貼文 / FB</span>
           </button>
         </div>
 
-        <div style={{ marginBottom: 16, padding: 16, background: "rgba(15,23,42,0.6)", borderRadius: 12, display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
+        <div style={{ marginBottom: 16, padding: 16, background: "rgba(255,249,236,0.7)", borderRadius: 12, display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
           {generating && (
-            <div style={{ textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+            <div style={{ textAlign: "center", color: "#5A7B9A", fontSize: 13 }}>
               <div style={{ fontSize: 32, marginBottom: 8, animation: "spin 1.5s linear infinite", display: "inline-block" }}>🎨</div>
               <div>繪製中...</div>
             </div>
           )}
           {!generating && previewUrl && (
-            <img src={previewUrl} alt="preview" style={{ maxWidth: "100%", maxHeight: 380, borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}/>
+            <img src={previewUrl} alt="preview" style={{ maxWidth: "100%", maxHeight: 380, borderRadius: 8, boxShadow: "0 4px 20px rgba(30,58,95,0.15)" }}/>
           )}
           <canvas ref={canvasRef} style={{ display: "none" }}/>
         </div>
 
         <div style={{ display: "flex", gap: 10 }}>
           <button onClick={onClose}
-            style={{ flex: 1, padding: "14px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+            style={{ flex: 1, padding: "14px", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             關閉
           </button>
           <button onClick={handleDownload} disabled={!previewUrl || generating}
-            style={{ flex: 2, padding: "14px", borderRadius: 12, border: "none", background: (!previewUrl || generating) ? "rgba(148,163,184,0.15)" : "linear-gradient(135deg, #f59e0b, #f97316)", color: (!previewUrl || generating) ? "#64748b" : "#fff", fontSize: 14, fontWeight: 700, cursor: (!previewUrl || generating) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            style={{ flex: 2, padding: "14px", borderRadius: 12, border: "none", background: (!previewUrl || generating) ? "rgba(180,165,130,0.22)" : "linear-gradient(135deg, #E89B5E, #D4855F)", color: (!previewUrl || generating) ? "#8A7F6A" : "#fff", fontSize: 14, fontWeight: 700, cursor: (!previewUrl || generating) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
             💾 下載 PNG
           </button>
         </div>
 
-        <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", fontSize: 11, color: "#f59e0b", lineHeight: 1.5 }}>
+        <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(232,155,94,0.12)", border: "1px solid rgba(232,155,94,0.25)", fontSize: 11, color: "#E89B5E", lineHeight: 1.5 }}>
           💡 下載後可直接上傳到 IG 限動、LINE 相簿或 FB，邀請朋友一起來排球揪團雷達！
         </div>
       </div>
@@ -1775,26 +1775,26 @@ const LoginChoiceModal = ({ open, onClose, onGoogle, onGuest, googleLoading }) =
   if (!open) return null;
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(167,139,250,0.25)", padding: "32px 24px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(196,167,136,0.32)", padding: "32px 24px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)" }}>
 
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🏐</div>
-          <h3 style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", marginBottom: 6 }}>歡迎加入排球夥伴</h3>
-          <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 800, color: "#1E3A5F", marginBottom: 6 }}>歡迎加入排球夥伴</h3>
+          <p style={{ fontSize: 13, color: "#5A7B9A", lineHeight: 1.6 }}>
             選擇你的註冊方式<br/>
-            <span style={{ fontSize: 11, color: "#64748b" }}>Google 登入可以讓你隨時管理自己的資料</span>
+            <span style={{ fontSize: 11, color: "#8A7F6A" }}>Google 登入可以讓你隨時管理自己的資料</span>
           </p>
         </div>
 
         {/* Google 登入（推薦選項）*/}
         <div style={{ position: "relative", marginBottom: 12 }}>
-          <div style={{ position: "absolute", top: -10, right: 16, fontSize: 10, padding: "3px 10px", borderRadius: 12, background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 2px 8px rgba(167,139,250,0.4)", zIndex: 1 }}>
+          <div style={{ position: "absolute", top: -10, right: 16, fontSize: 10, padding: "3px 10px", borderRadius: 12, background: "linear-gradient(135deg, #C4A788, #A88B6B)", color: "#fff", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 2px 8px rgba(196,167,136,0.4)", zIndex: 1 }}>
             ⭐ 推薦
           </div>
           <button onClick={onGoogle} disabled={googleLoading}
-            style={{ width: "100%", padding: "16px 20px", borderRadius: 14, border: "2px solid rgba(167,139,250,0.4)", background: googleLoading ? "rgba(167,139,250,0.1)" : "linear-gradient(135deg, rgba(167,139,250,0.15), rgba(139,92,246,0.15))", color: "#fff", fontSize: 15, fontWeight: 700, cursor: googleLoading ? "wait" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, transition: "all 0.2s" }}
-            onMouseEnter={(e) => { if (!googleLoading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(167,139,250,0.3)"; } }}
+            style={{ width: "100%", padding: "16px 20px", borderRadius: 14, border: "2px solid rgba(196,167,136,0.4)", background: googleLoading ? "rgba(196,167,136,0.15)" : "linear-gradient(135deg, rgba(196,167,136,0.22), rgba(139,92,246,0.15))", color: "#fff", fontSize: 15, fontWeight: 700, cursor: googleLoading ? "wait" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, transition: "all 0.2s" }}
+            onMouseEnter={(e) => { if (!googleLoading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(196,167,136,0.3)"; } }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
           >
             {googleLoading ? (
@@ -1811,27 +1811,27 @@ const LoginChoiceModal = ({ open, onClose, onGoogle, onGuest, googleLoading }) =
               </>
             )}
           </button>
-          <div style={{ fontSize: 11, color: "#a78bfa", marginTop: 6, textAlign: "center", fontWeight: 600 }}>
+          <div style={{ fontSize: 11, color: "#C4A788", marginTop: 6, textAlign: "center", fontWeight: 600 }}>
             ✓ 免設密碼　✓ 自動帶入資料　✓ 可以管理自己的資料
           </div>
         </div>
 
         {/* Divider */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0" }}>
-          <div style={{ flex: 1, height: 1, background: "rgba(148,163,184,0.15)" }}/>
-          <span style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>或</span>
-          <div style={{ flex: 1, height: 1, background: "rgba(148,163,184,0.15)" }}/>
+          <div style={{ flex: 1, height: 1, background: "rgba(180,165,130,0.22)" }}/>
+          <span style={{ fontSize: 11, color: "#8A7F6A", fontWeight: 600 }}>或</span>
+          <div style={{ flex: 1, height: 1, background: "rgba(180,165,130,0.22)" }}/>
         </div>
 
         {/* 訪客登入 */}
         <button onClick={onGuest}
-          style={{ width: "100%", padding: "12px 20px", borderRadius: 14, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s" }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(148,163,184,0.4)"; e.currentTarget.style.color = "#cbd5e1"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148,163,184,0.2)"; e.currentTarget.style.color = "#94a3b8"; }}
+          style={{ width: "100%", padding: "12px 20px", borderRadius: 14, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(180,165,130,0.4)"; e.currentTarget.style.color = "#3A5A7A"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(180,165,130,0.28)"; e.currentTarget.style.color = "#5A7B9A"; }}
         >
           👤 訪客註冊（用密碼保護資料）
         </button>
-        <div style={{ fontSize: 11, color: "#64748b", marginTop: 6, textAlign: "center" }}>
+        <div style={{ fontSize: 11, color: "#8A7F6A", marginTop: 6, textAlign: "center" }}>
           不想綁 Google？可以用密碼保護你的資料
         </div>
 
@@ -1859,21 +1859,21 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
   if (!myPlayer) {
     return (
       <>
-        <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-        <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(167,139,250,0.25)", padding: "36px 24px 28px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)", textAlign: "center" }}>
+        <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+        <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(196,167,136,0.32)", padding: "36px 24px 28px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)", textAlign: "center" }}>
           <div style={{ fontSize: 56, marginBottom: 12, opacity: 0.8 }}>🏐</div>
-          <h3 style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", marginBottom: 8 }}>歡迎加入排球夥伴</h3>
-          <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 24, lineHeight: 1.6 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 800, color: "#1E3A5F", marginBottom: 8 }}>歡迎加入排球夥伴</h3>
+          <p style={{ fontSize: 13, color: "#5A7B9A", marginBottom: 24, lineHeight: 1.6 }}>
             你還沒有球員資料，建立後就能在這裡管理自己的<br/>
             戰績、推薦、想打球狀態等所有會員功能
           </p>
           <button onClick={() => { onClose(); onOpenRegisterFlow(); }}
-            style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10, transition: "all 0.2s" }}
+            style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #C4A788, #A88B6B)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10, transition: "all 0.2s" }}
             onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
           >🙋 立即建立球員資料</button>
           <button onClick={onClose}
-            style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+            style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
           >稍後再說</button>
         </div>
       </>
@@ -1891,19 +1891,19 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, top: 0, zIndex: 901, overflowY: "auto", background: "linear-gradient(180deg, #0c1222 0%, #0f172a 40%, #14102a 100%)", animation: "fadeIn 0.3s ease" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, top: 0, zIndex: 901, overflowY: "auto", background: "linear-gradient(180deg, #F8F2E5 0%, #FFF9EC 40%, #F8F2E5 100%)", animation: "fadeIn 0.3s ease" }}>
 
         {/* Sticky top bar */}
-        <div style={{ position: "sticky", top: 0, zIndex: 10, background: "linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(15,23,42,0.9) 100%)", borderBottom: "1px solid rgba(148,163,184,0.1)", padding: "14px 20px", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 10, background: "linear-gradient(180deg, rgba(255,249,236,0.98) 0%, rgba(248,242,229,0.9) 100%)", borderBottom: "1px solid rgba(180,165,130,0.15)", padding: "14px 20px", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 22 }}>👤</span>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>我的會員專區</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#1E3A5F" }}>我的會員專區</h2>
           </div>
           <button onClick={onClose}
-            style={{ background: "rgba(148,163,184,0.1)", border: "1px solid rgba(148,163,184,0.15)", borderRadius: 10, padding: 8, cursor: "pointer", color: "#94a3b8", display: "flex", transition: "all 0.2s" }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(148,163,184,0.2)"; e.currentTarget.style.color = "#e2e8f0"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(148,163,184,0.1)"; e.currentTarget.style.color = "#94a3b8"; }}
+            style={{ background: "rgba(180,165,130,0.15)", border: "1px solid rgba(180,165,130,0.22)", borderRadius: 10, padding: 8, cursor: "pointer", color: "#5A7B9A", display: "flex", transition: "all 0.2s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(180,165,130,0.28)"; e.currentTarget.style.color = "#1E3A5F"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(180,165,130,0.15)"; e.currentTarget.style.color = "#5A7B9A"; }}
           ><CloseIcon/></button>
         </div>
 
@@ -1911,17 +1911,17 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
 
           {/* ⚠️ Duplicate alert */}
           {hasDuplicates && (
-            <div style={{ padding: "14px 18px", borderRadius: 14, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.3)", animation: "slideUp 0.4s ease" }}>
+            <div style={{ padding: "14px 18px", borderRadius: 14, background: "rgba(232,155,94,0.15)", border: "1px solid rgba(232,155,94,0.3)", animation: "slideUp 0.4s ease" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                 <span style={{ fontSize: 18 }}>⚠️</span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: "#f59e0b" }}>偵測到 {myPlayers.length} 筆重複資料</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#E89B5E" }}>偵測到 {myPlayers.length} 筆重複資料</span>
               </div>
-              <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 12, color: "#5A7B9A", marginBottom: 12, lineHeight: 1.6 }}>
                 你的帳號有多筆球員資料，可能是之前誤觸建立的。<br/>
                 合併後會保留最新的資料 + 加總戰績與推薦，舊的會被安全刪除。
               </p>
               <button onClick={() => onMergeDuplicates(myPlayers)}
-                style={{ padding: "8px 18px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                style={{ padding: "8px 18px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
               >🔀 合併這 {myPlayers.length} 筆資料</button>
@@ -1929,18 +1929,18 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
           )}
 
           {/* ─── 個人資料卡 ─── */}
-          <div style={{ padding: "20px 22px", borderRadius: 16, background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.2)", position: "relative", overflow: "hidden", animation: "slideUp 0.4s ease 0.05s both" }}>
-            <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: "#a78bfa", opacity: 0.85 }}/>
+          <div style={{ padding: "20px 22px", borderRadius: 16, background: "rgba(196,167,136,0.12)", border: "1px solid rgba(196,167,136,0.28)", position: "relative", overflow: "hidden", animation: "slideUp 0.4s ease 0.05s both" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: "#C4A788", opacity: 0.85 }}/>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
               {myPlayer.photoURL ? (
-                <img src={myPlayer.photoURL} alt="" style={{ width: 60, height: 60, borderRadius: "50%", border: "3px solid rgba(167,139,250,0.4)", objectFit: "cover", flexShrink: 0 }}/>
+                <img src={myPlayer.photoURL} alt="" style={{ width: 60, height: 60, borderRadius: "50%", border: "3px solid rgba(196,167,136,0.4)", objectFit: "cover", flexShrink: 0 }}/>
               ) : (
-                <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(167,139,250,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>🏐</div>
+                <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(196,167,136,0.28)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>🏐</div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", marginBottom: 4 }}>{myPlayer.nickname}</div>
-                <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 600, marginBottom: 6 }}>{myPlayer.level}・球齡 {myPlayer.experience}</div>
-                <div style={{ fontSize: 11, color: "#64748b", display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#1E3A5F", marginBottom: 4 }}>{myPlayer.nickname}</div>
+                <div style={{ fontSize: 12, color: "#C4A788", fontWeight: 600, marginBottom: 6 }}>{myPlayer.level}・球齡 {myPlayer.experience}</div>
+                <div style={{ fontSize: 11, color: "#8A7F6A", display: "flex", gap: 10, flexWrap: "wrap" }}>
                   <span>📍 {myPlayer.area}</span>
                   {myPlayer.position && <span>🧤 {myPlayer.position}</span>}
                   {myPlayer.height && <span>📏 {myPlayer.height} cm</span>}
@@ -1948,45 +1948,45 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
               </div>
             </div>
             <button onClick={() => onEditProfile(myPlayer)}
-              style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px solid rgba(167,139,250,0.3)", background: "rgba(167,139,250,0.08)", color: "#a78bfa", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
-              onMouseEnter={(e) => { e.target.style.background = "rgba(167,139,250,0.15)"; }}
-              onMouseLeave={(e) => { e.target.style.background = "rgba(167,139,250,0.08)"; }}
+              style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px solid rgba(196,167,136,0.3)", background: "rgba(196,167,136,0.15)", color: "#C4A788", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
+              onMouseEnter={(e) => { e.target.style.background = "rgba(196,167,136,0.22)"; }}
+              onMouseLeave={(e) => { e.target.style.background = "rgba(196,167,136,0.15)"; }}
             ><EditIcon/> 編輯我的資料</button>
           </div>
 
           {/* ─── 想打球開關 ─── */}
-          <div style={{ padding: "16px 20px", borderRadius: 16, background: isWanting ? "rgba(34,197,94,0.08)" : "rgba(15,23,42,0.4)", border: "1px solid", borderColor: isWanting ? "rgba(34,197,94,0.3)" : "rgba(148,163,184,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, animation: "slideUp 0.4s ease 0.1s both" }}>
+          <div style={{ padding: "16px 20px", borderRadius: 16, background: isWanting ? "rgba(127,168,124,0.15)" : "rgba(248,242,229,0.5)", border: "1px solid", borderColor: isWanting ? "rgba(127,168,124,0.35)" : "rgba(180,165,130,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, animation: "slideUp 0.4s ease 0.1s both" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 20 }}>{isWanting ? "🟢" : "⚪"}</span>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: isWanting ? "#22c55e" : "#e2e8f0" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: isWanting ? "#7FA87C" : "#1E3A5F" }}>
                   {isWanting ? `想打球！剩 ${remainHours} 小時` : "想打球狀態"}
                 </div>
-                <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+                <div style={{ fontSize: 11, color: "#8A7F6A", marginTop: 2 }}>
                   {isWanting ? "其他球員可以看到你想打球" : "開啟後 6 小時內告訴大家你想打球"}
                 </div>
               </div>
             </div>
             <button onClick={() => onWantToPlay(myPlayer)}
               disabled={isWanting}
-              style={{ padding: "8px 18px", borderRadius: 10, border: "none", background: isWanting ? "rgba(148,163,184,0.15)" : "linear-gradient(135deg, #22c55e, #16a34a)", color: isWanting ? "#64748b" : "#fff", fontSize: 12, fontWeight: 700, cursor: isWanting ? "not-allowed" : "pointer", transition: "all 0.2s" }}
+              style={{ padding: "8px 18px", borderRadius: 10, border: "none", background: isWanting ? "rgba(180,165,130,0.22)" : "linear-gradient(135deg, #7FA87C, #5B7A59)", color: isWanting ? "#8A7F6A" : "#fff", fontSize: 12, fontWeight: 700, cursor: isWanting ? "not-allowed" : "pointer", transition: "all 0.2s" }}
               onMouseEnter={(e) => { if (!isWanting) e.target.style.transform = "scale(1.04)"; }}
               onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
             >{isWanting ? "已開啟" : "🏐 我想打球"}</button>
           </div>
 
           {/* ─── 本週戰績 ─── */}
-          <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.2)", animation: "slideUp 0.4s ease 0.15s both" }}>
+          <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(232,155,94,0.10)", border: "1px solid rgba(232,155,94,0.28)", animation: "slideUp 0.4s ease 0.15s both" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 20 }}>📊</span>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "#f59e0b" }}>本週戰績</div>
-                  <div style={{ fontSize: 11, color: "#64748b", fontFamily: "'Space Mono', monospace" }}>{getCurrentWeek()}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "#E89B5E" }}>本週戰績</div>
+                  <div style={{ fontSize: 11, color: "#8A7F6A", fontFamily: "'Space Mono', monospace" }}>{getCurrentWeek()}</div>
                 </div>
               </div>
               <button onClick={() => onRecord(myPlayer)}
-                style={{ padding: "7px 14px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                style={{ padding: "7px 14px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
                 onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
               >📝 記錄本週</button>
@@ -1995,14 +1995,14 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
               const week = getCurrentWeek();
               const thisWeek = (myPlayer.weeklyRecords || []).find(r => r.week === week);
               if (!thisWeek) {
-                return <div style={{ fontSize: 12, color: "#64748b", fontStyle: "italic" }}>本週尚未記錄戰績</div>;
+                return <div style={{ fontSize: 12, color: "#8A7F6A", fontStyle: "italic" }}>本週尚未記錄戰績</div>;
               }
               const wr = thisWeek.played > 0 ? Math.round((thisWeek.won / thisWeek.played) * 100) : 0;
               return (
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <span style={{ fontSize: 28, fontWeight: 800, color: "#f59e0b", fontFamily: "'Space Mono', monospace" }}>{wr}%</span>
-                  <span style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 }}>{thisWeek.won}W {thisWeek.played - thisWeek.won}L</span>
-                  <span style={{ fontSize: 11, color: "#64748b", marginLeft: "auto" }}>{thisWeek.played} 場</span>
+                  <span style={{ fontSize: 28, fontWeight: 800, color: "#E89B5E", fontFamily: "'Space Mono', monospace" }}>{wr}%</span>
+                  <span style={{ fontSize: 13, color: "#1E3A5F", fontWeight: 600 }}>{thisWeek.won}W {thisWeek.played - thisWeek.won}L</span>
+                  <span style={{ fontSize: 11, color: "#8A7F6A", marginLeft: "auto" }}>{thisWeek.played} 場</span>
                 </div>
               );
             })()}
@@ -2010,46 +2010,46 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
 
           {/* ─── 總戰績總覽 + 分享 ─── */}
           {stats ? (
-            <div style={{ padding: "20px 22px", borderRadius: 16, background: "linear-gradient(135deg, rgba(245,158,11,0.08), rgba(249,115,22,0.08))", border: "1px solid rgba(245,158,11,0.25)", animation: "slideUp 0.4s ease 0.2s both" }}>
-              <div style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>OVERALL</div>
+            <div style={{ padding: "20px 22px", borderRadius: 16, background: "linear-gradient(135deg, rgba(232,155,94,0.15), rgba(249,115,22,0.08))", border: "1px solid rgba(232,155,94,0.3)", animation: "slideUp 0.4s ease 0.2s both" }}>
+              <div style={{ fontSize: 11, color: "#E89B5E", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>OVERALL</div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
-                <span style={{ fontSize: 48, fontWeight: 900, color: "#f59e0b", fontFamily: "'Space Mono', monospace", lineHeight: 1 }}>{stats.rate}</span>
-                <span style={{ fontSize: 24, fontWeight: 800, color: "#f59e0b" }}>%</span>
-                <span style={{ fontSize: 13, color: "#94a3b8", marginLeft: "auto" }}>{stats.totalWon}W / {stats.totalPlayed} 場</span>
+                <span style={{ fontSize: 48, fontWeight: 900, color: "#E89B5E", fontFamily: "'Space Mono', monospace", lineHeight: 1 }}>{stats.rate}</span>
+                <span style={{ fontSize: 24, fontWeight: 800, color: "#E89B5E" }}>%</span>
+                <span style={{ fontSize: 13, color: "#5A7B9A", marginLeft: "auto" }}>{stats.totalWon}W / {stats.totalPlayed} 場</span>
               </div>
               {stats.recent && stats.recent.length > 1 && (
                 <>
-                  <div style={{ fontSize: 11, color: "#64748b", marginBottom: 6 }}>📈 近 {stats.recent.length} 週趨勢</div>
+                  <div style={{ fontSize: 11, color: "#8A7F6A", marginBottom: 6 }}>📈 近 {stats.recent.length} 週趨勢</div>
                   <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 48, marginBottom: 14 }}>
                     {stats.recent.slice().reverse().map((r, i) => {
                       const wr = r.played > 0 ? r.won / r.played : 0;
                       const h = Math.max(6, wr * 42);
-                      return <div key={i} style={{ flex: 1, height: h, borderRadius: 3, background: wr >= 0.5 ? "rgba(34,197,94,0.6)" : "rgba(239,68,68,0.5)", transition: "height 0.3s" }} title={`${r.week}: ${r.won}/${r.played}`}/>;
+                      return <div key={i} style={{ flex: 1, height: h, borderRadius: 3, background: wr >= 0.5 ? "rgba(127,168,124,0.6)" : "rgba(200,90,90,0.5)", transition: "height 0.3s" }} title={`${r.week}: ${r.won}/${r.played}`}/>;
                     })}
                   </div>
                 </>
               )}
               <button onClick={() => onShare(myPlayer)}
-                style={{ width: "100%", padding: "11px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
-                onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(245,158,11,0.3)"; }}
+                style={{ width: "100%", padding: "11px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(232,155,94,0.3)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "none"; }}
               >📤 分享我的戰績卡</button>
             </div>
           ) : (
-            <div style={{ padding: "24px", borderRadius: 16, background: "rgba(15,23,42,0.4)", border: "1px dashed rgba(148,163,184,0.2)", textAlign: "center", animation: "slideUp 0.4s ease 0.2s both" }}>
+            <div style={{ padding: "24px", borderRadius: 16, background: "rgba(248,242,229,0.5)", border: "1px dashed rgba(180,165,130,0.28)", textAlign: "center", animation: "slideUp 0.4s ease 0.2s both" }}>
               <div style={{ fontSize: 36, marginBottom: 8, opacity: 0.6 }}>📊</div>
-              <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 6 }}>還沒有戰績紀錄</div>
-              <div style={{ fontSize: 11, color: "#64748b" }}>記錄本週戰績後，這裡會顯示你的總勝率與趨勢圖</div>
+              <div style={{ fontSize: 13, color: "#5A7B9A", marginBottom: 6 }}>還沒有戰績紀錄</div>
+              <div style={{ fontSize: 11, color: "#8A7F6A" }}>記錄本週戰績後，這裡會顯示你的總勝率與趨勢圖</div>
             </div>
           )}
 
           {/* ─── 歷史戰績清單 ─── */}
           {sortedRecords.length > 0 && (
-            <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(15,23,42,0.4)", border: "1px solid rgba(148,163,184,0.1)", animation: "slideUp 0.4s ease 0.25s both" }}>
+            <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(248,242,229,0.5)", border: "1px solid rgba(180,165,130,0.15)", animation: "slideUp 0.4s ease 0.25s both" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
                 <span style={{ fontSize: 18 }}>📜</span>
-                <span style={{ fontSize: 14, fontWeight: 800, color: "#e2e8f0" }}>歷史戰績</span>
-                <span style={{ fontSize: 11, color: "#64748b" }}>（共 {sortedRecords.length} 週）</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#1E3A5F" }}>歷史戰績</span>
+                <span style={{ fontSize: 11, color: "#8A7F6A" }}>（共 {sortedRecords.length} 週）</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 320, overflowY: "auto" }}>
                 {sortedRecords.map((r, i) => {
@@ -2057,16 +2057,16 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
                   const isCurrentWeek = r.week === getCurrentWeek();
                   return (
                     <div key={r.week}
-                      style={{ padding: "10px 14px", borderRadius: 10, background: isCurrentWeek ? "rgba(245,158,11,0.08)" : "rgba(15,23,42,0.6)", border: "1px solid", borderColor: isCurrentWeek ? "rgba(245,158,11,0.25)" : "rgba(148,163,184,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                      style={{ padding: "10px 14px", borderRadius: 10, background: isCurrentWeek ? "rgba(232,155,94,0.15)" : "rgba(255,249,236,0.7)", border: "1px solid", borderColor: isCurrentWeek ? "rgba(232,155,94,0.3)" : "rgba(180,165,130,0.12)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: 12, color: isCurrentWeek ? "#f59e0b" : "#94a3b8", fontFamily: "'Space Mono', monospace", fontWeight: 600, minWidth: 80 }}>{r.week}</span>
-                        <span style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 }}>{r.won}W {r.played - r.won}L</span>
-                        <span style={{ fontSize: 13, color: wr >= 50 ? "#22c55e" : "#ef4444", fontWeight: 800, fontFamily: "'Space Mono', monospace", marginLeft: "auto" }}>{wr}%</span>
+                        <span style={{ fontSize: 12, color: isCurrentWeek ? "#E89B5E" : "#5A7B9A", fontFamily: "'Space Mono', monospace", fontWeight: 600, minWidth: 80 }}>{r.week}</span>
+                        <span style={{ fontSize: 13, color: "#1E3A5F", fontWeight: 600 }}>{r.won}W {r.played - r.won}L</span>
+                        <span style={{ fontSize: 13, color: wr >= 50 ? "#7FA87C" : "#C85A5A", fontWeight: 800, fontFamily: "'Space Mono', monospace", marginLeft: "auto" }}>{wr}%</span>
                       </div>
                       <button onClick={() => onEditRecord(myPlayer, r)}
-                        style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(148,163,184,0.15)", background: "transparent", color: "#94a3b8", fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.color = "#f59e0b"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148,163,184,0.15)"; e.currentTarget.style.color = "#94a3b8"; }}
+                        style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(180,165,130,0.22)", background: "transparent", color: "#5A7B9A", fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#E89B5E"; e.currentTarget.style.color = "#E89B5E"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(180,165,130,0.22)"; e.currentTarget.style.color = "#5A7B9A"; }}
                       >修改</button>
                     </div>
                   );
@@ -2076,16 +2076,16 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
           )}
 
           {/* ─── 推薦我的人 ─── */}
-          <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(96,165,250,0.05)", border: "1px solid rgba(96,165,250,0.2)", animation: "slideUp 0.4s ease 0.3s both" }}>
+          <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(90,143,168,0.10)", border: "1px solid rgba(90,143,168,0.28)", animation: "slideUp 0.4s ease 0.3s both" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
               <span style={{ fontSize: 18 }}>👍</span>
-              <span style={{ fontSize: 14, fontWeight: 800, color: "#60a5fa" }}>推薦我的人</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: "#5A8FA8" }}>推薦我的人</span>
               {recommendCount > 0 && (
-                <span style={{ fontSize: 12, padding: "2px 10px", borderRadius: 12, background: "rgba(96,165,250,0.15)", color: "#60a5fa", fontWeight: 700 }}>{recommendCount} 人</span>
+                <span style={{ fontSize: 12, padding: "2px 10px", borderRadius: 12, background: "rgba(90,143,168,0.25)", color: "#5A8FA8", fontWeight: 700 }}>{recommendCount} 人</span>
               )}
             </div>
             {recommendations.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "20px 0", color: "#64748b" }}>
+              <div style={{ textAlign: "center", padding: "20px 0", color: "#8A7F6A" }}>
                 <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>💭</div>
                 <div style={{ fontSize: 12 }}>還沒有人推薦你</div>
                 <div style={{ fontSize: 11, marginTop: 4, opacity: 0.8 }}>認真打球、多交朋友，推薦會累積的 💪</div>
@@ -2093,15 +2093,15 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" }}>
                 {recommendations.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map((rec, i) => (
-                  <div key={i} style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(15,23,42,0.6)", border: "1px solid rgba(96,165,250,0.1)" }}>
+                  <div key={i} style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(255,249,236,0.7)", border: "1px solid rgba(90,143,168,0.18)" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: rec.message ? 4 : 0 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "#60a5fa", display: "flex", alignItems: "center", gap: 5 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#5A8FA8", display: "flex", alignItems: "center", gap: 5 }}>
                         👤 {rec.fromName || "某位球員"}
                       </span>
-                      <span style={{ fontSize: 10, color: "#64748b" }}>{formatRelativeTime(rec.createdAt)}</span>
+                      <span style={{ fontSize: 10, color: "#8A7F6A" }}>{formatRelativeTime(rec.createdAt)}</span>
                     </div>
                     {rec.message && (
-                      <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5, fontStyle: "italic", wordBreak: "break-word" }}>
+                      <div style={{ fontSize: 12, color: "#3A5A7A", lineHeight: 1.5, fontStyle: "italic", wordBreak: "break-word" }}>
                         「{rec.message}」
                       </div>
                     )}
@@ -2112,12 +2112,12 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
           </div>
 
           {/* ─── 危險區域 ─── */}
-          <div style={{ marginTop: 14, paddingTop: 20, borderTop: "1px dashed rgba(239,68,68,0.2)", animation: "slideUp 0.4s ease 0.35s both" }}>
-            <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, letterSpacing: "0.04em", textAlign: "center" }}>危險區域</div>
+          <div style={{ marginTop: 14, paddingTop: 20, borderTop: "1px dashed rgba(200,90,90,0.28)", animation: "slideUp 0.4s ease 0.35s both" }}>
+            <div style={{ fontSize: 11, color: "#8A7F6A", marginBottom: 8, letterSpacing: "0.04em", textAlign: "center" }}>危險區域</div>
             <button onClick={() => onDelete(myPlayer.id)}
-              style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)", color: "#ef4444", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
-              onMouseEnter={(e) => { e.target.style.background = "rgba(239,68,68,0.12)"; }}
-              onMouseLeave={(e) => { e.target.style.background = "rgba(239,68,68,0.06)"; }}
+              style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(200,90,90,0.35)", background: "rgba(200,90,90,0.12)", color: "#C85A5A", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+              onMouseEnter={(e) => { e.target.style.background = "rgba(200,90,90,0.22)"; }}
+              onMouseLeave={(e) => { e.target.style.background = "rgba(200,90,90,0.12)"; }}
             >🗑️ 刪除我的球員資料</button>
           </div>
 
@@ -2151,37 +2151,37 @@ const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading, on
     return (
       <>
         <button ref={btnRef} onClick={() => setMenuOpen(o => !o)}
-          style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px 4px 4px", borderRadius: 20, border: "1px solid rgba(34,197,94,0.25)", background: "rgba(34,197,94,0.08)", cursor: "pointer", transition: "all 0.2s" }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.15)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(34,197,94,0.08)"; }}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px 4px 4px", borderRadius: 20, border: "1px solid rgba(127,168,124,0.32)", background: "rgba(127,168,124,0.15)", cursor: "pointer", transition: "all 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(127,168,124,0.25)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(127,168,124,0.15)"; }}
         >
           {currentUser.photoURL ? (
             <img src={currentUser.photoURL} alt="" style={{ width: 22, height: 22, borderRadius: "50%" }}/>
           ) : (
-            <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#a78bfa", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>
+            <span style={{ width: 22, height: 22, borderRadius: "50%", background: "#C4A788", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>
               {(currentUser.displayName || "?").charAt(0)}
             </span>
           )}
-          <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>已登入</span>
+          <span style={{ fontSize: 11, color: "#7FA87C", fontWeight: 700 }}>已登入</span>
         </button>
         {menuOpen && (
           <>
             <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 900 }}/>
-            <div style={{ position: "fixed", top: menuPos.top, right: menuPos.right, zIndex: 901, minWidth: 220, maxWidth: "calc(100vw - 24px)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", padding: "10px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", animation: "fadeIn 0.15s ease" }}>
-              <div style={{ padding: "8px 10px", borderBottom: "1px dashed rgba(148,163,184,0.15)", marginBottom: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.displayName || "—"}</div>
-                <div style={{ fontSize: 10, color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.email || ""}</div>
+            <div style={{ position: "fixed", top: menuPos.top, right: menuPos.right, zIndex: 901, minWidth: 220, maxWidth: "calc(100vw - 24px)", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", padding: "10px", boxShadow: "0 10px 30px rgba(30,58,95,0.20)", animation: "fadeIn 0.15s ease" }}>
+              <div style={{ padding: "8px 10px", borderBottom: "1px dashed rgba(180,165,130,0.22)", marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#1E3A5F", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.displayName || "—"}</div>
+                <div style={{ fontSize: 10, color: "#8A7F6A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.email || ""}</div>
               </div>
               <button onClick={() => { setMenuOpen(false); onOpenMemberCenter(); }}
-                style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, rgba(167,139,250,0.15), rgba(139,92,246,0.15))", color: "#a78bfa", fontSize: 12, fontWeight: 700, cursor: "pointer", textAlign: "left", transition: "background 0.15s", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(167,139,250,0.25), rgba(139,92,246,0.25))"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(167,139,250,0.15), rgba(139,92,246,0.15))"; }}
+                style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, rgba(196,167,136,0.22), rgba(139,92,246,0.15))", color: "#C4A788", fontSize: 12, fontWeight: 700, cursor: "pointer", textAlign: "left", transition: "background 0.15s", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(196,167,136,0.32), rgba(139,92,246,0.25))"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(196,167,136,0.22), rgba(139,92,246,0.15))"; }}
               >
                 <span style={{ fontSize: 14 }}>👤</span> 我的會員專區
               </button>
               <button onClick={() => { setMenuOpen(false); onLogout(); }}
-                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "none", background: "transparent", color: "#ef4444", fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "left", transition: "background 0.15s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "none", background: "transparent", color: "#C85A5A", fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "left", transition: "background 0.15s" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,90,90,0.15)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
                 ↩️ 登出
@@ -2195,9 +2195,9 @@ const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading, on
 
   return (
     <button onClick={onLogin} disabled={googleLoading}
-      style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid rgba(167,139,250,0.3)", background: "rgba(167,139,250,0.08)", color: "#a78bfa", fontSize: 11, fontWeight: 700, cursor: googleLoading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s" }}
-      onMouseEnter={(e) => { if (!googleLoading) e.currentTarget.style.background = "rgba(167,139,250,0.15)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(167,139,250,0.08)"; }}
+      style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid rgba(196,167,136,0.3)", background: "rgba(196,167,136,0.15)", color: "#C4A788", fontSize: 11, fontWeight: 700, cursor: googleLoading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s" }}
+      onMouseEnter={(e) => { if (!googleLoading) e.currentTarget.style.background = "rgba(196,167,136,0.22)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(196,167,136,0.15)"; }}
     >
       {googleLoading ? "登入中..." : (
         <>
@@ -2248,29 +2248,29 @@ const CreatePlayerModal = ({ open, onClose, onSubmit, currentUser }) => {
   const inp = (label, field, opts = {}) => (
     <div style={{ marginBottom: 14 }} key={field}>
       <label style={labelStyle}>{label}{opts.required && " *"}</label>
-      {opts.children || <input value={form[field]} onChange={(e) => { setForm(f => ({...f, [field]: e.target.value})); if (errors[field]) setErrors(er => ({...er, [field]: ""})); }} type={opts.type || "text"} placeholder={opts.placeholder} style={{ ...inputStyle, borderColor: errors[field] ? "#ef4444" : "rgba(148,163,184,0.15)" }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = errors[field] ? "#ef4444" : "rgba(148,163,184,0.15)"; }}/>}
-      {errors[field] && <div style={{ fontSize: 11, color: "#ef4444", marginTop: 4 }}>{errors[field]}</div>}
+      {opts.children || <input value={form[field]} onChange={(e) => { setForm(f => ({...f, [field]: e.target.value})); if (errors[field]) setErrors(er => ({...er, [field]: ""})); }} type={opts.type || "text"} placeholder={opts.placeholder} style={{ ...inputStyle, borderColor: errors[field] ? "#C85A5A" : "rgba(180,165,130,0.22)" }} onFocus={(e) => { e.target.style.borderColor = "#C4A788"; }} onBlur={(e) => { e.target.style.borderColor = errors[field] ? "#C85A5A" : "rgba(180,165,130,0.22)"; }}/>}
+      {errors[field] && <div style={{ fontSize: 11, color: "#C85A5A", marginTop: 4 }}>{errors[field]}</div>}
     </div>
   );
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 901, maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: "24px 24px 0 0", border: "1px solid rgba(148,163,184,0.12)", borderBottom: "none", animation: "slideUpModal 0.35s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 -10px 60px rgba(0,0,0,0.5)" }}>
-        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}><div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(148,163,184,0.25)" }}/></div>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.25)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 901, maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: "24px 24px 0 0", border: "1px solid rgba(180,165,130,0.18)", borderBottom: "none", animation: "slideUpModal 0.35s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 -10px 60px rgba(30,58,95,0.20)" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}><div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(180,165,130,0.35)" }}/></div>
         <div style={{ padding: "8px 24px 32px", maxWidth: 520, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#a78bfa" }}>🙋 註冊球員資料</h2>
-            <button onClick={onClose} style={{ background: "rgba(148,163,184,0.1)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#94a3b8", display: "flex" }}><CloseIcon/></button>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#C4A788" }}>🙋 註冊球員資料</h2>
+            <button onClick={onClose} style={{ background: "rgba(180,165,130,0.15)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#5A7B9A", display: "flex" }}><CloseIcon/></button>
           </div>
 
           {/* Google 登入者橫幅 */}
           {currentUser && (
-            <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 12, background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)", display: "flex", alignItems: "center", gap: 10 }}>
-              {currentUser.photoURL && <img src={currentUser.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: "50%", border: "2px solid rgba(34,197,94,0.4)" }}/>}
+            <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 12, background: "rgba(127,168,124,0.15)", border: "1px solid rgba(127,168,124,0.32)", display: "flex", alignItems: "center", gap: 10 }}>
+              {currentUser.photoURL && <img src={currentUser.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: "50%", border: "2px solid rgba(127,168,124,0.4)" }}/>}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, color: "#22c55e", fontWeight: 700, marginBottom: 2 }}>✓ 已用 Google 登入</div>
-                <div style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.displayName}</div>
+                <div style={{ fontSize: 11, color: "#7FA87C", fontWeight: 700, marginBottom: 2 }}>✓ 已用 Google 登入</div>
+                <div style={{ fontSize: 13, color: "#1E3A5F", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.displayName}</div>
               </div>
             </div>
           )}
@@ -2298,21 +2298,21 @@ const CreatePlayerModal = ({ open, onClose, onSubmit, currentUser }) => {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {TIME_SLOTS.map(slot => (
                 <button key={slot} onClick={() => toggleSlot(slot)}
-                  style={{ padding: "6px 14px", borderRadius: 10, border: "1px solid", borderColor: form.timeSlots.includes(slot) ? "#a78bfa" : "rgba(148,163,184,0.2)", background: form.timeSlots.includes(slot) ? "rgba(167,139,250,0.12)" : "transparent", color: form.timeSlots.includes(slot) ? "#a78bfa" : "var(--text-secondary)", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+                  style={{ padding: "6px 14px", borderRadius: 10, border: "1px solid", borderColor: form.timeSlots.includes(slot) ? "#C4A788" : "rgba(180,165,130,0.28)", background: form.timeSlots.includes(slot) ? "rgba(196,167,136,0.18)" : "transparent", color: form.timeSlots.includes(slot) ? "#C4A788" : "var(--text-secondary)", fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
                 >{slot}</button>
               ))}
             </div>
           </div>
 
           {inp("自我介紹（選填）", "intro", { children:
-            <textarea value={form.intro} onChange={(e) => setForm(f => ({...f, intro: e.target.value}))} placeholder="例：週末固定打球，喜歡 6-2 陣型，歡迎約打！" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: 60 }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/>
+            <textarea value={form.intro} onChange={(e) => setForm(f => ({...f, intro: e.target.value}))} placeholder="例：週末固定打球，喜歡 6-2 陣型，歡迎約打！" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: 60 }} onFocus={(e) => { e.target.style.borderColor = "#C4A788"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(180,165,130,0.22)"; }}/>
           })}
 
           {/* Skill evaluation */}
-          <div style={{ marginBottom: 18, padding: "16px", borderRadius: 14, background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
+          <div style={{ marginBottom: 18, padding: "16px", borderRadius: 14, background: "rgba(196,167,136,0.08)", border: "1px solid rgba(196,167,136,0.22)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: "#a78bfa" }}>📊 技能自評</span>
-              <span style={{ fontSize: 11, color: "#64748b" }}>選擇最符合你的描述</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#C4A788" }}>📊 技能自評</span>
+              <span style={{ fontSize: 11, color: "#8A7F6A" }}>選擇最符合你的描述</span>
             </div>
             {Object.values(form.skills).some(v => v > 0) && (
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
@@ -2328,10 +2328,10 @@ const CreatePlayerModal = ({ open, onClose, onSubmit, currentUser }) => {
                     const selected = form.skills[dim.key] === lv;
                     return (
                       <button key={lv} onClick={() => setForm(f => ({ ...f, skills: { ...f.skills, [dim.key]: selected ? 0 : lv } }))}
-                        style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 10px", borderRadius: 8, border: "1px solid", borderColor: selected ? "#a78bfa" : "rgba(148,163,184,0.12)", background: selected ? "rgba(167,139,250,0.12)" : "transparent", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
-                        <span style={{ minWidth: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, background: selected ? "#a78bfa" : "rgba(148,163,184,0.1)", color: selected ? "#fff" : "#94a3b8", flexShrink: 0 }}>{lv}</span>
+                        style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 10px", borderRadius: 8, border: "1px solid", borderColor: selected ? "#C4A788" : "rgba(180,165,130,0.18)", background: selected ? "rgba(196,167,136,0.18)" : "transparent", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+                        <span style={{ minWidth: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, background: selected ? "#C4A788" : "rgba(180,165,130,0.15)", color: selected ? "#fff" : "#5A7B9A", flexShrink: 0 }}>{lv}</span>
                         <div>
-                          <span style={{ fontSize: 10, color: selected ? "#a78bfa" : "#64748b", fontWeight: 600 }}>{LEVEL_TAGS[i]}</span>
+                          <span style={{ fontSize: 10, color: selected ? "#C4A788" : "#8A7F6A", fontWeight: 600 }}>{LEVEL_TAGS[i]}</span>
                           <div style={{ fontSize: 12, color: selected ? "var(--text-primary)" : "var(--text-secondary)", lineHeight: 1.5 }}>{desc}</div>
                         </div>
                       </button>
@@ -2346,7 +2346,7 @@ const CreatePlayerModal = ({ open, onClose, onSubmit, currentUser }) => {
           {!currentUser && inp("設定密碼（用來保護你的資料）", "password", { type: "password", required: true, placeholder: "之後編輯/刪除時需要" })}
 
           <button onClick={handleSubmit}
-            style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #C4A788, #A88B6B)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
             onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
           >✅ 發佈球員資料</button>
@@ -2389,29 +2389,29 @@ const WeeklyRecordModal = ({ open, onClose, player, onSave }) => {
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(245,158,11,0.25)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(232,155,94,0.3)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
           <span style={{ fontSize: 20 }}>📊</span>
-          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>記錄本週戰績</h3>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1E3A5F" }}>記錄本週戰績</h3>
         </div>
-        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: "#5A7B9A", marginBottom: 16, lineHeight: 1.5 }}>
           {week}{existing ? "（已有紀錄，提交會覆蓋）" : ""}
         </p>
 
         {stats && (
           <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-            <div style={{ flex: 1, textAlign: "center", padding: "8px", borderRadius: 8, background: "rgba(245,158,11,0.06)" }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#f59e0b", fontFamily: "'Space Mono', monospace" }}>{stats.rate}%</div>
-              <div style={{ fontSize: 10, color: "#64748b" }}>總勝率</div>
+            <div style={{ flex: 1, textAlign: "center", padding: "8px", borderRadius: 8, background: "rgba(232,155,94,0.12)" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#E89B5E", fontFamily: "'Space Mono', monospace" }}>{stats.rate}%</div>
+              <div style={{ fontSize: 10, color: "#8A7F6A" }}>總勝率</div>
             </div>
-            <div style={{ flex: 1, textAlign: "center", padding: "8px", borderRadius: 8, background: "rgba(34,197,94,0.06)" }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#22c55e", fontFamily: "'Space Mono', monospace" }}>{stats.totalWon}</div>
-              <div style={{ fontSize: 10, color: "#64748b" }}>總勝場</div>
+            <div style={{ flex: 1, textAlign: "center", padding: "8px", borderRadius: 8, background: "rgba(127,168,124,0.12)" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#7FA87C", fontFamily: "'Space Mono', monospace" }}>{stats.totalWon}</div>
+              <div style={{ fontSize: 10, color: "#8A7F6A" }}>總勝場</div>
             </div>
-            <div style={{ flex: 1, textAlign: "center", padding: "8px", borderRadius: 8, background: "rgba(96,165,250,0.06)" }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#60a5fa", fontFamily: "'Space Mono', monospace" }}>{stats.totalPlayed}</div>
-              <div style={{ fontSize: 10, color: "#64748b" }}>總場數</div>
+            <div style={{ flex: 1, textAlign: "center", padding: "8px", borderRadius: 8, background: "rgba(90,143,168,0.12)" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#5A8FA8", fontFamily: "'Space Mono', monospace" }}>{stats.totalPlayed}</div>
+              <div style={{ fontSize: 10, color: "#8A7F6A" }}>總場數</div>
             </div>
           </div>
         )}
@@ -2421,39 +2421,39 @@ const WeeklyRecordModal = ({ open, onClose, player, onSave }) => {
             <label style={labelStyle}>本週打了幾場 *</label>
             <input type="number" min="0" max="50" value={played} onChange={(e) => { setPlayed(e.target.value); setError(""); }}
               placeholder="例：5"
-              style={{ ...inputStyle, borderColor: error && !played ? "#ef4444" : "rgba(148,163,184,0.15)" }}
-              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
-              onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}
+              style={{ ...inputStyle, borderColor: error && !played ? "#C85A5A" : "rgba(180,165,130,0.22)" }}
+              onFocus={(e) => { e.target.style.borderColor = "#E89B5E"; }}
+              onBlur={(e) => { e.target.style.borderColor = "rgba(180,165,130,0.22)"; }}
             />
           </div>
           <div style={{ flex: 1 }}>
             <label style={labelStyle}>贏了幾場 *</label>
             <input type="number" min="0" max="50" value={won} onChange={(e) => { setWon(e.target.value); setError(""); }}
               placeholder="例：3"
-              style={{ ...inputStyle, borderColor: error && (!won && won !== "0") ? "#ef4444" : "rgba(148,163,184,0.15)" }}
-              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
-              onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}
+              style={{ ...inputStyle, borderColor: error && (!won && won !== "0") ? "#C85A5A" : "rgba(180,165,130,0.22)" }}
+              onFocus={(e) => { e.target.style.borderColor = "#E89B5E"; }}
+              onBlur={(e) => { e.target.style.borderColor = "rgba(180,165,130,0.22)"; }}
             />
           </div>
         </div>
 
         {played && won !== "" && Number(played) > 0 && (
-          <div style={{ textAlign: "center", marginBottom: 14, padding: "10px", borderRadius: 10, background: "rgba(245,158,11,0.08)" }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "#f59e0b", fontFamily: "'Space Mono', monospace" }}>
+          <div style={{ textAlign: "center", marginBottom: 14, padding: "10px", borderRadius: 10, background: "rgba(232,155,94,0.15)" }}>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "#E89B5E", fontFamily: "'Space Mono', monospace" }}>
               {Math.round((Number(won) / Number(played)) * 100)}%
             </span>
-            <span style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}>
+            <span style={{ fontSize: 12, color: "#8A7F6A", marginLeft: 8 }}>
               {won}W {Number(played) - Number(won)}L
             </span>
           </div>
         )}
 
-        {error && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 12 }}>{error}</div>}
+        {error && <div style={{ fontSize: 12, color: "#C85A5A", marginBottom: 12 }}>{error}</div>}
 
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+          <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
           <button onClick={handleSubmit}
-            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
             onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
             onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
           >📊 記錄戰績</button>
@@ -2477,19 +2477,19 @@ const EditPlayerModal = ({ open, onClose, player, onSave, onDelete }) => {
   const inp = (label, field, opts = {}) => (
     <div style={{ marginBottom: 14 }} key={field}>
       <label style={labelStyle}>{label}</label>
-      {opts.children || <input value={form[field] || ""} onChange={(e) => setForm(f => ({...f, [field]: e.target.value}))} type={opts.type || "text"} placeholder={opts.placeholder} style={inputStyle} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/>}
+      {opts.children || <input value={form[field] || ""} onChange={(e) => setForm(f => ({...f, [field]: e.target.value}))} type={opts.type || "text"} placeholder={opts.placeholder} style={inputStyle} onFocus={(e) => { e.target.style.borderColor = "#C4A788"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(180,165,130,0.22)"; }}/>}
     </div>
   );
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 901, maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: "24px 24px 0 0", border: "1px solid rgba(148,163,184,0.12)", borderBottom: "none", animation: "slideUpModal 0.35s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 -10px 60px rgba(0,0,0,0.5)" }}>
-        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}><div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(148,163,184,0.25)" }}/></div>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.25)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 901, maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: "24px 24px 0 0", border: "1px solid rgba(180,165,130,0.18)", borderBottom: "none", animation: "slideUpModal 0.35s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 -10px 60px rgba(30,58,95,0.20)" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}><div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(180,165,130,0.35)" }}/></div>
         <div style={{ padding: "8px 24px 32px", maxWidth: 520, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#a78bfa" }}>✏️ 編輯球員資料</h2>
-            <button onClick={onClose} style={{ background: "rgba(148,163,184,0.1)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#94a3b8", display: "flex" }}><CloseIcon/></button>
+            <h2 style={{ fontSize: 20, fontWeight: 800, color: "#C4A788" }}>✏️ 編輯球員資料</h2>
+            <button onClick={onClose} style={{ background: "rgba(180,165,130,0.15)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#5A7B9A", display: "flex" }}><CloseIcon/></button>
           </div>
           {inp("暱稱 *", "nickname", { placeholder: "你想被怎麼稱呼？" })}
           <div style={{ display: "flex", gap: 10 }}>
@@ -2506,15 +2506,15 @@ const EditPlayerModal = ({ open, onClose, player, onSave, onDelete }) => {
             <label style={labelStyle}>可打時段</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {TIME_SLOTS.map(slot => (
-                <button key={slot} onClick={() => toggleSlot(slot)} style={{ padding: "6px 14px", borderRadius: 10, border: "1px solid", borderColor: form.timeSlots?.includes(slot) ? "#a78bfa" : "rgba(148,163,184,0.2)", background: form.timeSlots?.includes(slot) ? "rgba(167,139,250,0.12)" : "transparent", color: form.timeSlots?.includes(slot) ? "#a78bfa" : "var(--text-secondary)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{slot}</button>
+                <button key={slot} onClick={() => toggleSlot(slot)} style={{ padding: "6px 14px", borderRadius: 10, border: "1px solid", borderColor: form.timeSlots?.includes(slot) ? "#C4A788" : "rgba(180,165,130,0.28)", background: form.timeSlots?.includes(slot) ? "rgba(196,167,136,0.18)" : "transparent", color: form.timeSlots?.includes(slot) ? "#C4A788" : "var(--text-secondary)", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>{slot}</button>
               ))}
             </div>
           </div>
-          {inp("自我介紹", "intro", { children: <textarea value={form.intro} onChange={(e) => setForm(f => ({...f, intro: e.target.value}))} placeholder="歡迎約打！" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: 60 }} onFocus={(e) => { e.target.style.borderColor = "#a78bfa"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(148,163,184,0.15)"; }}/> })}
+          {inp("自我介紹", "intro", { children: <textarea value={form.intro} onChange={(e) => setForm(f => ({...f, intro: e.target.value}))} placeholder="歡迎約打！" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: 60 }} onFocus={(e) => { e.target.style.borderColor = "#C4A788"; }} onBlur={(e) => { e.target.style.borderColor = "rgba(180,165,130,0.22)"; }}/> })}
 
-          <div style={{ marginBottom: 18, padding: "16px", borderRadius: 14, background: "rgba(167,139,250,0.04)", border: "1px solid rgba(167,139,250,0.15)" }}>
+          <div style={{ marginBottom: 18, padding: "16px", borderRadius: 14, background: "rgba(196,167,136,0.08)", border: "1px solid rgba(196,167,136,0.22)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: "#a78bfa" }}>📊 技能自評</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#C4A788" }}>📊 技能自評</span>
             </div>
             {form.skills && Object.values(form.skills).some(v => v > 0) && (
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
@@ -2530,10 +2530,10 @@ const EditPlayerModal = ({ open, onClose, player, onSave, onDelete }) => {
                     const selected = form.skills?.[dim.key] === lv;
                     return (
                       <button key={lv} onClick={() => setForm(f => ({ ...f, skills: { ...f.skills, [dim.key]: selected ? 0 : lv } }))}
-                        style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 10px", borderRadius: 8, border: "1px solid", borderColor: selected ? "#a78bfa" : "rgba(148,163,184,0.12)", background: selected ? "rgba(167,139,250,0.12)" : "transparent", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
-                        <span style={{ minWidth: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, background: selected ? "#a78bfa" : "rgba(148,163,184,0.1)", color: selected ? "#fff" : "#94a3b8", flexShrink: 0 }}>{lv}</span>
+                        style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 10px", borderRadius: 8, border: "1px solid", borderColor: selected ? "#C4A788" : "rgba(180,165,130,0.18)", background: selected ? "rgba(196,167,136,0.18)" : "transparent", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+                        <span style={{ minWidth: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, background: selected ? "#C4A788" : "rgba(180,165,130,0.15)", color: selected ? "#fff" : "#5A7B9A", flexShrink: 0 }}>{lv}</span>
                         <div>
-                          <span style={{ fontSize: 10, color: selected ? "#a78bfa" : "#64748b", fontWeight: 600 }}>{LEVEL_TAGS[i]}</span>
+                          <span style={{ fontSize: 10, color: selected ? "#C4A788" : "#8A7F6A", fontWeight: 600 }}>{LEVEL_TAGS[i]}</span>
                           <div style={{ fontSize: 12, color: selected ? "var(--text-primary)" : "var(--text-secondary)", lineHeight: 1.5 }}>{desc}</div>
                         </div>
                       </button>
@@ -2545,11 +2545,11 @@ const EditPlayerModal = ({ open, onClose, player, onSave, onDelete }) => {
           </div>
 
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={onClose} style={{ flex: 1, padding: "14px", borderRadius: 14, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
-            <button onClick={() => onSave(player.id, form)} style={{ flex: 2, padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>💾 儲存</button>
+            <button onClick={onClose} style={{ flex: 1, padding: "14px", borderRadius: 14, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>取消</button>
+            <button onClick={() => onSave(player.id, form)} style={{ flex: 2, padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #C4A788, #A88B6B)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>💾 儲存</button>
           </div>
-          <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed rgba(239,68,68,0.15)" }}>
-            <button onClick={() => onDelete(player.id)} style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)", color: "#ef4444", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>🗑️ 刪除我的資料</button>
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed rgba(200,90,90,0.25)" }}>
+            <button onClick={() => onDelete(player.id)} style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(200,90,90,0.35)", background: "rgba(200,90,90,0.12)", color: "#C85A5A", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>🗑️ 刪除我的資料</button>
           </div>
         </div>
       </div>
@@ -2605,45 +2605,45 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
   if (!open) return null;
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 901, maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: "24px 24px 0 0", border: "1px solid rgba(148,163,184,0.12)", borderBottom: "none", animation: "slideUpModal 0.35s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 -10px 60px rgba(0,0,0,0.5)" }}>
-        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}><div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(148,163,184,0.25)" }}/></div>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.25)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 901, maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: "24px 24px 0 0", border: "1px solid rgba(180,165,130,0.18)", borderBottom: "none", animation: "slideUpModal 0.35s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 -10px 60px rgba(30,58,95,0.20)" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}><div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(180,165,130,0.35)" }}/></div>
         <div style={{ padding: "8px 24px 32px", maxWidth: 520, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 800, color: "#f59e0b", marginBottom: 4 }}>🏐 我要開場</h2>
-              <p style={{ fontSize: 12, color: "#64748b" }}>{step === 1 ? "步驟 1/2 — 場地與主揪" : "步驟 2/2 — 場次細節"}</p>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: "#E89B5E", marginBottom: 4 }}>🏐 我要開場</h2>
+              <p style={{ fontSize: 12, color: "#8A7F6A" }}>{step === 1 ? "步驟 1/2 — 場地與主揪" : "步驟 2/2 — 場次細節"}</p>
             </div>
-            <button onClick={onClose} style={{ background: "rgba(148,163,184,0.1)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#94a3b8", display: "flex" }}><CloseIcon/></button>
+            <button onClick={onClose} style={{ background: "rgba(180,165,130,0.15)", border: "none", borderRadius: 10, padding: 8, cursor: "pointer", color: "#5A7B9A", display: "flex" }}><CloseIcon/></button>
           </div>
-          <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>{[1,2].map(s => (<div key={s} style={{ flex: 1, height: 4, borderRadius: 2, background: s <= step ? "#f59e0b" : "rgba(148,163,184,0.15)", transition: "background 0.3s ease" }}/>))}</div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>{[1,2].map(s => (<div key={s} style={{ flex: 1, height: 4, borderRadius: 2, background: s <= step ? "#E89B5E" : "rgba(180,165,130,0.22)", transition: "background 0.3s ease" }}/>))}</div>
 
           {step === 1 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 16, animation: "fadeIn 0.3s ease" }}>
               <div>
                 <label style={labelStyle}>場地名稱 *</label>
-                <input value={form.courtName} onChange={(e) => setForm({...form, courtName: e.target.value})} placeholder="例：大安運動中心、XX國小體育館" style={{...inputStyle, borderColor: errors.courtName ? "#ef4444" : "rgba(148,163,184,0.15)"}} onFocus={(e)=>{e.target.style.borderColor="#f59e0b";}} onBlur={(e)=>{e.target.style.borderColor=errors.courtName?"#ef4444":"rgba(148,163,184,0.15)";}}/>
-                {errors.courtName && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.courtName}</span>}
+                <input value={form.courtName} onChange={(e) => setForm({...form, courtName: e.target.value})} placeholder="例：大安運動中心、XX國小體育館" style={{...inputStyle, borderColor: errors.courtName ? "#C85A5A" : "rgba(180,165,130,0.22)"}} onFocus={(e)=>{e.target.style.borderColor="#E89B5E";}} onBlur={(e)=>{e.target.style.borderColor=errors.courtName?"#C85A5A":"rgba(180,165,130,0.22)";}}/>
+                {errors.courtName && <span style={{ fontSize: 11, color: "#C85A5A", marginTop: 4, display: "block" }}>{errors.courtName}</span>}
               </div>
               <div>
                 <label style={labelStyle}>地區 *</label>
-                <input value={form.area} onChange={(e) => setForm({...form, area: e.target.value})} placeholder="例：大安區、信義區、新莊區" style={{...inputStyle, borderColor: errors.area ? "#ef4444" : "rgba(148,163,184,0.15)"}} onFocus={(e)=>{e.target.style.borderColor="#f59e0b";}} onBlur={(e)=>{e.target.style.borderColor=errors.area?"#ef4444":"rgba(148,163,184,0.15)";}}/>
-                {errors.area && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.area}</span>}
+                <input value={form.area} onChange={(e) => setForm({...form, area: e.target.value})} placeholder="例：大安區、信義區、新莊區" style={{...inputStyle, borderColor: errors.area ? "#C85A5A" : "rgba(180,165,130,0.22)"}} onFocus={(e)=>{e.target.style.borderColor="#E89B5E";}} onBlur={(e)=>{e.target.style.borderColor=errors.area?"#C85A5A":"rgba(180,165,130,0.22)";}}/>
+                {errors.area && <span style={{ fontSize: 11, color: "#C85A5A", marginTop: 4, display: "block" }}>{errors.area}</span>}
               </div>
               <div>
                 <label style={labelStyle}>你的名稱（暱稱）*</label>
-                <input value={form.hostName} onChange={(e) => setForm({...form, hostName: e.target.value})} placeholder="讓大家知道誰在揪" style={{...inputStyle, borderColor: errors.hostName ? "#ef4444" : "rgba(148,163,184,0.15)"}} onFocus={(e)=>{e.target.style.borderColor="#f59e0b";}} onBlur={(e)=>{e.target.style.borderColor=errors.hostName?"#ef4444":"rgba(148,163,184,0.15)";}}/>
-                {errors.hostName && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.hostName}</span>}
+                <input value={form.hostName} onChange={(e) => setForm({...form, hostName: e.target.value})} placeholder="讓大家知道誰在揪" style={{...inputStyle, borderColor: errors.hostName ? "#C85A5A" : "rgba(180,165,130,0.22)"}} onFocus={(e)=>{e.target.style.borderColor="#E89B5E";}} onBlur={(e)=>{e.target.style.borderColor=errors.hostName?"#C85A5A":"rgba(180,165,130,0.22)";}}/>
+                {errors.hostName && <span style={{ fontSize: 11, color: "#C85A5A", marginTop: 4, display: "block" }}>{errors.hostName}</span>}
               </div>
               <div>
                 <label style={labelStyle}>🔒 編輯密碼 *</label>
-                <input type="password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} placeholder="設定密碼，之後修改場次時需要驗證" style={{...inputStyle, borderColor: errors.password ? "#ef4444" : "rgba(148,163,184,0.15)"}} onFocus={(e)=>{e.target.style.borderColor="#f59e0b";}} onBlur={(e)=>{e.target.style.borderColor=errors.password?"#ef4444":"rgba(148,163,184,0.15)";}}/>
-                {errors.password && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.password}</span>}
-                <span style={{ fontSize: 11, color: "#64748b", marginTop: 4, display: "block" }}>此密碼用於日後編輯場次資訊，請牢記</span>
+                <input type="password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} placeholder="設定密碼，之後修改場次時需要驗證" style={{...inputStyle, borderColor: errors.password ? "#C85A5A" : "rgba(180,165,130,0.22)"}} onFocus={(e)=>{e.target.style.borderColor="#E89B5E";}} onBlur={(e)=>{e.target.style.borderColor=errors.password?"#C85A5A":"rgba(180,165,130,0.22)";}}/>
+                {errors.password && <span style={{ fontSize: 11, color: "#C85A5A", marginTop: 4, display: "block" }}>{errors.password}</span>}
+                <span style={{ fontSize: 11, color: "#8A7F6A", marginTop: 4, display: "block" }}>此密碼用於日後編輯場次資訊，請牢記</span>
               </div>
               <button onClick={() => { const e = {}; if (!form.courtName.trim()) e.courtName = "請輸入場地名稱"; if (!form.area.trim()) e.area = "請輸入地區"; if (!form.hostName.trim()) e.hostName = "請輸入你的名稱"; if (!form.password) e.password = "請設定編輯密碼"; setErrors(e); if (Object.keys(e).length === 0) setStep(2); }}
-                style={{ padding: "14px", borderRadius: 14, border: "none", marginTop: 4, background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(245,158,11,0.3)"; }}
+                style={{ padding: "14px", borderRadius: 14, border: "none", marginTop: 4, background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(232,155,94,0.3)"; }}
                 onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "none"; }}
               >下一步 →</button>
             </div>
@@ -2658,24 +2658,24 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
               <div style={{ display: "flex", gap: 12 }}>
                 <div style={{ flex: 1 }}>
                   <label style={labelStyle}>目前已有幾人</label>
-                  <input type="number" min="1" max="18" value={form.currentPeople} onChange={(e) => setForm({...form, currentPeople: e.target.value})} style={{...inputStyle, borderColor: errors.currentPeople ? "#ef4444" : "rgba(148,163,184,0.15)"}}/>
-                  {errors.currentPeople && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.currentPeople}</span>}
+                  <input type="number" min="1" max="18" value={form.currentPeople} onChange={(e) => setForm({...form, currentPeople: e.target.value})} style={{...inputStyle, borderColor: errors.currentPeople ? "#C85A5A" : "rgba(180,165,130,0.22)"}}/>
+                  {errors.currentPeople && <span style={{ fontSize: 11, color: "#C85A5A", marginTop: 4, display: "block" }}>{errors.currentPeople}</span>}
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={labelStyle}>人數上限</label>
-                  <input type="number" min="12" max="24" value={form.maxPeople} onChange={(e) => setForm({...form, maxPeople: e.target.value})} style={{...inputStyle, borderColor: errors.maxPeople ? "#ef4444" : "rgba(148,163,184,0.15)"}}/>
-                  {errors.maxPeople && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.maxPeople}</span>}
+                  <input type="number" min="12" max="24" value={form.maxPeople} onChange={(e) => setForm({...form, maxPeople: e.target.value})} style={{...inputStyle, borderColor: errors.maxPeople ? "#C85A5A" : "rgba(180,165,130,0.22)"}}/>
+                  {errors.maxPeople && <span style={{ fontSize: 11, color: "#C85A5A", marginTop: 4, display: "block" }}>{errors.maxPeople}</span>}
                 </div>
               </div>
               {Number(form.currentPeople) >= 1 && Number(form.currentPeople) < 12 && (
-                <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", fontSize: 13, color: "#f59e0b" }}>🔥 還差 <strong>{12 - Number(form.currentPeople)}</strong> 人可以成團（最低 12 人）</div>
+                <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(232,155,94,0.15)", border: "1px solid rgba(232,155,94,0.25)", fontSize: 13, color: "#E89B5E" }}>🔥 還差 <strong>{12 - Number(form.currentPeople)}</strong> 人可以成團（最低 12 人）</div>
               )}
               <div style={{ display: "flex", gap: 12 }}>
                 <div style={{ flex: 1 }}><label style={labelStyle}>程度 *</label><select value={form.level} onChange={(e) => setForm({...form, level: e.target.value})} style={{...inputStyle, cursor: "pointer"}}>{LEVELS_INPUT.map(l => <option key={l} value={l}>{l}</option>)}</select></div>
                 <div style={{ flex: 1 }}>
                   <label style={labelStyle}>每人費用 (NT$) *</label>
-                  <input type="number" min="0" step="10" value={form.fee} onChange={(e) => setForm({...form, fee: e.target.value})} placeholder="例：150" style={{...inputStyle, borderColor: errors.fee ? "#ef4444" : "rgba(148,163,184,0.15)"}}/>
-                  {errors.fee && <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>{errors.fee}</span>}
+                  <input type="number" min="0" step="10" value={form.fee} onChange={(e) => setForm({...form, fee: e.target.value})} placeholder="例：150" style={{...inputStyle, borderColor: errors.fee ? "#C85A5A" : "rgba(180,165,130,0.22)"}}/>
+                  {errors.fee && <span style={{ fontSize: 11, color: "#C85A5A", marginTop: 4, display: "block" }}>{errors.fee}</span>}
                 </div>
               </div>
               <div>
@@ -2683,31 +2683,31 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
                 <input value={form.signupUrl} onChange={(e) => setForm({...form, signupUrl: e.target.value})} placeholder="例：https://www.facebook.com/groups/..."
                   style={{
                     ...inputStyle,
-                    borderColor: form.signupUrl && !isValidUrl(form.signupUrl) ? "#ef4444" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#22c55e" : "rgba(148,163,184,0.15)")
+                    borderColor: form.signupUrl && !isValidUrl(form.signupUrl) ? "#C85A5A" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#7FA87C" : "rgba(180,165,130,0.22)")
                   }}
                   onFocus={(e)=>{
-                    if (!form.signupUrl) e.target.style.borderColor = "#f59e0b";
+                    if (!form.signupUrl) e.target.style.borderColor = "#E89B5E";
                   }}
                   onBlur={(e)=>{
-                    e.target.style.borderColor = form.signupUrl && !isValidUrl(form.signupUrl) ? "#ef4444" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#22c55e" : "rgba(148,163,184,0.15)");
+                    e.target.style.borderColor = form.signupUrl && !isValidUrl(form.signupUrl) ? "#C85A5A" : (form.signupUrl && isValidUrl(form.signupUrl) ? "#7FA87C" : "rgba(180,165,130,0.22)");
                   }}
                 />
                 {form.signupUrl && !isValidUrl(form.signupUrl) ? (
-                  <span style={{ fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" }}>⚠️ 這不是有效的網址，請以 http:// 或 https:// 開頭（留空也 OK）</span>
+                  <span style={{ fontSize: 11, color: "#C85A5A", marginTop: 4, display: "block" }}>⚠️ 這不是有效的網址，請以 http:// 或 https:// 開頭（留空也 OK）</span>
                 ) : form.signupUrl && isValidUrl(form.signupUrl) ? (
-                  <span style={{ fontSize: 11, color: "#22c55e", marginTop: 4, display: "block" }}>✓ 網址格式正確</span>
+                  <span style={{ fontSize: 11, color: "#7FA87C", marginTop: 4, display: "block" }}>✓ 網址格式正確</span>
                 ) : (
-                  <span style={{ fontSize: 11, color: "#64748b", marginTop: 4, display: "block" }}>貼上 FB 社團、LINE 群組或其他報名頁面的網址</span>
+                  <span style={{ fontSize: 11, color: "#8A7F6A", marginTop: 4, display: "block" }}>貼上 FB 社團、LINE 群組或其他報名頁面的網址</span>
                 )}
               </div>
               <div>
                 <label style={labelStyle}>備註（選填）</label>
-                <textarea value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} placeholder="例：需要自備球鞋、有停車場、冷氣開放..." rows={2} style={{...inputStyle, resize: "vertical", minHeight: 60}} onFocus={(e)=>{e.target.style.borderColor="#f59e0b";}} onBlur={(e)=>{e.target.style.borderColor="rgba(148,163,184,0.15)";}}/>
+                <textarea value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} placeholder="例：需要自備球鞋、有停車場、冷氣開放..." rows={2} style={{...inputStyle, resize: "vertical", minHeight: 60}} onFocus={(e)=>{e.target.style.borderColor="#E89B5E";}} onBlur={(e)=>{e.target.style.borderColor="rgba(180,165,130,0.22)";}}/>
               </div>
               <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                <button onClick={() => setStep(1)} style={{ flex: 1, padding: "14px", borderRadius: 14, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>← 上一步</button>
-                <button onClick={handleSubmit} style={{ flex: 2, padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
-                  onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(245,158,11,0.3)"; }}
+                <button onClick={() => setStep(1)} style={{ flex: 1, padding: "14px", borderRadius: 14, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>← 上一步</button>
+                <button onClick={handleSubmit} style={{ flex: 2, padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                  onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(232,155,94,0.3)"; }}
                   onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "none"; }}
                 >🏐 發佈場次</button>
               </div>
@@ -3359,19 +3359,19 @@ export default function VolleyballMatcher() {
   const formed = allSessions.filter(s => s.registered >= s.min && s.registered < s.max);
 
   return (
-    <div style={{ "--text-primary": "#e2e8f0", "--text-secondary": "#94a3b8", "--text-dim": "#64748b", "--card-bg": "rgba(15,23,42,0.6)", "--border": "rgba(148,163,184,0.1)", "--surface": "rgba(15,23,42,0.4)", minHeight: "100vh", background: "linear-gradient(160deg, #0c1222 0%, #0f172a 40%, #14102a 100%)", color: "var(--text-primary)", fontFamily: "'Noto Sans TC', 'Noto Sans', -apple-system, sans-serif", padding: "0 0 100px", position: "relative", boxShadow: isAdmin ? "inset 0 0 0 3px #ef4444, inset 0 0 40px rgba(239,68,68,0.15)" : "none" }}>
+    <div style={{ "--text-primary": "#1E3A5F", "--text-secondary": "#5A7B9A", "--text-dim": "#8A7F6A", "--card-bg": "rgba(255,249,236,0.85)", "--border": "rgba(180,165,130,0.22)", "--surface": "rgba(248,242,229,0.6)", minHeight: "100vh", background: "linear-gradient(160deg, #F8F2E5 0%, #FFF9EC 40%, #F8F2E5 100%)", color: "var(--text-primary)", fontFamily: "'Noto Sans TC', 'Noto Sans', -apple-system, sans-serif", padding: "0 0 100px", position: "relative", boxShadow: isAdmin ? "inset 0 0 0 3px #C85A5A, inset 0 0 40px rgba(200,90,90,0.25)" : "none" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&family=Space+Mono:wght@400;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { height: 4px; width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(180,165,130,0.28); border-radius: 4px; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUpModal { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         @keyframes toastIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        @keyframes glow { 0%, 100% { box-shadow: 0 0 12px rgba(245,158,11,0.3); } 50% { box-shadow: 0 0 24px rgba(245,158,11,0.5); } }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 12px rgba(232,155,94,0.3); } 50% { box-shadow: 0 0 24px rgba(232,155,94,0.5); } }
         @keyframes adminPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         @keyframes ringBump { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.18); } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -3379,23 +3379,23 @@ export default function VolleyballMatcher() {
       `}</style>
 
       {isAdmin && (
-        <div style={{ position: "sticky", top: 0, zIndex: 500, background: "linear-gradient(90deg, #ef4444, #dc2626)", color: "#fff", padding: "8px 16px", textAlign: "center", fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 2px 12px rgba(239,68,68,0.3)" }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 500, background: "linear-gradient(90deg, #C85A5A, #A84040)", color: "#fff", padding: "8px 16px", textAlign: "center", fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 2px 12px rgba(200,90,90,0.35)" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 6, animation: "adminPulse 2s ease infinite" }}>
             <ShieldIcon/> 管理模式中
           </span>
           <span style={{ opacity: 0.7, fontSize: 11, fontWeight: 400 }}>| 你現在擁有最高權限</span>
-          <button onClick={handleAdminLogout} style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", padding: "3px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", marginLeft: 8 }}>登出</button>
+          <button onClick={handleAdminLogout} style={{ background: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.4)", color: "#fff", padding: "3px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer", marginLeft: 8 }}>登出</button>
         </div>
       )}
 
-      <div style={{ padding: "32px 24px 24px", background: "linear-gradient(180deg, rgba(15,23,42,0.9) 0%, transparent 100%)", borderBottom: "1px solid var(--border)", marginBottom: 20, position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -40, right: -40, width: 180, height: 180, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.15), transparent 70%)", pointerEvents: "none" }}/>
-        <div style={{ position: "absolute", bottom: -60, left: -30, width: 140, height: 140, borderRadius: "50%", background: "radial-gradient(circle, rgba(167,139,250,0.08), transparent 70%)", pointerEvents: "none" }}/>
+      <div style={{ padding: "32px 24px 24px", background: "linear-gradient(180deg, rgba(248,242,229,0.9) 0%, transparent 100%)", borderBottom: "1px solid var(--border)", marginBottom: 20, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -40, right: -40, width: 180, height: 180, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,155,94,0.25), transparent 70%)", pointerEvents: "none" }}/>
+        <div style={{ position: "absolute", bottom: -60, left: -30, width: 140, height: 140, borderRadius: "50%", background: "radial-gradient(circle, rgba(196,167,136,0.15), transparent 70%)", pointerEvents: "none" }}/>
         <div style={{ maxWidth: 720, margin: "0 auto", position: "relative" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
-            <div style={{ color: "#f59e0b" }}><VolleyballIcon/></div>
-            <h1 style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.02em", background: "linear-gradient(135deg, #f59e0b, #f97316)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>排球揪團雷達</h1>
-            <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 12, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.1em", border: "1px solid rgba(245,158,11,0.2)" }}>TAIPEI</span>
+            <div style={{ color: "#E89B5E" }}><VolleyballIcon/></div>
+            <h1 style={{ fontSize: 24, fontWeight: 900, letterSpacing: "-0.02em", background: "linear-gradient(135deg, #E89B5E, #D4855F)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>排球揪團雷達</h1>
+            <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 12, background: "rgba(232,155,94,0.18)", color: "#E89B5E", fontWeight: 700, letterSpacing: "0.1em", border: "1px solid rgba(232,155,94,0.28)" }}>TAIPEI</span>
             {/* NEW: Header auth indicator — always visible */}
             <div style={{ marginLeft: "auto" }}>
               <HeaderAuthIndicator currentUser={currentUser} onLogin={handleHeaderLogin} onLogout={handleGoogleLogout} googleLoading={googleLoading} onOpenMemberCenter={handleOpenMemberCenter}/>
@@ -3408,22 +3408,22 @@ export default function VolleyballMatcher() {
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 16px" }}>
         <div style={{ display: "flex", marginBottom: 20, borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)", background: "var(--surface)" }}>
           <button onClick={() => setActiveTab("sessions")}
-            style={{ flex: 1, padding: "12px", border: "none", background: activeTab === "sessions" ? "rgba(245,158,11,0.15)" : "transparent", color: activeTab === "sessions" ? "#f59e0b" : "var(--text-secondary)", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", borderBottom: activeTab === "sessions" ? "2px solid #f59e0b" : "2px solid transparent" }}
+            style={{ flex: 1, padding: "12px", border: "none", background: activeTab === "sessions" ? "rgba(232,155,94,0.25)" : "transparent", color: activeTab === "sessions" ? "#E89B5E" : "var(--text-secondary)", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", borderBottom: activeTab === "sessions" ? "2px solid #E89B5E" : "2px solid transparent" }}
           >🏐 場次揪團</button>
           <button onClick={() => setActiveTab("buddies")}
-            style={{ flex: 1, padding: "12px", border: "none", background: activeTab === "buddies" ? "rgba(167,139,250,0.15)" : "transparent", color: activeTab === "buddies" ? "#a78bfa" : "var(--text-secondary)", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", borderBottom: activeTab === "buddies" ? "2px solid #a78bfa" : "2px solid transparent" }}
+            style={{ flex: 1, padding: "12px", border: "none", background: activeTab === "buddies" ? "rgba(196,167,136,0.22)" : "transparent", color: activeTab === "buddies" ? "#C4A788" : "var(--text-secondary)", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", borderBottom: activeTab === "buddies" ? "2px solid #C4A788" : "2px solid transparent" }}
           >🙋 排球夥伴 <span style={{ fontSize: 11, opacity: 0.7 }}>({players.length})</span></button>
         </div>
       </div>
 
       {activeTab === "sessions" && <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 16px" }}>
         <div style={{ display: "flex", gap: 10, marginBottom: 20, justifyContent: "center", flexWrap: "wrap", animation: "slideUp 0.4s ease" }}>
-          <StatBadge value={allSessions.length} label="場次" color="#60a5fa"/>
-          <StatBadge value={totalPlayers} label="已報名" color="#a78bfa"/>
-          <StatBadge value={needPeople.length} label="缺人中" color="#f59e0b"/>
-          <StatBadge value={formed.length} label="已成團" color="#22c55e"/>
+          <StatBadge value={allSessions.length} label="場次" color="#5A8FA8"/>
+          <StatBadge value={totalPlayers} label="已報名" color="#C4A788"/>
+          <StatBadge value={needPeople.length} label="缺人中" color="#E89B5E"/>
+          <StatBadge value={formed.length} label="已成團" color="#7FA87C"/>
           {players.filter(p => (p.wantToPlayUntil || 0) > Date.now()).length > 0 && (
-            <StatBadge value={players.filter(p => (p.wantToPlayUntil || 0) > Date.now()).length} label="想打球" color="#06c755"/>
+            <StatBadge value={players.filter(p => (p.wantToPlayUntil || 0) > Date.now()).length} label="想打球" color="#5B9C60"/>
           )}
         </div>
 
@@ -3432,10 +3432,10 @@ export default function VolleyballMatcher() {
             const count = sessions.filter(s => s.date === d.value && !hasSessionStarted(s)).length;
             const isSelected = selectedDate === d.value;
             return (
-              <button key={d.value} onClick={() => setSelectedDate(d.value)} style={{ position: "relative", padding: "8px 20px", borderRadius: 10, border: "1px solid", borderColor: isSelected ? "#f59e0b" : "var(--border)", background: isSelected ? "rgba(245,158,11,0.12)" : "transparent", color: isSelected ? "#f59e0b" : "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
+              <button key={d.value} onClick={() => setSelectedDate(d.value)} style={{ position: "relative", padding: "8px 20px", borderRadius: 10, border: "1px solid", borderColor: isSelected ? "#E89B5E" : "var(--border)", background: isSelected ? "rgba(232,155,94,0.22)" : "transparent", color: isSelected ? "#E89B5E" : "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
                 {d.label}<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 4 }}>{d.value.slice(5).replace("-","/")}</span>
                 {count > 0 && (
-                  <span style={{ position: "absolute", top: -6, right: -6, minWidth: 18, height: 18, padding: "0 5px", borderRadius: 9, background: isSelected ? "#f59e0b" : "#60a5fa", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }}>{count}</span>
+                  <span style={{ position: "absolute", top: -6, right: -6, minWidth: 18, height: 18, padding: "0 5px", borderRadius: 9, background: isSelected ? "#E89B5E" : "#5A8FA8", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(30,58,95,0.15)" }}>{count}</span>
                 )}
               </button>
             );
@@ -3446,31 +3446,31 @@ export default function VolleyballMatcher() {
           <div style={{ flex: 1, minWidth: 120 }}>
             <label style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, letterSpacing: "0.04em", fontWeight: 600 }}>📍 地區</label>
             <select value={selectedArea} onChange={(e) => setSelectedArea(e.target.value)}
-              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(15,23,42,0.8)", border: "1px solid var(--border)", color: selectedArea !== "全部" ? "#f59e0b" : "var(--text-primary)", fontSize: 13, fontWeight: selectedArea !== "全部" ? 600 : 400, cursor: "pointer", transition: "all 0.2s" }}
-              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
+              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(255,249,236,0.95)", border: "1px solid var(--border)", color: selectedArea !== "全部" ? "#E89B5E" : "var(--text-primary)", fontSize: 13, fontWeight: selectedArea !== "全部" ? 600 : 400, cursor: "pointer", transition: "all 0.2s" }}
+              onFocus={(e) => { e.target.style.borderColor = "#E89B5E"; }}
               onBlur={(e) => { e.target.style.borderColor = "var(--border)"; }}
             >{AREAS_FILTER.map(a => <option key={a} value={a}>{a}</option>)}</select>
           </div>
           <div style={{ flex: 1, minWidth: 120 }}>
             <label style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, letterSpacing: "0.04em", fontWeight: 600 }}>🏐 程度</label>
             <select value={selectedLevel} onChange={(e) => setSelectedLevel(e.target.value)}
-              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(15,23,42,0.8)", border: "1px solid var(--border)", color: selectedLevel !== "全部" ? "#f59e0b" : "var(--text-primary)", fontSize: 13, fontWeight: selectedLevel !== "全部" ? 600 : 400, cursor: "pointer", transition: "all 0.2s" }}
-              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
+              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(255,249,236,0.95)", border: "1px solid var(--border)", color: selectedLevel !== "全部" ? "#E89B5E" : "var(--text-primary)", fontSize: 13, fontWeight: selectedLevel !== "全部" ? 600 : 400, cursor: "pointer", transition: "all 0.2s" }}
+              onFocus={(e) => { e.target.style.borderColor = "#E89B5E"; }}
               onBlur={(e) => { e.target.style.borderColor = "var(--border)"; }}
             >{LEVELS.map(l => <option key={l} value={l}>{l}</option>)}</select>
           </div>
           <div style={{ flex: 1, minWidth: 120 }}>
             <label style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, letterSpacing: "0.04em", fontWeight: 600 }}>🔀 排序</label>
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(15,23,42,0.8)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, cursor: "pointer", transition: "all 0.2s" }}
-              onFocus={(e) => { e.target.style.borderColor = "#f59e0b"; }}
+              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(255,249,236,0.95)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, cursor: "pointer", transition: "all 0.2s" }}
+              onFocus={(e) => { e.target.style.borderColor = "#E89B5E"; }}
               onBlur={(e) => { e.target.style.borderColor = "var(--border)"; }}
             ><option value="need">缺人優先</option><option value="time">時間排序</option><option value="fee">費用低→高</option></select>
           </div>
         </div>
 
         <div style={{ display: "flex", gap: 14, marginBottom: 18, justifyContent: "center", flexWrap: "wrap", fontSize: 11, color: "var(--text-dim)" }}>
-          {[{color:"#ef4444",label:"募集中"},{color:"#f59e0b",label:"即將成團（差≤3人）"},{color:"#22c55e",label:"已成團"},{color:"#94a3b8",label:"已滿"}].map(item => (
+          {[{color:"#C85A5A",label:"募集中"},{color:"#E89B5E",label:"即將成團（差≤3人）"},{color:"#7FA87C",label:"已成團"},{color:"#5A7B9A",label:"已滿"}].map(item => (
             <span key={item.label} style={{ display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: item.color, display: "inline-block" }}/>{item.label}</span>
           ))}
         </div>
@@ -3483,13 +3483,13 @@ export default function VolleyballMatcher() {
             </div>
           )}
           {!loading && sorted.length === 0 && (
-            <div style={{ textAlign: "center", padding: "48px 24px", background: "rgba(15,23,42,0.3)", borderRadius: 16, border: "1px dashed rgba(148,163,184,0.15)" }}>
+            <div style={{ textAlign: "center", padding: "48px 24px", background: "rgba(248,242,229,0.4)", borderRadius: 16, border: "1px dashed rgba(180,165,130,0.22)" }}>
               <div style={{ fontSize: 56, marginBottom: 12, opacity: 0.7 }}>🏐</div>
               <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>這個時段還沒有場次</div>
               <div style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 20 }}>換個日期看看，或是直接揪一場吧！</div>
-              <button onClick={() => setShowCreateModal(true)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px rgba(245,158,11,0.25)", transition: "all 0.2s" }}
-                onMouseEnter={(e) => { e.target.style.transform = "translateY(-2px)"; e.target.style.boxShadow = "0 6px 20px rgba(245,158,11,0.35)"; }}
-                onMouseLeave={(e) => { e.target.style.transform = "translateY(0)"; e.target.style.boxShadow = "0 4px 16px rgba(245,158,11,0.25)"; }}
+              <button onClick={() => setShowCreateModal(true)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px rgba(232,155,94,0.3)", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.transform = "translateY(-2px)"; e.target.style.boxShadow = "0 6px 20px rgba(232,155,94,0.35)"; }}
+                onMouseLeave={(e) => { e.target.style.transform = "translateY(0)"; e.target.style.boxShadow = "0 4px 16px rgba(232,155,94,0.3)"; }}
               >🏐 我要開場</button>
             </div>
           )}
@@ -3501,7 +3501,7 @@ export default function VolleyballMatcher() {
         </div>
 
         {needPeople.length > 0 && (
-          <div style={{ marginTop: 24, padding: "16px 20px", borderRadius: 14, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", fontSize: 13, color: "#f59e0b", textAlign: "center", lineHeight: 1.6 }}>
+          <div style={{ marginTop: 24, padding: "16px 20px", borderRadius: 14, background: "rgba(232,155,94,0.12)", border: "1px solid rgba(232,155,94,0.25)", fontSize: 13, color: "#E89B5E", textAlign: "center", lineHeight: 1.6 }}>
             <span style={{ animation: "pulse 2s ease infinite" }}>🔥</span>
             {" "}目前有 <strong>{needPeople.length}</strong> 個場次正在等人成團，
             總共還差 <strong>{needPeople.reduce((sum,s) => sum + Math.max(0, s.min - s.registered), 0)}</strong> 人！
@@ -3514,22 +3514,22 @@ export default function VolleyballMatcher() {
         {/* NOTE: Old "Google login bar" has been REMOVED — auth is now in the header indicator. */}
 
         <div style={{ display: "flex", gap: 10, marginBottom: 20, justifyContent: "center", flexWrap: "wrap", animation: "slideUp 0.4s ease" }}>
-          <StatBadge value={players.length} label="球員" color="#a78bfa"/>
-          <StatBadge value={players.filter(p => (p.wantToPlayUntil || 0) > Date.now()).length} label="想打球" color="#22c55e"/>
-          <StatBadge value={[...new Set(players.map(p => p.area))].length} label="活躍地區" color="#f59e0b"/>
+          <StatBadge value={players.length} label="球員" color="#C4A788"/>
+          <StatBadge value={players.filter(p => (p.wantToPlayUntil || 0) > Date.now()).length} label="想打球" color="#7FA87C"/>
+          <StatBadge value={[...new Set(players.map(p => p.area))].length} label="活躍地區" color="#E89B5E"/>
         </div>
 
         <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", padding: "12px 16px", background: "var(--surface)", borderRadius: 14, border: "1px solid var(--border)" }}>
           <div style={{ flex: 1, minWidth: 120 }}>
             <label style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, letterSpacing: "0.04em", fontWeight: 600 }}>📍 地區</label>
             <select value={playerFilterArea} onChange={(e) => setPlayerFilterArea(e.target.value)}
-              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(15,23,42,0.8)", border: "1px solid var(--border)", color: playerFilterArea !== "全部" ? "#a78bfa" : "var(--text-primary)", fontSize: 13, fontWeight: playerFilterArea !== "全部" ? 600 : 400, cursor: "pointer" }}
+              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(255,249,236,0.95)", border: "1px solid var(--border)", color: playerFilterArea !== "全部" ? "#C4A788" : "var(--text-primary)", fontSize: 13, fontWeight: playerFilterArea !== "全部" ? 600 : 400, cursor: "pointer" }}
             ><option value="全部">全部</option>{[...new Set(players.map(p => p.area).filter(Boolean))].map(a => <option key={a} value={a}>{a}</option>)}</select>
           </div>
           <div style={{ flex: 1, minWidth: 120 }}>
             <label style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, letterSpacing: "0.04em", fontWeight: 600 }}>🏐 程度</label>
             <select value={playerFilterLevel} onChange={(e) => setPlayerFilterLevel(e.target.value)}
-              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(15,23,42,0.8)", border: "1px solid var(--border)", color: playerFilterLevel !== "全部" ? "#a78bfa" : "var(--text-primary)", fontSize: 13, fontWeight: playerFilterLevel !== "全部" ? 600 : 400, cursor: "pointer" }}
+              style={{ width: "100%", padding: "7px 10px", borderRadius: 8, background: "rgba(255,249,236,0.95)", border: "1px solid var(--border)", color: playerFilterLevel !== "全部" ? "#C4A788" : "var(--text-primary)", fontSize: 13, fontWeight: playerFilterLevel !== "全部" ? 600 : 400, cursor: "pointer" }}
             ><option value="全部">全部</option>{LEVELS_INPUT.map(l => <option key={l} value={l}>{l}</option>)}</select>
           </div>
         </div>
@@ -3549,11 +3549,11 @@ export default function VolleyballMatcher() {
             </div>
           ))}
           {players.filter(p => playerFilterArea === "全部" || p.area === playerFilterArea).filter(p => playerFilterLevel === "全部" || p.level === playerFilterLevel).length === 0 && (
-            <div style={{ textAlign: "center", padding: "48px 24px", background: "rgba(15,23,42,0.3)", borderRadius: 16, border: "1px dashed rgba(148,163,184,0.15)" }}>
+            <div style={{ textAlign: "center", padding: "48px 24px", background: "rgba(248,242,229,0.4)", borderRadius: 16, border: "1px dashed rgba(180,165,130,0.22)" }}>
               <div style={{ fontSize: 56, marginBottom: 12, opacity: 0.7 }}>🙋</div>
               <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 6 }}>還沒有球員資料</div>
               <div style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 20 }}>成為第一個註冊的球員吧！</div>
-              <button onClick={handleOpenRegisterFlow} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>🙋 我要註冊</button>
+              <button onClick={handleOpenRegisterFlow} style={{ padding: "10px 24px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #C4A788, #A88B6B)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>🙋 我要註冊</button>
             </div>
           )}
         </div>
@@ -3562,16 +3562,16 @@ export default function VolleyballMatcher() {
       {activeTab === "sessions" ? (
         <button onClick={() => setShowCreateModal(true)}
           title="我要開場"
-          style={{ position: "fixed", bottom: 24, right: 24, zIndex: 800, height: 60, padding: "0 22px", borderRadius: 30, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 24px rgba(245,158,11,0.4)", transition: "all 0.25s ease", animation: "glow 3s ease infinite", fontSize: 14, fontWeight: 700 }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(245,158,11,0.55)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(245,158,11,0.4)"; }}
+          style={{ position: "fixed", bottom: 24, right: 24, zIndex: 800, height: 60, padding: "0 22px", borderRadius: 30, border: "none", background: "linear-gradient(135deg, #E89B5E, #D4855F)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 24px rgba(232,155,94,0.4)", transition: "all 0.25s ease", animation: "glow 3s ease infinite", fontSize: 14, fontWeight: 700 }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(232,155,94,0.55)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(232,155,94,0.4)"; }}
         ><PlusIcon/><span>我要開場</span></button>
       ) : (
         <button onClick={handleOpenRegisterFlow}
           title="我要註冊"
-          style={{ position: "fixed", bottom: 24, right: 24, zIndex: 800, height: 60, padding: "0 22px", borderRadius: 30, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 24px rgba(167,139,250,0.4)", transition: "all 0.25s ease", animation: "glow 3s ease infinite", fontSize: 14, fontWeight: 700 }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(167,139,250,0.55)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(167,139,250,0.4)"; }}
+          style={{ position: "fixed", bottom: 24, right: 24, zIndex: 800, height: 60, padding: "0 22px", borderRadius: 30, border: "none", background: "linear-gradient(135deg, #C4A788, #A88B6B)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 4px 24px rgba(196,167,136,0.4)", transition: "all 0.25s ease", animation: "glow 3s ease infinite", fontSize: 14, fontWeight: 700 }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(196,167,136,0.55)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(196,167,136,0.4)"; }}
         ><PlusIcon/><span>我要註冊</span></button>
       )}
 
@@ -3625,7 +3625,7 @@ export default function VolleyballMatcher() {
       />
 
       {showToast && (
-        <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.4)" : "0 8px 32px rgba(34,197,94,0.4)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(232,155,94,0.95)" : "rgba(127,168,124,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(232,155,94,0.4)" : "0 8px 32px rgba(127,168,124,0.4)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 16, flexShrink: 0 }}>{showToast.type === "warn" ? "⚠️" : "✅"}</span>
           <span>{showToast.msg}</span>
         </div>
