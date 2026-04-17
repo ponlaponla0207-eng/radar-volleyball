@@ -18,7 +18,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const sessionsRef = collection(db, "sessions");
-
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 // ════════════════════════════════════════════
 // 管理者密碼 — 請改成你自己的密碼（請勿使用預設值）
 // 進入方式：網址加上 ?admin=1，例如 https://your-site.vercel.app/?admin=1
