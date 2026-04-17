@@ -1181,7 +1181,7 @@ const RadarChart = ({ skills, size = 120 }) => {
   );
 };
 
-const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onRecommend }) => {
+const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onRecommend, onShare }) => {
   const hasSkills = player.skills && Object.values(player.skills).some(v => v > 0);
   const isOwner = currentUser && player.uid === currentUser.uid;
   // Check if "want to play" is active
@@ -1218,7 +1218,14 @@ const PlayerCard = ({ player, onEdit, onWantToPlay, onRecord, currentUser, onRec
           style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#f59e0b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}
           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.08)"; }}
-        >📊 記錄</button>
+     >📊 記錄</button>
+      )}
+      {isOwner && (
+        <button onClick={() => onShare(player)} title="下載戰績卡分享"
+          style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#f59e0b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.15)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(245,158,11,0.08)"; }}
+        >📤 分享</button>
       )}
       <button onClick={() => onEdit(player)} title="編輯"
         style={{ background: "rgba(148,163,184,0.08)", border: "1px solid rgba(148,163,184,0.12)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#64748b", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
@@ -1653,6 +1660,495 @@ const WeeklyRecordModal = ({ open, onClose, player, onSave }) => {
   );
 };
 
+/* ════════════════════════════════════════════
+   Share Card Modal — generates downloadable PNG with Canvas API
+   ════════════════════════════════════════════ */
+const ShareCardModal = ({ open, onClose, player }) => {
+  const [size, setSize] = useState("vertical"); // "vertical" or "square"
+  const [generating, setGenerating] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (open && player) {
+      setPreviewUrl(null);
+      setGenerating(true);
+      // Delay slightly so modal renders first
+      const timer = setTimeout(() => {
+        generateImage();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open, player, size]);
+
+  if (!open || !player) return null;
+
+  const generateImage = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const isVertical = size === "vertical";
+    const W = 1080;
+    const H = isVertical ? 1920 : 1080;
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    // ── Draw: white background ──
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Draw: top orange accent strip ──
+    const stripH = isVertical ? 24 : 20;
+    const gradient = ctx.createLinearGradient(0, 0, W, 0);
+    gradient.addColorStop(0, "#f59e0b");
+    gradient.addColorStop(1, "#f97316");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, W, stripH);
+
+    // ── Layout scaling ──
+    const pad = isVertical ? 72 : 56;
+    let cursorY = stripH + (isVertical ? 80 : 56);
+
+    // ── Draw: Avatar circle + name + meta ──
+    const avatarSize = isVertical ? 130 : 110;
+    const avatarX = pad + avatarSize / 2;
+    const avatarY = cursorY + avatarSize / 2;
+
+    // Avatar background circle
+    ctx.fillStyle = "#e0e7ff";
+    ctx.beginPath();
+    ctx.arc(avatarX, avatarY, avatarSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Avatar initial (first char of nickname)
+    const initial = (player.nickname || "?").charAt(0);
+    ctx.fillStyle = "#4f46e5";
+    ctx.font = `900 ${avatarSize * 0.45}px "PingFang TC", "Microsoft JhengHei", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(initial, avatarX, avatarY + 4);
+
+    // Name to the right of avatar
+    const nameX = avatarX + avatarSize / 2 + 28;
+    ctx.fillStyle = "#0f172a";
+    ctx.font = `900 ${isVertical ? 64 : 54}px "PingFang TC", "Microsoft JhengHei", sans-serif`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(player.nickname || "—", nameX, cursorY + 10);
+
+    // Meta line
+    ctx.fillStyle = "#64748b";
+    ctx.font = `600 ${isVertical ? 28 : 24}px "PingFang TC", "Microsoft JhengHei", sans-serif`;
+    const metaParts = [];
+    if (player.area) metaParts.push(`📍 ${player.area}`);
+    if (player.experience) metaParts.push(`球齡 ${player.experience}`);
+    if (player.level) metaParts.push(player.level);
+    ctx.fillText(metaParts.join(" · "), nameX, cursorY + (isVertical ? 82 : 70));
+
+    cursorY += avatarSize + (isVertical ? 60 : 40);
+
+    // ── Draw: Win rate hero card ──
+    const stats = calcWinStats(player.weeklyRecords);
+    if (stats) {
+      const heroH = isVertical ? 280 : 200;
+      const heroW = W - pad * 2;
+
+      // Rounded rect background
+      const heroGradient = ctx.createLinearGradient(0, cursorY, 0, cursorY + heroH);
+      heroGradient.addColorStop(0, "#fff7ed");
+      heroGradient.addColorStop(1, "#fef3c7");
+      ctx.fillStyle = heroGradient;
+      roundRect(ctx, pad, cursorY, heroW, heroH, 24);
+      ctx.fill();
+
+      // Border
+      ctx.strokeStyle = "#fde68a";
+      ctx.lineWidth = 2;
+      roundRect(ctx, pad, cursorY, heroW, heroH, 24);
+      ctx.stroke();
+
+      // Label
+      ctx.fillStyle = "#92400e";
+      ctx.font = `800 ${isVertical ? 22 : 18}px "PingFang TC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("OVERALL WIN RATE", W / 2, cursorY + (isVertical ? 34 : 24));
+
+      // Big number
+      ctx.fillStyle = "#ea580c";
+      const numSize = isVertical ? 180 : 130;
+      ctx.font = `900 ${numSize}px "Space Mono", "Menlo", monospace`;
+      ctx.textBaseline = "middle";
+      const rateText = `${stats.rate}`;
+      const rateMetrics = ctx.measureText(rateText);
+      const pctSize = numSize * 0.5;
+
+      const rateY = cursorY + heroH / 2 + (isVertical ? 20 : 10);
+      ctx.fillText(rateText, W / 2 - 20, rateY);
+
+      ctx.font = `900 ${pctSize}px "Space Mono", "Menlo", monospace`;
+      ctx.textAlign = "left";
+      ctx.fillText("%", W / 2 + rateMetrics.width / 2 - 15, rateY + (isVertical ? 15 : 10));
+
+      // Sub text
+      ctx.fillStyle = "#78350f";
+      ctx.font = `700 ${isVertical ? 26 : 20}px "PingFang TC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(`${stats.totalWon} 勝 / ${stats.totalPlayed} 場`, W / 2, cursorY + heroH - (isVertical ? 28 : 20));
+
+      cursorY += heroH + (isVertical ? 40 : 28);
+    } else {
+      // No stats yet — show placeholder
+      const heroH = isVertical ? 180 : 120;
+      ctx.fillStyle = "#f8fafc";
+      roundRect(ctx, pad, cursorY, W - pad * 2, heroH, 24);
+      ctx.fill();
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = `700 ${isVertical ? 28 : 22}px "PingFang TC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("尚未記錄戰績", W / 2, cursorY + heroH / 2);
+      cursorY += heroH + (isVertical ? 40 : 28);
+    }
+
+    // ── Draw: Radar chart ──
+    const hasSkills = player.skills && Object.values(player.skills).some(v => v > 0);
+    if (hasSkills) {
+      const radarH = isVertical ? 520 : 380;
+      const radarW = isVertical ? W - pad * 2 : (W - pad * 2) * 0.55;
+
+      ctx.fillStyle = "#f8fafc";
+      roundRect(ctx, pad, cursorY, radarW, radarH, 24);
+      ctx.fill();
+
+      // Label
+      ctx.fillStyle = "#64748b";
+      ctx.font = `800 ${isVertical ? 22 : 18}px "PingFang TC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("SKILL PROFILE", pad + radarW / 2, cursorY + (isVertical ? 30 : 24));
+
+      // Draw radar
+      drawRadar(ctx, player.skills, pad + radarW / 2, cursorY + radarH / 2 + (isVertical ? 10 : 0), isVertical ? 160 : 120);
+
+      if (!isVertical) {
+        // Square: side-by-side recommendations + trend
+        const rightX = pad + radarW + 24;
+        const rightW = W - rightX - pad;
+
+        // Recommendations box (top)
+        const recH = 170;
+        ctx.fillStyle = "#fef3c7";
+        roundRect(ctx, rightX, cursorY, rightW, recH, 24);
+        ctx.fill();
+
+        ctx.fillStyle = "#92400e";
+        ctx.font = `800 18px "PingFang TC", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText("RECOMMENDED", rightX + rightW / 2, cursorY + 24);
+
+        ctx.fillStyle = "#ea580c";
+        ctx.font = `900 86px "Space Mono", "Menlo", monospace`;
+        ctx.textBaseline = "middle";
+        const recCount = player.recommendCount || 0;
+        ctx.fillText(`👍 ${recCount}`, rightX + rightW / 2, cursorY + 100);
+
+        // Trend box (bottom)
+        const trendY = cursorY + recH + 20;
+        const trendH = radarH - recH - 20;
+        ctx.fillStyle = "#f1f5f9";
+        roundRect(ctx, rightX, trendY, rightW, trendH, 24);
+        ctx.fill();
+
+        ctx.fillStyle = "#64748b";
+        ctx.font = `800 16px "PingFang TC", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText("8 WEEK TREND", rightX + rightW / 2, trendY + 20);
+
+        if (stats && stats.recent.length > 1) {
+          drawTrendBars(ctx, stats.recent, rightX + 30, trendY + 60, rightW - 60, trendH - 90);
+        } else {
+          ctx.fillStyle = "#cbd5e1";
+          ctx.font = `600 16px "PingFang TC", sans-serif`;
+          ctx.fillText("資料不足", rightX + rightW / 2, trendY + trendH / 2);
+        }
+      }
+
+      cursorY += radarH + (isVertical ? 40 : 30);
+    }
+
+    // ── Draw: Trend + Recommendations (vertical only, side by side at bottom) ──
+    if (isVertical) {
+      const boxH = 220;
+      const gap = 24;
+      const halfW = (W - pad * 2 - gap) / 2;
+
+      // Trend box
+      ctx.fillStyle = "#f1f5f9";
+      roundRect(ctx, pad, cursorY, halfW, boxH, 24);
+      ctx.fill();
+
+      ctx.fillStyle = "#64748b";
+      ctx.font = `800 22px "PingFang TC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("8 WEEK TREND", pad + halfW / 2, cursorY + 24);
+
+      if (stats && stats.recent.length > 1) {
+        drawTrendBars(ctx, stats.recent, pad + 40, cursorY + 80, halfW - 80, boxH - 120);
+      } else {
+        ctx.fillStyle = "#cbd5e1";
+        ctx.font = `600 20px "PingFang TC", sans-serif`;
+        ctx.textBaseline = "middle";
+        ctx.fillText("資料不足", pad + halfW / 2, cursorY + boxH / 2 + 20);
+      }
+
+      // Recommendations box
+      const recX = pad + halfW + gap;
+      ctx.fillStyle = "#fef3c7";
+      roundRect(ctx, recX, cursorY, halfW, boxH, 24);
+      ctx.fill();
+
+      ctx.fillStyle = "#92400e";
+      ctx.font = `800 22px "PingFang TC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("RECOMMENDED", recX + halfW / 2, cursorY + 24);
+
+      ctx.fillStyle = "#ea580c";
+      ctx.font = `900 110px "Space Mono", "Menlo", monospace`;
+      ctx.textBaseline = "middle";
+      const recCount = player.recommendCount || 0;
+      ctx.fillText(`👍 ${recCount}`, recX + halfW / 2, cursorY + boxH / 2 + 20);
+
+      cursorY += boxH + 40;
+    }
+
+    // ── Draw: Bottom footer (dark bar) ──
+    const footerH = isVertical ? 110 : 90;
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(0, H - footerH, W, footerH);
+
+    // Footer content
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = `700 ${isVertical ? 20 : 16}px "PingFang TC", sans-serif`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("POWERED BY", pad, H - footerH + (isVertical ? 28 : 22));
+
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = `900 ${isVertical ? 34 : 28}px "PingFang TC", sans-serif`;
+    ctx.fillText("排球揪團雷達", pad, H - footerH + (isVertical ? 56 : 46));
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = `600 ${isVertical ? 22 : 18}px "PingFang TC", sans-serif`;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText("radar-volleyball.vercel.app", W - pad, H - footerH / 2);
+
+    // Export to PNG
+    try {
+      const dataUrl = canvas.toDataURL("image/png");
+      setPreviewUrl(dataUrl);
+    } catch (err) {
+      console.error("Canvas export failed:", err);
+    }
+    setGenerating(false);
+  };
+
+  const handleDownload = () => {
+    if (!previewUrl) return;
+    const link = document.createElement("a");
+    link.href = previewUrl;
+    link.download = `volleyball-card-${player.nickname || "player"}-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(480px, 94vw)", maxHeight: "92vh", overflowY: "auto", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(245,158,11,0.25)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <span style={{ fontSize: 24 }}>📤</span>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>分享我的戰績卡</h3>
+        </div>
+        <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 16, lineHeight: 1.5 }}>
+          下載後可分享到 IG、LINE、FB 社團，讓更多朋友看到你的排球戰績。
+        </p>
+
+        {/* Size selector */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          <button onClick={() => setSize("vertical")}
+            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid", borderColor: size === "vertical" ? "#f59e0b" : "rgba(148,163,184,0.2)", background: size === "vertical" ? "rgba(245,158,11,0.1)" : "transparent", color: size === "vertical" ? "#f59e0b" : "#94a3b8", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+            📱 直式<br/><span style={{ fontSize: 10, opacity: 0.7 }}>IG 限動 / LINE 相簿</span>
+          </button>
+          <button onClick={() => setSize("square")}
+            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid", borderColor: size === "square" ? "#f59e0b" : "rgba(148,163,184,0.2)", background: size === "square" ? "rgba(245,158,11,0.1)" : "transparent", color: size === "square" ? "#f59e0b" : "#94a3b8", fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+            🟦 正方形<br/><span style={{ fontSize: 10, opacity: 0.7 }}>IG 貼文 / FB</span>
+          </button>
+        </div>
+
+        {/* Preview area */}
+        <div style={{ marginBottom: 16, padding: 16, background: "rgba(15,23,42,0.6)", borderRadius: 12, display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
+          {generating && (
+            <div style={{ textAlign: "center", color: "#94a3b8", fontSize: 13 }}>
+              <div style={{ fontSize: 32, marginBottom: 8, animation: "spin 1.5s linear infinite", display: "inline-block" }}>🎨</div>
+              <div>繪製中...</div>
+            </div>
+          )}
+          {!generating && previewUrl && (
+            <img src={previewUrl} alt="preview" style={{ maxWidth: "100%", maxHeight: 380, borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}/>
+          )}
+          {/* Hidden canvas used for drawing */}
+          <canvas ref={canvasRef} style={{ display: "none" }}/>
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onClose}
+            style={{ flex: 1, padding: "14px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+            關閉
+          </button>
+          <button onClick={handleDownload} disabled={!previewUrl || generating}
+            style={{ flex: 2, padding: "14px", borderRadius: 12, border: "none", background: (!previewUrl || generating) ? "rgba(148,163,184,0.15)" : "linear-gradient(135deg, #f59e0b, #f97316)", color: (!previewUrl || generating) ? "#64748b" : "#fff", fontSize: 14, fontWeight: 700, cursor: (!previewUrl || generating) ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            💾 下載 PNG
+          </button>
+        </div>
+
+        <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", fontSize: 11, color: "#f59e0b", lineHeight: 1.5 }}>
+          💡 下載後可直接上傳到 IG 限動、LINE 相簿或 FB，邀請朋友一起來排球揪團雷達！
+        </div>
+      </div>
+    </>
+  );
+};
+
+// Helper: draw rounded rectangle path
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// Helper: draw radar chart
+function drawRadar(ctx, skills, cx, cy, radius) {
+  const dims = SKILL_DIMS;
+  const angleStep = (Math.PI * 2) / dims.length;
+
+  // Grid polygons (5 levels)
+  ctx.strokeStyle = "#e2e8f0";
+  ctx.lineWidth = 1.5;
+  for (let lv = 1; lv <= 5; lv++) {
+    const r = (lv / 5) * radius;
+    ctx.beginPath();
+    for (let i = 0; i < dims.length; i++) {
+      const a = angleStep * i - Math.PI / 2;
+      const x = cx + r * Math.cos(a);
+      const y = cy + r * Math.sin(a);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle = "#cbd5e1";
+  ctx.lineWidth = 1;
+  for (let i = 0; i < dims.length; i++) {
+    const a = angleStep * i - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + radius * Math.cos(a), cy + radius * Math.sin(a));
+    ctx.stroke();
+  }
+
+  // Data polygon
+  ctx.beginPath();
+  for (let i = 0; i < dims.length; i++) {
+    const val = skills[dims[i].key] || 0;
+    const r = (val / 5) * radius;
+    const a = angleStep * i - Math.PI / 2;
+    const x = cx + r * Math.cos(a);
+    const y = cy + r * Math.sin(a);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = "rgba(245,158,11,0.25)";
+  ctx.fill();
+  ctx.strokeStyle = "#f59e0b";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Data dots
+  ctx.fillStyle = "#f59e0b";
+  for (let i = 0; i < dims.length; i++) {
+    const val = skills[dims[i].key] || 0;
+    const r = (val / 5) * radius;
+    const a = angleStep * i - Math.PI / 2;
+    const x = cx + r * Math.cos(a);
+    const y = cy + r * Math.sin(a);
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Labels
+  ctx.fillStyle = "#334155";
+  ctx.font = `800 18px "PingFang TC", "Microsoft JhengHei", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  for (let i = 0; i < dims.length; i++) {
+    const a = angleStep * i - Math.PI / 2;
+    const labelR = radius + 26;
+    const x = cx + labelR * Math.cos(a);
+    const y = cy + labelR * Math.sin(a);
+    ctx.fillText(dims[i].label, x, y);
+  }
+
+  // Center avg
+  const avg = dims.reduce((s, d) => s + (skills[d.key] || 0), 0) / dims.length;
+  ctx.fillStyle = "#ea580c";
+  ctx.font = `900 28px "Space Mono", "Menlo", monospace`;
+  ctx.fillText(avg.toFixed(1), cx, cy);
+}
+
+// Helper: draw 8-week trend bars
+function drawTrendBars(ctx, records, x, y, w, h) {
+  const recs = records.slice().reverse();
+  const n = recs.length;
+  const gap = 4;
+  const barW = (w - gap * (n - 1)) / n;
+
+  for (let i = 0; i < n; i++) {
+    const r = recs[i];
+    const wr = r.played > 0 ? r.won / r.played : 0;
+    const barH = Math.max(6, wr * h);
+    const bx = x + i * (barW + gap);
+    const by = y + h - barH;
+
+    ctx.fillStyle = wr >= 0.5 ? "#86efac" : "#fca5a5";
+    roundRect(ctx, bx, by, barW, barH, 3);
+    ctx.fill();
+  }
+}
+
 const EditPlayerModal = ({ open, onClose, player, onSave, onDelete }) => {
   const [form, setForm] = useState({});
   useEffect(() => {
@@ -1953,6 +2449,8 @@ export default function VolleyballMatcher() {
   const [recordTarget, setRecordTarget] = useState(null);
   const [showRecommendModal, setShowRecommendModal] = useState(false);
   const [recommendTarget, setRecommendTarget] = useState(null);
+  const [showShareCardModal, setShowShareCardModal] = useState(false);
+  const [shareCardTarget, setShareCardTarget] = useState(null);
 
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
@@ -2130,6 +2628,10 @@ export default function VolleyballMatcher() {
     }
   };
 // 打開推薦 modal（未登入直接提示登入）
+  const handleOpenShareCard = (player) => {
+    setShareCardTarget(player);
+    setShowShareCardModal(true);
+  };
   const handleOpenRecommendModal = (player) => {
     if (!currentUser) {
       toast("請先用 Google 登入才能推薦", 3000, "warn");
@@ -2701,7 +3203,7 @@ export default function VolleyballMatcher() {
             })
             .map((p, i) => (
             <div key={p.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-<PlayerCard player={p} onEdit={handleEditPlayerClick} onWantToPlay={handleWantToPlay} onRecord={handleOpenRecordModal} currentUser={currentUser} onRecommend={handleOpenRecommendModal}/>
+<PlayerCard player={p} onEdit={handleEditPlayerClick} onWantToPlay={handleWantToPlay} onRecord={handleOpenRecordModal} currentUser={currentUser} onRecommend={handleOpenRecommendModal} onShare={handleOpenShareCard}/>
             </div>
           ))}
           {players.filter(p => playerFilterArea === "全部" || p.area === playerFilterArea).filter(p => playerFilterLevel === "全部" || p.level === playerFilterLevel).length === 0 && (
@@ -2757,6 +3259,7 @@ export default function VolleyballMatcher() {
       <PasswordModal open={showPlayerPasswordModal} onClose={() => { setShowPlayerPasswordModal(false); setEditPlayerTarget(null); }} onVerify={handlePlayerPasswordVerify} sessionId={editPlayerTarget?.id}/>
       <EditPlayerModal open={showEditPlayerModal} onClose={() => { setShowEditPlayerModal(false); setEditPlayerTarget(null); }} player={editPlayerTarget} onSave={handleSavePlayer} onDelete={handleDeletePlayer}/>
       <WeeklyRecordModal open={showRecordModal} onClose={() => { setShowRecordModal(false); setRecordTarget(null); }} player={recordTarget} onSave={handleSaveWeeklyRecord}/><RecommendModal open={showRecommendModal} onClose={() => { setShowRecommendModal(false); setRecommendTarget(null); }} player={recommendTarget} currentUser={currentUser} onSubmit={handleSubmitRecommendation}/>
+      <ShareCardModal open={showShareCardModal} onClose={() => { setShowShareCardModal(false); setShareCardTarget(null); }} player={shareCardTarget}/>
 
       {showToast && (
         <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.4)" : "0 8px 32px rgba(34,197,94,0.4)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
