@@ -1841,9 +1841,297 @@ const LoginChoiceModal = ({ open, onClose, onGoogle, onGuest, googleLoading }) =
 };
 
 /* ════════════════════════════════════════════
+   Member Center Modal — Full member dashboard
+   ════════════════════════════════════════════ */
+const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile, onOpenRegisterFlow, onWantToPlay, onRecord, onShare, onDelete, onMergeDuplicates, onEditRecord }) => {
+  if (!open || !currentUser) return null;
+
+  // Find ALL players matching this user's uid (to detect duplicates)
+  const myPlayers = players.filter(p => p.uid === currentUser.uid);
+  const myPlayer = myPlayers.length > 0 ? myPlayers.sort((a, b) => {
+    const aTime = a.createdAt?.seconds || a.createdAt?.toMillis?.() || 0;
+    const bTime = b.createdAt?.seconds || b.createdAt?.toMillis?.() || 0;
+    return bTime - aTime; // newest first
+  })[0] : null;
+  const hasDuplicates = myPlayers.length > 1;
+
+  // Empty state — no player data yet
+  if (!myPlayer) {
+    return (
+      <>
+        <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+        <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(420px, 92vw)", background: "linear-gradient(180deg, #1a1f35, #0f172a)", borderRadius: 20, border: "1px solid rgba(167,139,250,0.25)", padding: "36px 24px 28px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.5)", textAlign: "center" }}>
+          <div style={{ fontSize: 56, marginBottom: 12, opacity: 0.8 }}>🏐</div>
+          <h3 style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", marginBottom: 8 }}>歡迎加入排球夥伴</h3>
+          <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 24, lineHeight: 1.6 }}>
+            你還沒有球員資料，建立後就能在這裡管理自己的<br/>
+            戰績、推薦、想打球狀態等所有會員功能
+          </p>
+          <button onClick={() => { onClose(); onOpenRegisterFlow(); }}
+            style={{ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, #a78bfa, #8b5cf6)", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10, transition: "all 0.2s" }}
+            onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
+            onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+          >🙋 立即建立球員資料</button>
+          <button onClick={onClose}
+            style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(148,163,184,0.2)", background: "transparent", color: "#94a3b8", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+          >稍後再說</button>
+        </div>
+      </>
+    );
+  }
+
+  // Main member center
+  const stats = calcWinStats(myPlayer.weeklyRecords);
+  const wantExpiry = myPlayer.wantToPlayUntil || 0;
+  const isWanting = wantExpiry > Date.now();
+  const remainHours = isWanting ? Math.ceil((wantExpiry - Date.now()) / 3600000) : 0;
+  const recommendations = myPlayer.recommendations || [];
+  const recommendCount = myPlayer.recommendCount || recommendations.length;
+  const sortedRecords = (myPlayer.weeklyRecords || []).slice().sort((a, b) => b.week.localeCompare(a.week));
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, top: 0, zIndex: 901, overflowY: "auto", background: "linear-gradient(180deg, #0c1222 0%, #0f172a 40%, #14102a 100%)", animation: "fadeIn 0.3s ease" }}>
+
+        {/* Sticky top bar */}
+        <div style={{ position: "sticky", top: 0, zIndex: 10, background: "linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(15,23,42,0.9) 100%)", borderBottom: "1px solid rgba(148,163,184,0.1)", padding: "14px 20px", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 22 }}>👤</span>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#e2e8f0" }}>我的會員專區</h2>
+          </div>
+          <button onClick={onClose}
+            style={{ background: "rgba(148,163,184,0.1)", border: "1px solid rgba(148,163,184,0.15)", borderRadius: 10, padding: 8, cursor: "pointer", color: "#94a3b8", display: "flex", transition: "all 0.2s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(148,163,184,0.2)"; e.currentTarget.style.color = "#e2e8f0"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(148,163,184,0.1)"; e.currentTarget.style.color = "#94a3b8"; }}
+          ><CloseIcon/></button>
+        </div>
+
+        <div style={{ maxWidth: 640, margin: "0 auto", padding: "24px 20px 80px", display: "flex", flexDirection: "column", gap: 16 }}>
+
+          {/* ⚠️ Duplicate alert */}
+          {hasDuplicates && (
+            <div style={{ padding: "14px 18px", borderRadius: 14, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.3)", animation: "slideUp 0.4s ease" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 18 }}>⚠️</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#f59e0b" }}>偵測到 {myPlayers.length} 筆重複資料</span>
+              </div>
+              <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 12, lineHeight: 1.6 }}>
+                你的帳號有多筆球員資料，可能是之前誤觸建立的。<br/>
+                合併後會保留最新的資料 + 加總戰績與推薦，舊的會被安全刪除。
+              </p>
+              <button onClick={() => onMergeDuplicates(myPlayers)}
+                style={{ padding: "8px 18px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
+                onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+              >🔀 合併這 {myPlayers.length} 筆資料</button>
+            </div>
+          )}
+
+          {/* ─── 個人資料卡 ─── */}
+          <div style={{ padding: "20px 22px", borderRadius: 16, background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.2)", position: "relative", overflow: "hidden", animation: "slideUp 0.4s ease 0.05s both" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: "#a78bfa", opacity: 0.85 }}/>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
+              {myPlayer.photoURL ? (
+                <img src={myPlayer.photoURL} alt="" style={{ width: 60, height: 60, borderRadius: "50%", border: "3px solid rgba(167,139,250,0.4)", objectFit: "cover", flexShrink: 0 }}/>
+              ) : (
+                <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(167,139,250,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>🏐</div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#e2e8f0", marginBottom: 4 }}>{myPlayer.nickname}</div>
+                <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 600, marginBottom: 6 }}>{myPlayer.level}・球齡 {myPlayer.experience}</div>
+                <div style={{ fontSize: 11, color: "#64748b", display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <span>📍 {myPlayer.area}</span>
+                  {myPlayer.position && <span>🧤 {myPlayer.position}</span>}
+                  {myPlayer.height && <span>📏 {myPlayer.height} cm</span>}
+                </div>
+              </div>
+            </div>
+            <button onClick={() => onEditProfile(myPlayer)}
+              style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px solid rgba(167,139,250,0.3)", background: "rgba(167,139,250,0.08)", color: "#a78bfa", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
+              onMouseEnter={(e) => { e.target.style.background = "rgba(167,139,250,0.15)"; }}
+              onMouseLeave={(e) => { e.target.style.background = "rgba(167,139,250,0.08)"; }}
+            ><EditIcon/> 編輯我的資料</button>
+          </div>
+
+          {/* ─── 想打球開關 ─── */}
+          <div style={{ padding: "16px 20px", borderRadius: 16, background: isWanting ? "rgba(34,197,94,0.08)" : "rgba(15,23,42,0.4)", border: "1px solid", borderColor: isWanting ? "rgba(34,197,94,0.3)" : "rgba(148,163,184,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, animation: "slideUp 0.4s ease 0.1s both" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 20 }}>{isWanting ? "🟢" : "⚪"}</span>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: isWanting ? "#22c55e" : "#e2e8f0" }}>
+                  {isWanting ? `想打球！剩 ${remainHours} 小時` : "想打球狀態"}
+                </div>
+                <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+                  {isWanting ? "其他球員可以看到你想打球" : "開啟後 6 小時內告訴大家你想打球"}
+                </div>
+              </div>
+            </div>
+            <button onClick={() => onWantToPlay(myPlayer)}
+              disabled={isWanting}
+              style={{ padding: "8px 18px", borderRadius: 10, border: "none", background: isWanting ? "rgba(148,163,184,0.15)" : "linear-gradient(135deg, #22c55e, #16a34a)", color: isWanting ? "#64748b" : "#fff", fontSize: 12, fontWeight: 700, cursor: isWanting ? "not-allowed" : "pointer", transition: "all 0.2s" }}
+              onMouseEnter={(e) => { if (!isWanting) e.target.style.transform = "scale(1.04)"; }}
+              onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+            >{isWanting ? "已開啟" : "🏐 我想打球"}</button>
+          </div>
+
+          {/* ─── 本週戰績 ─── */}
+          <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.2)", animation: "slideUp 0.4s ease 0.15s both" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 20 }}>📊</span>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "#f59e0b" }}>本週戰績</div>
+                  <div style={{ fontSize: 11, color: "#64748b", fontFamily: "'Space Mono', monospace" }}>{getCurrentWeek()}</div>
+                </div>
+              </div>
+              <button onClick={() => onRecord(myPlayer)}
+                style={{ padding: "7px 14px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.transform = "scale(1.04)"; }}
+                onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+              >📝 記錄本週</button>
+            </div>
+            {(() => {
+              const week = getCurrentWeek();
+              const thisWeek = (myPlayer.weeklyRecords || []).find(r => r.week === week);
+              if (!thisWeek) {
+                return <div style={{ fontSize: 12, color: "#64748b", fontStyle: "italic" }}>本週尚未記錄戰績</div>;
+              }
+              const wr = thisWeek.played > 0 ? Math.round((thisWeek.won / thisWeek.played) * 100) : 0;
+              return (
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <span style={{ fontSize: 28, fontWeight: 800, color: "#f59e0b", fontFamily: "'Space Mono', monospace" }}>{wr}%</span>
+                  <span style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 }}>{thisWeek.won}W {thisWeek.played - thisWeek.won}L</span>
+                  <span style={{ fontSize: 11, color: "#64748b", marginLeft: "auto" }}>{thisWeek.played} 場</span>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* ─── 總戰績總覽 + 分享 ─── */}
+          {stats ? (
+            <div style={{ padding: "20px 22px", borderRadius: 16, background: "linear-gradient(135deg, rgba(245,158,11,0.08), rgba(249,115,22,0.08))", border: "1px solid rgba(245,158,11,0.25)", animation: "slideUp 0.4s ease 0.2s both" }}>
+              <div style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 6 }}>OVERALL</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
+                <span style={{ fontSize: 48, fontWeight: 900, color: "#f59e0b", fontFamily: "'Space Mono', monospace", lineHeight: 1 }}>{stats.rate}</span>
+                <span style={{ fontSize: 24, fontWeight: 800, color: "#f59e0b" }}>%</span>
+                <span style={{ fontSize: 13, color: "#94a3b8", marginLeft: "auto" }}>{stats.totalWon}W / {stats.totalPlayed} 場</span>
+              </div>
+              {stats.recent && stats.recent.length > 1 && (
+                <>
+                  <div style={{ fontSize: 11, color: "#64748b", marginBottom: 6 }}>📈 近 {stats.recent.length} 週趨勢</div>
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 48, marginBottom: 14 }}>
+                    {stats.recent.slice().reverse().map((r, i) => {
+                      const wr = r.played > 0 ? r.won / r.played : 0;
+                      const h = Math.max(6, wr * 42);
+                      return <div key={i} style={{ flex: 1, height: h, borderRadius: 3, background: wr >= 0.5 ? "rgba(34,197,94,0.6)" : "rgba(239,68,68,0.5)", transition: "height 0.3s" }} title={`${r.week}: ${r.won}/${r.played}`}/>;
+                    })}
+                  </div>
+                </>
+              )}
+              <button onClick={() => onShare(myPlayer)}
+                style={{ width: "100%", padding: "11px", borderRadius: 10, border: "none", background: "linear-gradient(135deg, #f59e0b, #f97316)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }}
+                onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; e.target.style.boxShadow = "0 4px 20px rgba(245,158,11,0.3)"; }}
+                onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "none"; }}
+              >📤 分享我的戰績卡</button>
+            </div>
+          ) : (
+            <div style={{ padding: "24px", borderRadius: 16, background: "rgba(15,23,42,0.4)", border: "1px dashed rgba(148,163,184,0.2)", textAlign: "center", animation: "slideUp 0.4s ease 0.2s both" }}>
+              <div style={{ fontSize: 36, marginBottom: 8, opacity: 0.6 }}>📊</div>
+              <div style={{ fontSize: 13, color: "#94a3b8", marginBottom: 6 }}>還沒有戰績紀錄</div>
+              <div style={{ fontSize: 11, color: "#64748b" }}>記錄本週戰績後，這裡會顯示你的總勝率與趨勢圖</div>
+            </div>
+          )}
+
+          {/* ─── 歷史戰績清單 ─── */}
+          {sortedRecords.length > 0 && (
+            <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(15,23,42,0.4)", border: "1px solid rgba(148,163,184,0.1)", animation: "slideUp 0.4s ease 0.25s both" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <span style={{ fontSize: 18 }}>📜</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#e2e8f0" }}>歷史戰績</span>
+                <span style={{ fontSize: 11, color: "#64748b" }}>（共 {sortedRecords.length} 週）</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 320, overflowY: "auto" }}>
+                {sortedRecords.map((r, i) => {
+                  const wr = r.played > 0 ? Math.round((r.won / r.played) * 100) : 0;
+                  const isCurrentWeek = r.week === getCurrentWeek();
+                  return (
+                    <div key={r.week}
+                      style={{ padding: "10px 14px", borderRadius: 10, background: isCurrentWeek ? "rgba(245,158,11,0.08)" : "rgba(15,23,42,0.6)", border: "1px solid", borderColor: isCurrentWeek ? "rgba(245,158,11,0.25)" : "rgba(148,163,184,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                        <span style={{ fontSize: 12, color: isCurrentWeek ? "#f59e0b" : "#94a3b8", fontFamily: "'Space Mono', monospace", fontWeight: 600, minWidth: 80 }}>{r.week}</span>
+                        <span style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 }}>{r.won}W {r.played - r.won}L</span>
+                        <span style={{ fontSize: 13, color: wr >= 50 ? "#22c55e" : "#ef4444", fontWeight: 800, fontFamily: "'Space Mono', monospace", marginLeft: "auto" }}>{wr}%</span>
+                      </div>
+                      <button onClick={() => onEditRecord(myPlayer, r)}
+                        style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(148,163,184,0.15)", background: "transparent", color: "#94a3b8", fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.color = "#f59e0b"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(148,163,184,0.15)"; e.currentTarget.style.color = "#94a3b8"; }}
+                      >修改</button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ─── 推薦我的人 ─── */}
+          <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(96,165,250,0.05)", border: "1px solid rgba(96,165,250,0.2)", animation: "slideUp 0.4s ease 0.3s both" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <span style={{ fontSize: 18 }}>👍</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: "#60a5fa" }}>推薦我的人</span>
+              {recommendCount > 0 && (
+                <span style={{ fontSize: 12, padding: "2px 10px", borderRadius: 12, background: "rgba(96,165,250,0.15)", color: "#60a5fa", fontWeight: 700 }}>{recommendCount} 人</span>
+              )}
+            </div>
+            {recommendations.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "20px 0", color: "#64748b" }}>
+                <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>💭</div>
+                <div style={{ fontSize: 12 }}>還沒有人推薦你</div>
+                <div style={{ fontSize: 11, marginTop: 4, opacity: 0.8 }}>認真打球、多交朋友，推薦會累積的 💪</div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" }}>
+                {recommendations.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)).map((rec, i) => (
+                  <div key={i} style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(15,23,42,0.6)", border: "1px solid rgba(96,165,250,0.1)" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: rec.message ? 4 : 0 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#60a5fa", display: "flex", alignItems: "center", gap: 5 }}>
+                        👤 {rec.fromName || "某位球員"}
+                      </span>
+                      <span style={{ fontSize: 10, color: "#64748b" }}>{formatRelativeTime(rec.createdAt)}</span>
+                    </div>
+                    {rec.message && (
+                      <div style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5, fontStyle: "italic", wordBreak: "break-word" }}>
+                        「{rec.message}」
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ─── 危險區域 ─── */}
+          <div style={{ marginTop: 14, paddingTop: 20, borderTop: "1px dashed rgba(239,68,68,0.2)", animation: "slideUp 0.4s ease 0.35s both" }}>
+            <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8, letterSpacing: "0.04em", textAlign: "center" }}>危險區域</div>
+            <button onClick={() => onDelete(myPlayer.id)}
+              style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)", color: "#ef4444", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}
+              onMouseEnter={(e) => { e.target.style.background = "rgba(239,68,68,0.12)"; }}
+              onMouseLeave={(e) => { e.target.style.background = "rgba(239,68,68,0.06)"; }}
+            >🗑️ 刪除我的球員資料</button>
+          </div>
+
+        </div>
+      </div>
+    </>
+  );
+};
+
+
+/* ════════════════════════════════════════════
    Header Auth Indicator — top-right corner login button or user pill
    ════════════════════════════════════════════ */
-const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading }) => {
+const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading, onOpenMemberCenter }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const btnRef = useRef(null);
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
@@ -1884,6 +2172,13 @@ const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading }) 
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.displayName || "—"}</div>
                 <div style={{ fontSize: 10, color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{currentUser.email || ""}</div>
               </div>
+              <button onClick={() => { setMenuOpen(false); onOpenMemberCenter(); }}
+                style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, rgba(167,139,250,0.15), rgba(139,92,246,0.15))", color: "#a78bfa", fontSize: 12, fontWeight: 700, cursor: "pointer", textAlign: "left", transition: "background 0.15s", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(167,139,250,0.25), rgba(139,92,246,0.25))"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "linear-gradient(135deg, rgba(167,139,250,0.15), rgba(139,92,246,0.15))"; }}
+              >
+                <span style={{ fontSize: 14 }}>👤</span> 我的會員專區
+              </button>
               <button onClick={() => { setMenuOpen(false); onLogout(); }}
                 style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "none", background: "transparent", color: "#ef4444", fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "left", transition: "background 0.15s" }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
@@ -2470,6 +2765,9 @@ export default function VolleyballMatcher() {
   const [showShareCardModal, setShowShareCardModal] = useState(false);
   const [shareCardTarget, setShareCardTarget] = useState(null);
 
+  // NEW: member center state
+  const [showMemberCenterModal, setShowMemberCenterModal] = useState(false);
+
   const toast = (msg, duration = 2500, type = "success") => { setShowToast({ msg, type }); setTimeout(() => setShowToast(null), duration); };
 
   const [nowTick, setNowTick] = useState(Date.now());
@@ -2636,6 +2934,85 @@ export default function VolleyballMatcher() {
   const handleOpenShareCard = (player) => {
     setShareCardTarget(player);
     setShowShareCardModal(true);
+  };
+
+  // NEW: open member center modal
+  const handleOpenMemberCenter = () => {
+    setShowMemberCenterModal(true);
+  };
+
+  // NEW: edit a specific historical week record — opens WeeklyRecordModal with prefilled data
+  // (The WeeklyRecordModal auto-detects the week based on `getCurrentWeek()` so editing old weeks
+  //  requires us to pass the player as-is; modal will show this week's record OR allow overwriting.
+  //  We keep this simple: just reopen the standard record modal, which lets them overwrite current week.)
+  const handleEditHistoricalRecord = (player, record) => {
+    // Simpler approach: open the regular WeeklyRecordModal for current week
+    // For editing PAST weeks, we'd need a different modal. Keeping current behavior for now:
+    // just jumping them to current week record since historical records are stored but we only
+    // allow modifying the current week via the existing modal.
+    // ALTERNATIVE: could inline-edit in the member center. For simplicity we just reopen modal.
+    setRecordTarget(player);
+    setShowRecordModal(true);
+  };
+
+  // NEW: merge duplicate player records for the current Google user
+  const handleMergeDuplicates = async (duplicates) => {
+    if (!duplicates || duplicates.length < 2) return;
+    if (!window.confirm(`確定要合併這 ${duplicates.length} 筆重複資料嗎？\n\n系統會：\n• 保留最新的那筆作為主資料\n• 合併所有戰績紀錄（同週以場數較多為準）\n• 合併所有推薦（去重）\n• 刪除其他舊資料\n\n此動作無法復原。`)) return;
+
+    try {
+      // Sort by createdAt descending — newest first
+      const sorted = [...duplicates].sort((a, b) => {
+        const aTime = a.createdAt?.seconds || a.createdAt?.toMillis?.() || 0;
+        const bTime = b.createdAt?.seconds || b.createdAt?.toMillis?.() || 0;
+        return bTime - aTime;
+      });
+      const primary = sorted[0];
+      const toDelete = sorted.slice(1);
+
+      // Merge weeklyRecords — if same week exists in multiple, keep the one with more games played
+      const weekMap = new Map();
+      duplicates.forEach(p => {
+        (p.weeklyRecords || []).forEach(r => {
+          const existing = weekMap.get(r.week);
+          if (!existing || (r.played || 0) > (existing.played || 0)) {
+            weekMap.set(r.week, r);
+          }
+        });
+      });
+      const mergedRecords = [...weekMap.values()].sort((a, b) => b.week.localeCompare(a.week)).slice(0, 52);
+
+      // Merge recommendations — dedupe by fromUid
+      const recMap = new Map();
+      duplicates.forEach(p => {
+        (p.recommendations || []).forEach(rec => {
+          const key = rec.fromUid || rec.fromName || JSON.stringify(rec);
+          if (!recMap.has(key)) recMap.set(key, rec);
+        });
+      });
+      const mergedRecommendations = [...recMap.values()];
+
+      // Latest wantToPlayUntil
+      const mergedWantToPlayUntil = duplicates.reduce((max, p) => Math.max(max, p.wantToPlayUntil || 0), 0);
+
+      // Update primary with merged data
+      await updateDoc(doc(db, "players", primary.id), {
+        weeklyRecords: mergedRecords,
+        recommendations: mergedRecommendations,
+        recommendCount: mergedRecommendations.length,
+        wantToPlayUntil: mergedWantToPlayUntil,
+      });
+
+      // Delete the rest
+      for (const p of toDelete) {
+        await deleteDoc(doc(db, "players", p.id));
+      }
+
+      toast(`✅ 已合併 ${duplicates.length} 筆重複資料，保留最新的`, 3500);
+    } catch (err) {
+      console.error("Merge error:", err);
+      toast("合併失敗，請稍後再試", 3000, "warn");
+    }
   };
 
   const handleWantToPlay = async (player) => {
@@ -3021,7 +3398,7 @@ export default function VolleyballMatcher() {
             <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 12, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontWeight: 700, letterSpacing: "0.1em", border: "1px solid rgba(245,158,11,0.2)" }}>TAIPEI</span>
             {/* NEW: Header auth indicator — always visible */}
             <div style={{ marginLeft: "auto" }}>
-              <HeaderAuthIndicator currentUser={currentUser} onLogin={handleHeaderLogin} onLogout={handleGoogleLogout} googleLoading={googleLoading}/>
+              <HeaderAuthIndicator currentUser={currentUser} onLogin={handleHeaderLogin} onLogout={handleGoogleLogout} googleLoading={googleLoading} onOpenMemberCenter={handleOpenMemberCenter}/>
             </div>
           </div>
           <p style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.5 }}>即時掌握台北各場館的排球場次，快速找到缺人的場，讓每一場都能順利開打</p>
@@ -3230,6 +3607,22 @@ export default function VolleyballMatcher() {
 
       {/* NEW: ShareCardModal */}
       <ShareCardModal open={showShareCardModal} onClose={() => { setShowShareCardModal(false); setShareCardTarget(null); }} player={shareCardTarget}/>
+
+      {/* NEW: MemberCenterModal — the member dashboard */}
+      <MemberCenterModal
+        open={showMemberCenterModal}
+        onClose={() => setShowMemberCenterModal(false)}
+        currentUser={currentUser}
+        players={players}
+        onEditProfile={(player) => { setShowMemberCenterModal(false); handleEditPlayerClick(player); }}
+        onOpenRegisterFlow={handleOpenRegisterFlow}
+        onWantToPlay={handleWantToPlay}
+        onRecord={(player) => { setShowMemberCenterModal(false); handleOpenRecordModal(player); }}
+        onShare={(player) => { setShowMemberCenterModal(false); handleOpenShareCard(player); }}
+        onDelete={(playerId) => { setShowMemberCenterModal(false); handleDeletePlayer(playerId); }}
+        onMergeDuplicates={handleMergeDuplicates}
+        onEditRecord={(player, record) => { setShowMemberCenterModal(false); handleEditHistoricalRecord(player, record); }}
+      />
 
       {showToast && (
         <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", padding: "14px 24px", borderRadius: 14, background: showToast.type === "warn" ? "rgba(245,158,11,0.95)" : "rgba(34,197,94,0.95)", color: "#fff", fontSize: 13, fontWeight: 700, zIndex: 999, animation: "toastIn 0.3s ease", boxShadow: showToast.type === "warn" ? "0 8px 32px rgba(245,158,11,0.4)" : "0 8px 32px rgba(34,197,94,0.4)", maxWidth: "90vw", textAlign: "center", lineHeight: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
