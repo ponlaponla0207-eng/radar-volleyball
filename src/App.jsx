@@ -607,11 +607,14 @@ const AdminLoginModal = ({ open, onClose, onLogin }) => {
 /* ════════════════════════════════════════════
    Share Modal — FB post generator
    ════════════════════════════════════════════ */
-const ShareModal = ({ open, onClose, data }) => {
+const ShareModal = ({ open, onClose, data, onNotifyWantToPlay, wantToPlayCount }) => {
   const [copied, setCopied] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState("");
   const [customUrl, setCustomUrl] = useState("");
   const [text, setText] = useState("");
+  const [notifySent, setNotifySent] = useState(false);
+  const [notifyResult, setNotifyResult] = useState(null);
+  const [notifying, setNotifying] = useState(false);
 
   useEffect(() => {
     if (open && data) {
@@ -619,6 +622,9 @@ const ShareModal = ({ open, onClose, data }) => {
       setCopied(false);
       setSelectedGroup("");
       setCustomUrl("");
+      setNotifySent(false);
+      setNotifyResult(null);
+      setNotifying(false);
     }
   }, [open, data]);
 
@@ -720,6 +726,34 @@ const ShareModal = ({ open, onClose, data }) => {
 
         <div style={{ marginTop: 14, padding: "10px 12px", borderRadius: 10, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.15)", fontSize: 11, color: "#f59e0b", lineHeight: 1.5 }}>
           💡 <strong>小提示：</strong>按「複製文字」→ 再按「前往 FB 社團貼文」→ 在 FB 社團點發文並貼上即可。
+        </div>
+
+        {/* Notify wanting-to-play players via LINE */}
+        <div style={{ marginTop: 12, padding: "14px 16px", borderRadius: 12, background: "rgba(6,199,85,0.06)", border: "1px solid rgba(6,199,85,0.2)" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#06c755", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+            📣 通知 LINE 好友有新場次
+            {wantToPlayCount > 0 && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: "rgba(34,197,94,0.15)", color: "#22c55e" }}>🟢 {wantToPlayCount} 人想打球</span>}
+          </div>
+          <p style={{ fontSize: 11, color: "#64748b", marginBottom: 10, lineHeight: 1.5 }}>
+            透過 LINE 通知所有加了官方帳號的好友，讓他們知道有新場次可以報名。
+          </p>
+          {notifyResult && (
+            <div style={{ marginBottom: 8, padding: "8px 10px", borderRadius: 8, background: notifyResult.error ? "rgba(239,68,68,0.08)" : "rgba(6,199,85,0.08)", fontSize: 12, color: notifyResult.error ? "#ef4444" : "#06c755", fontWeight: 600 }}>
+              {notifyResult.error ? `❌ ${notifyResult.error}` : `✅ ${notifyResult.message}`}
+            </div>
+          )}
+          <button
+            onClick={async () => {
+              if (notifySent) return;
+              setNotifying(true);
+              const r = await onNotifyWantToPlay(data);
+              setNotifyResult(r);
+              setNotifySent(true);
+              setNotifying(false);
+            }}
+            disabled={notifySent || notifying}
+            style={{ width: "100%", padding: "10px", borderRadius: 10, border: "none", background: notifySent ? "rgba(148,163,184,0.1)" : notifying ? "rgba(6,199,85,0.2)" : "linear-gradient(135deg, #06c755, #05a847)", color: notifySent ? "#64748b" : "#fff", fontSize: 13, fontWeight: 700, cursor: notifySent ? "not-allowed" : "pointer", transition: "all 0.2s" }}
+          >{notifySent ? "✅ 已通知" : notifying ? "發送中..." : "📣 發送 LINE 通知"}</button>
         </div>
       </div>
     </>
@@ -2147,6 +2181,9 @@ export default function VolleyballMatcher() {
           <StatBadge value={totalPlayers} label="已報名" color="#a78bfa"/>
           <StatBadge value={needPeople.length} label="缺人中" color="#f59e0b"/>
           <StatBadge value={formed.length} label="已成團" color="#22c55e"/>
+          {players.filter(p => (p.wantToPlayUntil || 0) > Date.now()).length > 0 && (
+            <StatBadge value={players.filter(p => (p.wantToPlayUntil || 0) > Date.now()).length} label="想打球" color="#06c755"/>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "center" }}>
@@ -2332,7 +2369,12 @@ export default function VolleyballMatcher() {
 
       <AdminLoginModal open={showAdminLoginModal} onClose={() => setShowAdminLoginModal(false)} onLogin={handleAdminLogin}/>
 
-      <ShareModal open={showShareModal} onClose={() => { setShowShareModal(false); setShareData(null); }} data={shareData}/>
+      <ShareModal open={showShareModal} onClose={() => { setShowShareModal(false); setShareData(null); }} data={shareData} wantToPlayCount={players.filter(p => (p.wantToPlayUntil || 0) > Date.now()).length} onNotifyWantToPlay={async (sessionData) => {
+        // We need the session ID from Firestore. Since we just created it, find it by matching
+        const matchSession = sessions.find(s => s.courtName === sessionData.courtName && s.date === sessionData.date && s.time === sessionData.time && s.host === sessionData.host);
+        if (!matchSession) return { error: "找不到場次資料，請稍後重試" };
+        return handleSendLineNotification(matchSession.id, "wantToPlay", "", sessionData.password || matchSession.password);
+      }}/>
 
       <NotifyModal open={showNotifyModal} onClose={() => { setShowNotifyModal(false); setNotifyTarget(null); }} session={notifyTarget} onSend={handleSendLineNotification}/>
 
@@ -2351,4 +2393,3 @@ export default function VolleyballMatcher() {
     </div>
   );
 }
-
