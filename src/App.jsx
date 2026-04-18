@@ -49,7 +49,25 @@ const PARTNER_VENUES = [
   },
     {
     emoji: "🏐",
-    name: "球魔方排球廣",
+    name: "3.14排球館",
+    desc: "固定開團、臉書社團",
+    url: "https://www.facebook.com/groups/471627857365456",
+  },
+      {
+    emoji: "🏐",
+    name: "259排球館",
+    desc: "固定開團、臉書社團",
+    url: "https://www.facebook.com/groups/4342598336000512",
+  },
+        {
+    emoji: "🏐",
+    name: "612排球星球",
+    desc: "固定開團、臉書社團",
+    url: "https://www.facebook.com/groups/241020673769507",
+  },
+   {
+    emoji: "🏐",
+    name: "球魔方排球館",
     desc: "固定開團、顯示即時缺人數",
     url: "https://magicblock.acesports.tw/login",
   },
@@ -3155,8 +3173,8 @@ const PartnerVenuesModal = ({ open, onClose }) => {
         )}
 
         <div style={{ marginTop: 16, padding: "10px 12px", borderRadius: 8, background: "rgba(127,168,124,0.08)", border: "1px solid rgba(127,168,124,0.20)", fontSize: 11, color: "#5A7B9A", lineHeight: 1.6 }}>
-          💡 有固定開團的球館想加入清單？<br/>
-          可到 LINE 官方帳號私訊聯絡，我們會評估後加入。
+          💡 這邊的球館都是打過覺得場地不錯<br/>
+          值得可以再去打的球館。
         </div>
       </div>
     </>
