@@ -1,12 +1,32 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>排球揪團雷達 — 台北排球場次即時配對</title>
-    <meta name="description" content="即時掌握台北各場館排球場次，快速找到缺人的場，讓每一場都能順利開打。" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏐</text></svg>" />
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- 基本資訊 -->
+  <title>排球揪團雷達｜台北排球場次即時配對</title>
+  <meta name="description" content="即時掌握台北各場館的排球場次，快速找到缺人的場，讓每一場都能順利開打" />
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#E89B5E" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/icon-192.png" />
+
+  <!-- Apple / iOS 專用 PWA 設定 -->
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="排球雷達" />
+
+  <!-- 社群分享預覽 (Open Graph) -->
+  <meta property="og:title" content="排球揪團雷達" />
+  <meta property="og:description" content="台北排球場次即時雷達——找人、揪團、記錄戰績" />
+  <meta property="og:image" content="/icon-512.png" />
+  <meta property="og:type" content="website" />
+</head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
