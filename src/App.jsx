@@ -37,6 +37,21 @@ const FUNCTIONS_BASE_URL = "https://sendlinenotification-njjh4do2yq-uc.a.run.app
 const LINE_USER_KEY = "vb_line_user_id"; // localStorage key for LINE user ID
 const WANT_TO_PLAY_HOURS = 6; // 「想打球」狀態維持 6 小時
 
+// NEW: 其他球館揪團資訊（可自行編輯）
+// 每一筆需要: emoji, name, desc, url
+// 未來想新增球館，直接在這個陣列裡加一筆就好
+const PARTNER_VENUES = [
+  {
+    emoji: "🐸",
+    name: "PowerFrog 排球館",
+    desc: "固定開團、顯示即時缺人數",
+    url: "https://powerfrog-cwagdne0bdc4dedp.japanwest-01.azurewebsites.net/signup",
+  },
+  // 範例（把註解拿掉 + 改成你要加的球館）
+  // { emoji: "🏐", name: "XXX 排球館", desc: "週X晚上固定場", url: "https://..." },
+  // { emoji: "🎯", name: "XXX 社團", desc: "新手友善", url: "https://..." },
+];
+
 // Get ISO week string like "2026-W16"
 function getCurrentWeek() {
   const d = new Date();
@@ -3082,6 +3097,67 @@ const CreateSessionModal = ({ open, onClose, onSubmit, initialData }) => {
 };
 
 /* ════════════════════════════════════════════
+   NEW: PartnerVenuesModal — 其他球館揪團資訊
+   ════════════════════════════════════════════ */
+const PartnerVenuesModal = ({ open, onClose }) => {
+  if (!open) return null;
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 900, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 901, width: "min(480px, 94vw)", maxHeight: "85vh", background: "#FFF9EC", borderRadius: 20, border: "1px solid rgba(232,155,94,0.35)", padding: "24px 22px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)", display: "flex", flexDirection: "column" }}>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 22 }}>🏐</span>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#1E3A5F", margin: 0 }}>其他球館揪團</h2>
+          </div>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid rgba(180,165,130,0.22)", background: "transparent", color: "#8A7F6A", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#E89B5E"; e.currentTarget.style.color = "#E89B5E"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(180,165,130,0.22)"; e.currentTarget.style.color = "#8A7F6A"; }}
+          >×</button>
+        </div>
+
+        <div style={{ fontSize: 12, color: "#8A7F6A", lineHeight: 1.6, marginBottom: 16 }}>
+          以下是其他有固定開團的場館/社團連結，點擊前往查看他們的場次資訊。
+        </div>
+
+        {PARTNER_VENUES.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px 20px", color: "#8A7F6A" }}>
+            <div style={{ fontSize: 40, marginBottom: 8, opacity: 0.5 }}>🤷</div>
+            <div style={{ fontSize: 13 }}>目前還沒有合作球館</div>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, overflowY: "auto", paddingRight: 4 }}>
+            {PARTNER_VENUES.map((v, i) => (
+              <a key={i} href={v.url} target="_blank" rel="noopener noreferrer"
+                style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, background: "rgba(248,242,229,0.6)", border: "1px solid rgba(180,165,130,0.22)", textDecoration: "none", transition: "all 0.2s", cursor: "pointer" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#E89B5E"; e.currentTarget.style.background = "rgba(232,155,94,0.10)"; e.currentTarget.style.transform = "translateX(4px)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(180,165,130,0.22)"; e.currentTarget.style.background = "rgba(248,242,229,0.6)"; e.currentTarget.style.transform = "translateX(0)"; }}
+              >
+                <div style={{ fontSize: 28, flexShrink: 0, width: 44, height: 44, borderRadius: 10, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(180,165,130,0.20)" }}>{v.emoji}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#1E3A5F", marginBottom: 2 }}>{v.name}</div>
+                  {v.desc && <div style={{ fontSize: 11, color: "#8A7F6A", lineHeight: 1.5 }}>{v.desc}</div>}
+                </div>
+                <div style={{ fontSize: 11, color: "#E89B5E", fontWeight: 700, display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                  前往 <span style={{ fontSize: 14 }}>→</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div style={{ marginTop: 16, padding: "10px 12px", borderRadius: 8, background: "rgba(127,168,124,0.08)", border: "1px solid rgba(127,168,124,0.20)", fontSize: 11, color: "#5A7B9A", lineHeight: 1.6 }}>
+          💡 有固定開團的球館想加入清單？<br/>
+          可到 LINE 官方帳號私訊聯絡，我們會評估後加入。
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ════════════════════════════════════════════
    Main App
    ════════════════════════════════════════════ */
 export default function VolleyballMatcher() {
@@ -3131,6 +3207,9 @@ export default function VolleyballMatcher() {
 
   // NEW: member center state
   const [showMemberCenterModal, setShowMemberCenterModal] = useState(false);
+
+  // NEW: partner venues modal
+  const [showPartnerVenuesModal, setShowPartnerVenuesModal] = useState(false);
 
   // NEW: notifications state
   const [notifications, setNotifications] = useState([]);
@@ -3965,6 +4044,19 @@ export default function VolleyballMatcher() {
           })}
         </div>
 
+        {/* NEW: 其他球館揪團資訊按鈕 */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+          <button onClick={() => setShowPartnerVenuesModal(true)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 18px", borderRadius: 20, border: "1px solid rgba(90,143,168,0.35)", background: "rgba(90,143,168,0.08)", color: "#5A8FA8", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(90,143,168,0.18)"; e.currentTarget.style.borderColor = "#5A8FA8"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(90,143,168,0.08)"; e.currentTarget.style.borderColor = "rgba(90,143,168,0.35)"; e.currentTarget.style.transform = "translateY(0)"; }}
+          >
+            <span style={{ fontSize: 14 }}>🏐</span>
+            <span>其他球館揪團資訊</span>
+            <span style={{ fontSize: 10, opacity: 0.7 }}>→</span>
+          </button>
+        </div>
+
         <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", padding: "12px 16px", background: "var(--surface)", borderRadius: 14, border: "1px solid var(--border)" }}>
           <div style={{ flex: 1, minWidth: 120 }}>
             <label style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, letterSpacing: "0.04em", fontWeight: 600 }}>📍 地區</label>
@@ -4164,6 +4256,12 @@ export default function VolleyballMatcher() {
         notifications={notifications}
         onReadNotification={handleReadNotification}
         onDeleteAll={handleDeleteAllNotifications}
+      />
+
+      {/* NEW: 其他球館揪團資訊 Modal */}
+      <PartnerVenuesModal
+        open={showPartnerVenuesModal}
+        onClose={() => setShowPartnerVenuesModal(false)}
       />
 
       {showToast && (
