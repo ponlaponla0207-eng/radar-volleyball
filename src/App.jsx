@@ -256,7 +256,7 @@ const ProgressRing = ({ current, min, max }) => {
 };
 
 /* ── Session Card ── */
-const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment, onWaitlist, onCancelWaitlist, hasWaitlisted, isAdmin, onAdminDelete, onAdminAdjust, currentUser, onNotifyWanting, wantingCount }) => {
+const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment, onWaitlist, onCancelWaitlist, hasWaitlisted, isAdmin, onAdminDelete, onAdminAdjust, currentUser, onNotifyWanting, wantingCount, onDuplicate }) => {
   const status = getStatus(session);
   const need = Math.max(0, session.min - session.registered);
   const isFull = session.registered >= session.max;
@@ -277,6 +277,13 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
     >
       {/* Left-side accent bar (bold and tall, more noticeable) */}
       <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 4, background: status.color, opacity: 0.85 }}/>
+      {/* NEW: Duplicate button (only when logged in) — left of edit button */}
+      {currentUser && onDuplicate && (
+        <button onClick={() => onDuplicate(session)} title="複製這個場次" style={{ position: "absolute", top: 10, right: 78, background: "rgba(180,165,130,0.12)", border: "1px solid rgba(180,165,130,0.18)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#8A7F6A", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(90,143,168,0.22)"; e.currentTarget.style.color = "#5A8FA8"; e.currentTarget.style.borderColor = "rgba(90,143,168,0.3)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(180,165,130,0.12)"; e.currentTarget.style.color = "#8A7F6A"; e.currentTarget.style.borderColor = "rgba(180,165,130,0.18)"; }}
+        >📋 複製</button>
+      )}
       {/* Edit button top-right */}
       <button onClick={() => onEdit(session)} title="主揪編輯" style={{ position: "absolute", top: 10, right: 12, background: "rgba(180,165,130,0.12)", border: "1px solid rgba(180,165,130,0.18)", borderRadius: 8, padding: "5px 8px", cursor: "pointer", color: "#8A7F6A", display: "flex", alignItems: "center", gap: 4, fontSize: 11, transition: "all 0.2s" }}
         onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(232,155,94,0.22)"; e.currentTarget.style.color = "#E89B5E"; e.currentTarget.style.borderColor = "rgba(232,155,94,0.3)"; }}
@@ -285,7 +292,7 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
 
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
         <ProgressRing current={session.registered} min={session.min} max={session.max}/>
-        <div style={{ flex: 1, minWidth: 0, paddingRight: 60 }}>
+        <div style={{ flex: 1, minWidth: 0, paddingRight: currentUser && onDuplicate ? 130 : 60 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
             <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)" }}>{courtName}</span>
             <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 20, background: status.bg, color: status.color, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}>
@@ -1869,7 +1876,7 @@ const LoginChoiceModal = ({ open, onClose, onGoogle, onGuest, googleLoading }) =
 /* ════════════════════════════════════════════
    Member Center Modal — Full member dashboard
    ════════════════════════════════════════════ */
-const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile, onOpenRegisterFlow, onWantToPlay, onRecord, onShare, onDelete, onMergeDuplicates, onEditRecord }) => {
+const MemberCenterModal = ({ open, onClose, currentUser, players, sessions, onEditProfile, onOpenRegisterFlow, onWantToPlay, onRecord, onShare, onDelete, onMergeDuplicates, onEditRecord, onDuplicateSession }) => {
   if (!open || !currentUser) return null;
 
   // Find ALL players matching this user's uid (to detect duplicates)
@@ -2100,6 +2107,52 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, onEditProfile,
               </div>
             </div>
           )}
+
+          {/* ─── 我開的場次（主揪專屬） ─── */}
+          {(() => {
+            const mySessions = (sessions || []).filter(s => s.organizerUid === currentUser.uid);
+            const sortedSessions = mySessions.slice().sort((a, b) => {
+              // Newest first (by date + time)
+              return (b.date + " " + (b.time || "")).localeCompare(a.date + " " + (a.time || ""));
+            });
+            if (mySessions.length === 0) return null;
+            return (
+              <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(232,155,94,0.08)", border: "1px solid rgba(232,155,94,0.28)", animation: "slideUp 0.4s ease 0.27s both" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                  <span style={{ fontSize: 18 }}>📋</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: "#B56620" }}>我開的場次</span>
+                  <span style={{ fontSize: 11, color: "#8A7F6A" }}>（共 {mySessions.length} 場）</span>
+                </div>
+                <div style={{ fontSize: 11, color: "#8A7F6A", marginBottom: 10, lineHeight: 1.6 }}>
+                  💡 常開同樣場地？點「複製」快速建立下一場
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" }}>
+                  {sortedSessions.slice(0, 20).map((s) => (
+                    <div key={s.id} style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(255,249,236,0.6)", border: "1px solid rgba(180,165,130,0.22)", display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#1E3A5F", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {s.courtName}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#8A7F6A", fontFamily: "'Space Mono', monospace" }}>
+                          {s.date} · {s.time} · {s.level} · ${s.fee}
+                        </div>
+                      </div>
+                      <button onClick={() => onDuplicateSession(s)}
+                        style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(90,143,168,0.35)", background: "rgba(90,143,168,0.12)", color: "#5A8FA8", fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "all 0.15s", flexShrink: 0 }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(90,143,168,0.25)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(90,143,168,0.12)"; }}
+                      >📋 複製</button>
+                    </div>
+                  ))}
+                  {sortedSessions.length > 20 && (
+                    <div style={{ fontSize: 11, color: "#8A7F6A", textAlign: "center", padding: 8 }}>
+                      （只顯示最近 20 場）
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ─── 推薦我的人 ─── */}
           <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(90,143,168,0.10)", border: "1px solid rgba(90,143,168,0.28)", animation: "slideUp 0.4s ease 0.3s both" }}>
@@ -2822,7 +2875,7 @@ const EditPlayerModal = ({ open, onClose, player, onSave, onDelete }) => {
 
 const LAST_FORM_KEY = "vb_last_create_form";
 
-const CreateSessionModal = ({ open, onClose, onSubmit }) => {
+const CreateSessionModal = ({ open, onClose, onSubmit, initialData }) => {
   const defaultForm = { courtName: "", area: "", date: getToday(), startTime: "19:00", currentPeople: "1", maxPeople: "16", level: "中階", fee: "", hostName: "", signupUrl: "", notes: "", password: "" };
 
   const loadSavedForm = () => {
@@ -2841,11 +2894,31 @@ const CreateSessionModal = ({ open, onClose, onSubmit }) => {
 
   useEffect(() => {
     if (open) {
-      setForm(loadSavedForm());
+      // If initialData provided (from copying a session), use it with today's date + blank notes/signupUrl
+      if (initialData) {
+        setForm({
+          ...defaultForm,
+          courtName: initialData.courtName || "",
+          area: initialData.area || "",
+          date: getToday(), // always today, user can change it
+          startTime: (initialData.time || "19:00").split("\u2013")[0].trim(),
+          currentPeople: "1",
+          maxPeople: String(initialData.max || 16),
+          level: initialData.level || "中階",
+          fee: String(initialData.fee || ""),
+          hostName: initialData.host || "",
+          // Deliberately blank: signupUrl, notes, password — these change per session
+          signupUrl: "",
+          notes: "",
+          password: "",
+        });
+      } else {
+        setForm(loadSavedForm());
+      }
       setStep(1);
       setErrors({});
     }
-  }, [open]);
+  }, [open, initialData]);
 
   const handleSubmit = () => {
     const e = {};
@@ -2996,6 +3069,8 @@ export default function VolleyballMatcher() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  // NEW: for duplicating a session — holds the session data to pre-fill the form
+  const [duplicateSessionData, setDuplicateSessionData] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
@@ -3074,6 +3149,19 @@ export default function VolleyballMatcher() {
     const [y, mo, d] = session.date.split("-").map(Number);
     const sessionStart = new Date(y, mo - 1, d, h || 0, m || 0);
     return sessionStart.getTime() <= Date.now();
+  };
+
+  // NEW: Check if session is expired (start time + 2 hours grace period passed)
+  // Session is considered "done" after its end time — we use start + 2h since sessions are typically 2 hours
+  const isSessionExpired = (session) => {
+    if (!session.date || !session.time) return false;
+    const startStr = session.time.split("\u2013")[0].trim();
+    const [h, m] = startStr.split(":").map(Number);
+    const [y, mo, d] = session.date.split("-").map(Number);
+    if (!y || !mo || !d) return false;
+    // Sessions become expired 2 hours after start time (enough buffer for typical 2h game)
+    const sessionEnd = new Date(y, mo - 1, d, h || 0, m || 0).getTime() + (2 * 60 * 60 * 1000);
+    return sessionEnd <= Date.now();
   };
 
   useEffect(() => {
@@ -3565,6 +3653,13 @@ export default function VolleyballMatcher() {
     }
   };
 
+  // NEW: open CreateSessionModal pre-filled with an existing session's data (duplicate)
+  const handleDuplicateSession = (session) => {
+    setDuplicateSessionData(session);
+    setShowCreateModal(true);
+    toast("✏️ 已載入場地資訊，只要改日期就好", 2500);
+  };
+
   const handleCreateSession = async (data) => {
     try {
       await addDoc(sessionsRef, {
@@ -3723,7 +3818,7 @@ export default function VolleyballMatcher() {
 
   const _tickRef = nowTick;
   const allSessions = sessions
-    .filter(s => !hasSessionStarted(s))
+    .filter(s => !isSessionExpired(s))
     .filter(s => s.date === selectedDate)
     .filter(s => selectedArea === "全部" || s.area === selectedArea)
     .filter(s => selectedLevel === "全部" || s.level === selectedLevel);
@@ -3831,7 +3926,7 @@ export default function VolleyballMatcher() {
 
         <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "center" }}>
           {DATES.map(d => {
-            const count = sessions.filter(s => s.date === d.value && !hasSessionStarted(s)).length;
+            const count = sessions.filter(s => s.date === d.value && !isSessionExpired(s)).length;
             const isSelected = selectedDate === d.value;
             return (
               <button key={d.value} onClick={() => setSelectedDate(d.value)} style={{ position: "relative", padding: "8px 20px", borderRadius: 10, border: "1px solid", borderColor: isSelected ? "#E89B5E" : "var(--border)", background: isSelected ? "rgba(232,155,94,0.22)" : "transparent", color: isSelected ? "#E89B5E" : "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
@@ -3897,7 +3992,7 @@ export default function VolleyballMatcher() {
           )}
           {!loading && sorted.map((s, i) => (
             <div key={s.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal} onWaitlist={handleWaitlist} onCancelWaitlist={handleCancelWaitlist} hasWaitlisted={waitlistedSessions.has(s.id)} isAdmin={isAdmin} onAdminDelete={handleAdminDelete} onAdminAdjust={handleAdminAdjust} currentUser={currentUser} onNotifyWanting={handleOpenNotifyWanting} wantingCount={players.filter(p => (p.wantToPlayUntil || 0) > Date.now() && p.uid && p.uid !== currentUser?.uid).length}/>
+              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal} onWaitlist={handleWaitlist} onCancelWaitlist={handleCancelWaitlist} hasWaitlisted={waitlistedSessions.has(s.id)} isAdmin={isAdmin} onAdminDelete={handleAdminDelete} onAdminAdjust={handleAdminAdjust} currentUser={currentUser} onNotifyWanting={handleOpenNotifyWanting} wantingCount={players.filter(p => (p.wantToPlayUntil || 0) > Date.now() && p.uid && p.uid !== currentUser?.uid).length} onDuplicate={handleDuplicateSession}/>
             </div>
           ))}
         </div>
@@ -3977,7 +4072,7 @@ export default function VolleyballMatcher() {
         ><PlusIcon/><span>我要註冊</span></button>
       )}
 
-      <CreateSessionModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onSubmit={handleCreateSession}/>
+      <CreateSessionModal open={showCreateModal} onClose={() => { setShowCreateModal(false); setDuplicateSessionData(null); }} onSubmit={handleCreateSession} initialData={duplicateSessionData}/>
 
       <PasswordModal open={showPasswordModal} onClose={() => { setShowPasswordModal(false); setEditTarget(null); }} onVerify={handlePasswordVerify} sessionId={editTarget?.session?.id}/>
 
@@ -4016,6 +4111,7 @@ export default function VolleyballMatcher() {
         onClose={() => setShowMemberCenterModal(false)}
         currentUser={currentUser}
         players={players}
+        sessions={sessions}
         onEditProfile={(player) => { setShowMemberCenterModal(false); handleEditPlayerClick(player); }}
         onOpenRegisterFlow={handleOpenRegisterFlow}
         onWantToPlay={handleWantToPlay}
@@ -4024,6 +4120,7 @@ export default function VolleyballMatcher() {
         onDelete={(playerId) => { setShowMemberCenterModal(false); handleDeletePlayer(playerId); }}
         onMergeDuplicates={handleMergeDuplicates}
         onEditRecord={(player, record) => { setShowMemberCenterModal(false); handleEditHistoricalRecord(player, record); }}
+        onDuplicateSession={(session) => { setShowMemberCenterModal(false); handleDuplicateSession(session); }}
       />
 
       {/* NEW: Notification modals */}
