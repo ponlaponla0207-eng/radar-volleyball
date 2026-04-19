@@ -47,7 +47,7 @@ const LINE_LOGIN_SCOPE = "profile openid"; // 加 email 需要額外申請權限
 // 未來想新增球館，直接在這個陣列裡加一筆就好
 const PARTNER_VENUES = [
   {
-    emoji: "🐸",
+    emoji: "🏐",
     name: "PowerFrog 排球館",
     desc: "固定開團、顯示即時缺人數",
     url: "https://powerfrog-cwagdne0bdc4dedp.japanwest-01.azurewebsites.net/signup",
