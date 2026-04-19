@@ -3732,8 +3732,14 @@ export default function VolleyballMatcher() {
     return () => clearInterval(timer);
   }, []);
 
-  const JOINED_KEY = "vb_joined_sessions";
-  const WAITLIST_KEY = "vb_waitlist_sessions";
+  // localStorage keys 按使用者隔離（登入者/訪客/不同帳號各自一份）
+  // 這樣切換帳號/登出時不會拿到上一個人的狀態
+  const getUserScope = () => {
+    if (currentUser?.uid) return `user_${currentUser.uid}`;
+    return "guest";
+  };
+  const JOINED_KEY = `vb_joined_sessions_${getUserScope()}`;
+  const WAITLIST_KEY = `vb_waitlist_sessions_${getUserScope()}`;
   const loadJoined = () => {
     try { return new Set(JSON.parse(localStorage.getItem(JOINED_KEY) || "[]")); } catch { return new Set(); }
   };
@@ -3749,10 +3755,12 @@ export default function VolleyballMatcher() {
 
   const [waitlistedSessions, setWaitlistedSessions] = useState(new Set());
 
+  // 初次載入 + 使用者切換時，都要重新載入該使用者的 state
   useEffect(() => {
     setJoinedSessions(loadJoined());
     setWaitlistedSessions(loadWaitlist());
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.uid]);
 
   const hasSessionStarted = (session) => {
     if (!session.date || !session.time) return false;
@@ -4457,16 +4465,36 @@ export default function VolleyballMatcher() {
 
   const handleCancelRegistration = async (sessionId) => {
     if (!joinedSessions.has(sessionId)) return;
+
+    // 🛡️ 防護：先驗證這個 session 的 registeredList 裡是否真的有「我」
+    // 避免：換帳號/切訪客時 localStorage 殘留導致扣到別人的名額
+    const session = sessions.find(s => s.id === sessionId);
+    const list = session?.registeredList || [];
+    let myEntry = null;
+    let verified = false;
+
+    if (currentUser) {
+      // 登入者：uid 精準匹配
+      myEntry = list.find(e => e.uid === currentUser.uid);
+      verified = !!myEntry;
+    } else {
+      // 訪客：無法精準驗證，最多只能看 session 的 registered 計數器是否 > 0
+      // 這邊保守處理：訪客取消時，如果本地狀態有記、計數器也 > 0 才扣
+      verified = (session?.registered || 0) > 0;
+    }
+
+    if (!verified) {
+      // 不在名單上 → 只清本地狀態，不動 Firestore
+      const nj = new Set(joinedSessions); nj.delete(sessionId);
+      setJoinedSessions(nj); saveJoined(nj);
+      toast("你的狀態已更新（未影響場次報名）", 2500);
+      return;
+    }
+
+    // 驗證通過，正常取消
     const nj = new Set(joinedSessions); nj.delete(sessionId);
     setJoinedSessions(nj); saveJoined(nj);
     try {
-      // 找出這個使用者在名單裡的 entry（透過 uid 匹配，訪客找不到只能減計數）
-      const session = sessions.find(s => s.id === sessionId);
-      const list = session?.registeredList || [];
-      let myEntry = null;
-      if (currentUser) {
-        myEntry = list.find(e => e.uid === currentUser.uid);
-      }
       const updatePayload = { registered: increment(-1) };
       if (myEntry) {
         updatePayload.registeredList = arrayRemove(myEntry);
@@ -4536,15 +4564,30 @@ export default function VolleyballMatcher() {
 
   const handleCancelWaitlist = async (sessionId) => {
     if (!waitlistedSessions.has(sessionId)) return;
+
+    // 🛡️ 防護：確認自己真的在候補名單上
+    const session = sessions.find(s => s.id === sessionId);
+    const list = session?.waitlistList || [];
+    let myEntry = null;
+    let verified = false;
+
+    if (currentUser) {
+      myEntry = list.find(e => e.uid === currentUser.uid);
+      verified = !!myEntry;
+    } else {
+      verified = (session?.waitlist || 0) > 0;
+    }
+
+    if (!verified) {
+      const nw = new Set(waitlistedSessions); nw.delete(sessionId);
+      setWaitlistedSessions(nw); saveWaitlist(nw);
+      toast("你的狀態已更新（未影響場次候補）", 2500);
+      return;
+    }
+
     const nw = new Set(waitlistedSessions); nw.delete(sessionId);
     setWaitlistedSessions(nw); saveWaitlist(nw);
     try {
-      const session = sessions.find(s => s.id === sessionId);
-      const list = session?.waitlistList || [];
-      let myEntry = null;
-      if (currentUser) {
-        myEntry = list.find(e => e.uid === currentUser.uid);
-      }
       const updatePayload = { waitlist: increment(-1) };
       if (myEntry) {
         updatePayload.waitlistList = arrayRemove(myEntry);
