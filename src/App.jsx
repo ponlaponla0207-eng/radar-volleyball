@@ -114,6 +114,76 @@ function dayOffset(n) {
   return `${y}-${m}-${day}`;
 }
 
+// 判斷場次是否已結束（date + time 都在過去）
+function isSessionPast(session) {
+  if (!session?.date) return false;
+  const today = dayOffset(0);
+  // 日期比今天早 → 已過
+  if (session.date < today) return true;
+  if (session.date > today) return false;
+  // 今天的場次 → 看結束時間
+  if (!session.time) return false;
+  const endStr = session.time.includes("\u2013") ? session.time.split("\u2013")[1].trim() : session.time;
+  const [h, m] = endStr.split(":").map(Number);
+  if (isNaN(h)) return false;
+  const now = new Date();
+  const endMin = h * 60 + (m || 0);
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  return nowMin > endMin;
+}
+
+// 從 sessions 中找出 uid 曾經參加過（報名過）的已過場次
+function calcMyPastSessions(sessions, uid) {
+  if (!sessions || !uid) return [];
+  return sessions
+    .filter(s => {
+      if (!isSessionPast(s)) return false;
+      const list = s.registeredList || [];
+      return list.some(e => e.uid === uid);
+    })
+    .sort((a, b) => {
+      const aKey = (a.date || "") + " " + (a.time || "");
+      const bKey = (b.date || "") + " " + (b.time || "");
+      return bKey.localeCompare(aKey); // 最新的在前
+    });
+}
+
+// 從我參加過的場次中，統計最常一起打球的夥伴（非我本人）
+function calcFrequentPartners(pastSessions, myUid) {
+  if (!pastSessions || pastSessions.length === 0) return [];
+  const counter = new Map(); // uid -> { uid, name, playerId, photoURL, count, lastPlayedAt }
+  pastSessions.forEach(s => {
+    const list = s.registeredList || [];
+    list.forEach(entry => {
+      // 不統計訪客（沒 uid）和自己
+      if (!entry.uid || entry.uid === myUid) return;
+      const key = entry.uid;
+      const existing = counter.get(key);
+      if (existing) {
+        existing.count += 1;
+        // 記錄最近一次一起打的時間
+        if ((entry.joinedAt || 0) > (existing.lastPlayedAt || 0)) {
+          existing.lastPlayedAt = entry.joinedAt;
+          // 更新為最新的名字/頭像
+          existing.name = entry.name || existing.name;
+          existing.photoURL = entry.photoURL || existing.photoURL;
+          existing.playerId = entry.playerId || existing.playerId;
+        }
+      } else {
+        counter.set(key, {
+          uid: entry.uid,
+          name: entry.name || "球友",
+          playerId: entry.playerId || null,
+          photoURL: entry.photoURL || null,
+          count: 1,
+          lastPlayedAt: entry.joinedAt || 0,
+        });
+      }
+    });
+  });
+  return Array.from(counter.values()).sort((a, b) => b.count - a.count);
+}
+
 const AREAS_FILTER = ["全部", "大安區", "信義區", "中山區", "松山區", "內湖區", "文山區", "北投區", "士林區"];
 const LEVELS = ["全部", "初階", "中階", "中高階", "不限"];
 const LEVELS_INPUT = ["初階", "中階", "中高階", "不限"];
@@ -2312,7 +2382,7 @@ const LoginChoiceModal = ({ open, onClose, onGoogle, onLine, onGuest, googleLoad
 /* ════════════════════════════════════════════
    Member Center Modal — Full member dashboard
    ════════════════════════════════════════════ */
-const MemberCenterModal = ({ open, onClose, currentUser, players, sessions, onEditProfile, onOpenRegisterFlow, onWantToPlay, onRecord, onShare, onDelete, onMergeDuplicates, onEditRecord, onDuplicateSession }) => {
+const MemberCenterModal = ({ open, onClose, currentUser, players, sessions, onEditProfile, onOpenRegisterFlow, onWantToPlay, onRecord, onShare, onDelete, onMergeDuplicates, onEditRecord, onDuplicateSession, onOpenProfile }) => {
   if (!open || !currentUser) return null;
 
   // Find ALL players matching this user's uid (to detect duplicates)
@@ -2568,6 +2638,115 @@ const MemberCenterModal = ({ open, onClose, currentUser, players, sessions, onEd
               </div>
             </div>
           </div>
+
+          {/* ─── 📅 我參加過的場次 ─── */}
+          {(() => {
+            const pastSessions = calcMyPastSessions(sessions, currentUser.uid);
+            if (pastSessions.length === 0) return null;
+            const partners = calcFrequentPartners(pastSessions, currentUser.uid);
+
+            return (
+              <div style={{ padding: "18px 22px", borderRadius: 16, background: "rgba(90,143,168,0.08)", border: "1px solid rgba(90,143,168,0.28)", animation: "slideUp 0.4s ease 0.24s both" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 18 }}>📅</span>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: "#3D6B80" }}>我參加過的場次</span>
+                  <span style={{ fontSize: 11, color: "#8A7F6A" }}>（共 {pastSessions.length} 場）</span>
+                </div>
+                <div style={{ fontSize: 11, color: "#8A7F6A", marginBottom: 14, lineHeight: 1.6 }}>
+                  🏐 球打得越多，夥伴越多{partners.length > 0 ? `・已結識 ${partners.length} 位球友` : ""}
+                </div>
+
+                {/* ─ 最常一起打的夥伴 ─ */}
+                {partners.length > 0 && (
+                  <div style={{ padding: "12px 14px", borderRadius: 12, background: "rgba(255,249,236,0.7)", border: "1px solid rgba(180,165,130,0.25)", marginBottom: 14 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#8A7F6A", marginBottom: 10, letterSpacing: "0.05em" }}>🤝 常一起打球的夥伴</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {partners.slice(0, 12).map(p => {
+                        const clickable = !!(p.playerId && onOpenProfile);
+                        return (
+                          <div key={p.uid}
+                            onClick={clickable ? () => onOpenProfile(p.playerId) : undefined}
+                            style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px 5px 5px", borderRadius: 20, background: "rgba(90,143,168,0.12)", border: "1px solid rgba(90,143,168,0.28)", cursor: clickable ? "pointer" : "default", transition: "all 0.18s" }}
+                            onMouseEnter={clickable ? (e) => { e.currentTarget.style.background = "rgba(90,143,168,0.25)"; e.currentTarget.style.transform = "translateY(-1px)"; } : undefined}
+                            onMouseLeave={clickable ? (e) => { e.currentTarget.style.background = "rgba(90,143,168,0.12)"; e.currentTarget.style.transform = "translateY(0)"; } : undefined}
+                            title={clickable ? "點擊查看球員卡" : undefined}
+                          >
+                            {p.photoURL ? (
+                              <img src={p.photoURL} alt="" style={{ width: 22, height: 22, borderRadius: "50%", flexShrink: 0 }}/>
+                            ) : (
+                              <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(90,143,168,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, fontWeight: 700, color: "#5A8FA8" }}>
+                                {(p.name || "?").charAt(0)}
+                              </div>
+                            )}
+                            <span style={{ fontSize: 12, fontWeight: 700, color: "#1E3A5F" }}>{p.name}</span>
+                            <span style={{ fontSize: 10, fontWeight: 800, color: "#5A8FA8", padding: "1px 6px", borderRadius: 10, background: "rgba(90,143,168,0.2)" }}>×{p.count}</span>
+                          </div>
+                        );
+                      })}
+                      {partners.length > 12 && (
+                        <div style={{ fontSize: 11, color: "#8A7F6A", padding: "5px 10px", fontStyle: "italic", alignSelf: "center" }}>
+                          還有 {partners.length - 12} 位...
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* ─ 場次列表 ─ */}
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#8A7F6A", marginBottom: 8, letterSpacing: "0.05em" }}>最近的場次</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 380, overflowY: "auto" }}>
+                  {pastSessions.slice(0, 30).map((s) => {
+                    const list = s.registeredList || [];
+                    // 排自己不顯示、訪客顯示灰色
+                    const others = list.filter(e => e.uid !== currentUser.uid);
+                    return (
+                      <div key={s.id} style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,249,236,0.6)", border: "1px solid rgba(180,165,130,0.22)" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                          <span style={{ fontSize: 14 }}>📍</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "#1E3A5F", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {s.courtName}
+                            </div>
+                            <div style={{ fontSize: 11, color: "#8A7F6A", fontFamily: "'Space Mono', monospace", marginTop: 2 }}>
+                              {s.date} · {s.time}{s.level ? ` · ${s.level}` : ""}{s.fee ? ` · $${s.fee}` : ""}
+                            </div>
+                          </div>
+                        </div>
+
+                        {others.length > 0 && (
+                          <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px dashed rgba(180,165,130,0.3)" }}>
+                            <div style={{ fontSize: 10, color: "#8A7F6A", marginBottom: 6 }}>👥 一起打球的夥伴</div>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                              {others.map((e, i) => {
+                                const isGuest = !e.uid;
+                                const clickable = !!(e.playerId && onOpenProfile);
+                                return (
+                                  <span key={i}
+                                    onClick={clickable ? () => onOpenProfile(e.playerId) : undefined}
+                                    style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: isGuest ? "rgba(180,165,130,0.18)" : "rgba(90,143,168,0.12)", color: isGuest ? "#8A7F6A" : "#3D6B80", fontWeight: 600, cursor: clickable ? "pointer" : "default", transition: "all 0.15s", border: "1px solid", borderColor: isGuest ? "rgba(180,165,130,0.22)" : "rgba(90,143,168,0.22)" }}
+                                    onMouseEnter={clickable ? (ev) => { ev.currentTarget.style.background = "rgba(90,143,168,0.25)"; } : undefined}
+                                    onMouseLeave={clickable ? (ev) => { ev.currentTarget.style.background = "rgba(90,143,168,0.12)"; } : undefined}
+                                    title={clickable ? "點擊查看球員卡" : undefined}
+                                  >
+                                    {e.name}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {pastSessions.length > 30 && (
+                    <div style={{ fontSize: 11, color: "#8A7F6A", textAlign: "center", padding: 8 }}>
+                      （只顯示最近 30 場）
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ─── 我開的場次（主揪專屬） ─── */}
           {(() => {
@@ -5161,6 +5340,7 @@ export default function VolleyballMatcher() {
         onMergeDuplicates={handleMergeDuplicates}
         onEditRecord={(player, record) => { setShowMemberCenterModal(false); handleEditHistoricalRecord(player, record); }}
         onDuplicateSession={(session) => { setShowMemberCenterModal(false); handleDuplicateSession(session); }}
+        onOpenProfile={(playerId) => { setShowMemberCenterModal(false); setViewingPlayerId(playerId); }}
       />
 
       {/* NEW: Notification modals */}
