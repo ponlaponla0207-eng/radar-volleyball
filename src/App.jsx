@@ -47,7 +47,7 @@ const LINE_LOGIN_SCOPE = "profile openid"; // 加 email 需要額外申請權限
 // 未來想新增球館，直接在這個陣列裡加一筆就好
 const PARTNER_VENUES = [
   {
-    emoji: "🏐",
+    emoji: "🐸",
     name: "PowerFrog 排球館",
     desc: "固定開團、顯示即時缺人數",
     url: "https://powerfrog-cwagdne0bdc4dedp.japanwest-01.azurewebsites.net/signup",
@@ -5259,6 +5259,30 @@ export default function VolleyballMatcher() {
           )}
         </div>
       </div>}
+
+      {/* ══ Footer ══ */}
+      <footer style={{ maxWidth: 980, margin: "40px auto 100px", padding: "24px 20px", textAlign: "center", borderTop: "1px solid rgba(180,165,130,0.22)" }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 14 }}>
+          {/* 回報問題 / 加入 LINE 官方帳號 */}
+          <a href={LINE_OA_URL} target="_blank" rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 14, background: "linear-gradient(135deg, #06C755, #00B900)", color: "#fff", fontSize: 13, fontWeight: 700, textDecoration: "none", boxShadow: "0 4px 14px rgba(6,199,85,0.25)", transition: "all 0.25s ease" }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(6,199,85,0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(6,199,85,0.25)"; }}
+          >
+            <svg width="18" height="18" viewBox="0 0 36 36" fill="#fff" style={{ flexShrink: 0 }}>
+              <path d="M18 3C9.716 3 3 8.475 3 15.198c0 6.025 5.334 11.076 12.535 12.032.488.105 1.154.322 1.322.739.151.377.099.968.049 1.349l-.214 1.285c-.065.377-.302 1.479 1.296.806 1.599-.674 8.621-5.074 11.766-8.692C31.95 20.304 33 17.878 33 15.198 33 8.475 26.284 3 18 3z"/>
+            </svg>
+            <span>🐛 回報問題 / 加入 LINE</span>
+          </a>
+        </div>
+        <div style={{ fontSize: 11, color: "#8A7F6A", lineHeight: 1.7, marginBottom: 6 }}>
+          有任何問題、建議或想要的新功能？<br/>
+          加入我們的 LINE 官方帳號，第一手掌握新功能 🎉
+        </div>
+        <div style={{ fontSize: 10, color: "#A8998A", marginTop: 12 }}>
+          🏐 排球揪團雷達 · 版本 {new Date().getFullYear()}
+        </div>
+      </footer>
 
       {activeTab === "sessions" ? (
         <button onClick={() => setShowCreateModal(true)}
