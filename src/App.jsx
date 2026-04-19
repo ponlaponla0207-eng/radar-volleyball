@@ -2495,7 +2495,7 @@ const NotificationCenterModal = ({ open, onClose, notifications, onReadNotificat
 /* ════════════════════════════════════════════
    Header Auth Indicator — top-right corner login button or user pill
    ════════════════════════════════════════════ */
-const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading, onOpenMemberCenter, unreadNotificationCount, onOpenNotificationCenter }) => {
+const HeaderAuthIndicator = ({ currentUser, onLogin, onLineLogin, onLogout, googleLoading, lineLoading, onOpenMemberCenter, unreadNotificationCount, onOpenNotificationCenter }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const btnRef = useRef(null);
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
@@ -2576,23 +2576,44 @@ const HeaderAuthIndicator = ({ currentUser, onLogin, onLogout, googleLoading, on
   }
 
   return (
-    <button onClick={onLogin} disabled={googleLoading}
-      style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid rgba(196,167,136,0.3)", background: "rgba(196,167,136,0.15)", color: "#C4A788", fontSize: 11, fontWeight: 700, cursor: googleLoading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s" }}
-      onMouseEnter={(e) => { if (!googleLoading) e.currentTarget.style.background = "rgba(196,167,136,0.22)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(196,167,136,0.15)"; }}
-    >
-      {googleLoading ? "登入中..." : (
-        <>
-          <svg width="12" height="12" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
-            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          </svg>
-          Google 登入
-        </>
-      )}
-    </button>
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      {/* Google 登入 */}
+      <button onClick={onLogin} disabled={googleLoading || lineLoading}
+        title="用 Google 登入"
+        style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid rgba(196,167,136,0.3)", background: "rgba(196,167,136,0.15)", color: "#C4A788", fontSize: 11, fontWeight: 700, cursor: (googleLoading || lineLoading) ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s" }}
+        onMouseEnter={(e) => { if (!googleLoading && !lineLoading) e.currentTarget.style.background = "rgba(196,167,136,0.22)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(196,167,136,0.15)"; }}
+      >
+        {googleLoading ? "登入中..." : (
+          <>
+            <svg width="12" height="12" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            Google
+          </>
+        )}
+      </button>
+
+      {/* NEW: LINE 登入 */}
+      <button onClick={onLineLogin} disabled={googleLoading || lineLoading}
+        title="用 LINE 登入"
+        style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid rgba(127,168,124,0.45)", background: "linear-gradient(135deg, #06C755, #00B900)", color: "#fff", fontSize: 11, fontWeight: 700, cursor: (googleLoading || lineLoading) ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 5, transition: "all 0.2s", boxShadow: "0 2px 6px rgba(6,199,85,0.25)" }}
+        onMouseEnter={(e) => { if (!googleLoading && !lineLoading) { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 10px rgba(6,199,85,0.4)"; } }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 6px rgba(6,199,85,0.25)"; }}
+      >
+        {lineLoading ? "導向中..." : (
+          <>
+            <svg width="12" height="12" viewBox="0 0 36 36" fill="#fff" style={{ flexShrink: 0 }}>
+              <path d="M18 3C9.716 3 3 8.475 3 15.198c0 6.025 5.334 11.076 12.535 12.032.488.105 1.154.322 1.322.739.151.377.099.968.049 1.349l-.214 1.285c-.065.377-.302 1.479 1.296.806 1.599-.674 8.621-5.074 11.766-8.692C31.95 20.304 33 17.878 33 15.198 33 8.475 26.284 3 18 3z"/>
+            </svg>
+            LINE
+          </>
+        )}
+      </button>
+    </div>
   );
 };
 
@@ -4107,7 +4128,7 @@ export default function VolleyballMatcher() {
             <span style={{ fontSize: 10, padding: "3px 8px", borderRadius: 12, background: "rgba(232,155,94,0.18)", color: "#E89B5E", fontWeight: 700, letterSpacing: "0.1em", border: "1px solid rgba(232,155,94,0.28)" }}>TAIPEI</span>
             {/* NEW: Header auth indicator — always visible */}
             <div style={{ marginLeft: "auto" }}>
-              <HeaderAuthIndicator currentUser={currentUser} onLogin={handleHeaderLogin} onLogout={handleGoogleLogout} googleLoading={googleLoading} onOpenMemberCenter={handleOpenMemberCenter} unreadNotificationCount={notifications.filter(n => !n.readAt).length} onOpenNotificationCenter={handleOpenNotificationCenter}/>
+              <HeaderAuthIndicator currentUser={currentUser} onLogin={handleHeaderLogin} onLineLogin={() => startLineLogin()} onLogout={handleGoogleLogout} googleLoading={googleLoading} lineLoading={lineLoading} onOpenMemberCenter={handleOpenMemberCenter} unreadNotificationCount={notifications.filter(n => !n.readAt).length} onOpenNotificationCenter={handleOpenNotificationCenter}/>
             </div>
           </div>
           <p style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.5 }}>即時掌握台北各場館的排球場次，快速找到缺人的場，讓每一場都能順利開打</p>
