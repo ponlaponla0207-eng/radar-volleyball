@@ -2801,7 +2801,7 @@ const NotifyWantingPlayersModal = ({ open, onClose, session, players, currentUse
 /* ════════════════════════════════════════════
    NotificationCenterModal — recipient views their notifications
    ════════════════════════════════════════════ */
-const NotificationCenterModal = ({ open, onClose, notifications, onReadNotification, onDeleteAll }) => {
+const NotificationCenterModal = ({ open, onClose, notifications, onReadNotification, onDeleteAll, onAcceptPromotion, onDeclinePromotion }) => {
   if (!open) return null;
 
   const sorted = [...notifications].sort((a, b) => {
@@ -2854,21 +2854,78 @@ const NotificationCenterModal = ({ open, onClose, notifications, onReadNotificat
           <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
             {sorted.map((n) => {
               const isUnread = !n.readAt;
+              const isPromote = n.type === "promote";
+              const promoteStatus = n.responseStatus; // "accepted" | "declined" | null
+              const promoteResponded = !!promoteStatus;
+
+              // 點通知卡：promote 類型且尚未回應時，不要跳轉，讓使用者按按鈕
+              const handleClickCard = () => {
+                if (isPromote && !promoteResponded) {
+                  // 只標已讀，不跳轉
+                  if (isUnread) onReadNotification(n);
+                } else {
+                  onReadNotification(n);
+                }
+              };
+
               return (
-                <div key={n.id} onClick={() => onReadNotification(n)}
-                  style={{ padding: "12px 14px", borderRadius: 12, background: isUnread ? "rgba(232,155,94,0.12)" : "rgba(255,249,236,0.5)", border: "1px solid", borderColor: isUnread ? "rgba(232,155,94,0.35)" : "rgba(180,165,130,0.18)", cursor: "pointer", transition: "all 0.15s", position: "relative" }}
+                <div key={n.id} onClick={handleClickCard}
+                  style={{ padding: "12px 14px", borderRadius: 12, background: isPromote && !promoteResponded ? "rgba(127,168,124,0.14)" : isUnread ? "rgba(232,155,94,0.12)" : "rgba(255,249,236,0.5)", border: "1px solid", borderColor: isPromote && !promoteResponded ? "rgba(127,168,124,0.4)" : isUnread ? "rgba(232,155,94,0.35)" : "rgba(180,165,130,0.18)", cursor: "pointer", transition: "all 0.15s", position: "relative" }}
                   onMouseEnter={(e) => { e.currentTarget.style.transform = "translateX(2px)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.transform = "translateX(0)"; }}
                 >
                   {isUnread && (
                     <span style={{ position: "absolute", top: 10, right: 10, width: 8, height: 8, borderRadius: "50%", background: "#C85A5A" }}/>
                   )}
-                  <div style={{ fontSize: 12, color: "#E89B5E", fontWeight: 700, marginBottom: 4 }}>📢 {n.fromName || "主揪"} 邀請你加入場次</div>
+
+                  {/* 不同類型的通知 header */}
+                  {isPromote ? (
+                    <div style={{ fontSize: 13, color: "#5B7A59", fontWeight: 800, marginBottom: 4 }}>🎉 你可以補上了！</div>
+                  ) : (
+                    <div style={{ fontSize: 12, color: "#E89B5E", fontWeight: 700, marginBottom: 4 }}>📢 {n.fromName || "主揪"} 邀請你加入場次</div>
+                  )}
+
                   <div style={{ fontSize: 13, color: "#1E3A5F", fontWeight: 700, marginBottom: 2 }}>{n.sessionTitle}</div>
                   <div style={{ fontSize: 11, color: "#5A7B9A", marginBottom: 6 }}>{n.sessionTime}</div>
-                  {n.needed > 0 && (
+
+                  {isPromote && (
+                    <div style={{ fontSize: 11, color: "#5B7A59", fontWeight: 600, marginBottom: 6, lineHeight: 1.5 }}>
+                      {n.fromName || "主揪"} 通知你可以從候補升級為正式報名
+                    </div>
+                  )}
+
+                  {!isPromote && n.needed > 0 && (
                     <div style={{ fontSize: 11, color: "#B56620", fontWeight: 600 }}>🔥 還差 {n.needed} 人成團</div>
                   )}
+
+                  {/* 升級通知：我可以/我不行 按鈕區 */}
+                  {isPromote && !promoteResponded && (
+                    <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+                      <button onClick={(e) => { e.stopPropagation(); onAcceptPromotion && onAcceptPromotion(n); }}
+                        style={{ flex: 2, padding: "9px 10px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #7FA87C, #6A9468)", color: "#fff", fontSize: 12, fontWeight: 800, cursor: "pointer", transition: "all 0.2s" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.03)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(127,168,124,0.4)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}
+                      >✅ 我可以</button>
+                      <button onClick={(e) => { e.stopPropagation(); onDeclinePromotion && onDeclinePromotion(n); }}
+                        style={{ flex: 1, padding: "9px 10px", borderRadius: 8, border: "1px solid rgba(200,90,90,0.3)", background: "rgba(200,90,90,0.1)", color: "#C85A5A", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,90,90,0.2)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(200,90,90,0.1)"; }}
+                      >❌ 我不行</button>
+                    </div>
+                  )}
+
+                  {/* 升級通知：已回應狀態 */}
+                  {isPromote && promoteStatus === "accepted" && (
+                    <div style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, background: "rgba(127,168,124,0.15)", border: "1px solid rgba(127,168,124,0.3)", fontSize: 11, color: "#5B7A59", fontWeight: 700, textAlign: "center" }}>
+                      ✅ 已接受・你已報名成功
+                    </div>
+                  )}
+                  {isPromote && promoteStatus === "declined" && (
+                    <div style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, background: "rgba(180,165,130,0.12)", border: "1px solid rgba(180,165,130,0.22)", fontSize: 11, color: "#8A7F6A", fontWeight: 600, textAlign: "center" }}>
+                      已婉拒此次邀請
+                    </div>
+                  )}
+
                   <div style={{ fontSize: 10, color: "#8A7F6A", marginTop: 6 }}>{formatRelTime(n.createdAt)}</div>
                 </div>
               );
@@ -4070,6 +4127,91 @@ export default function VolleyballMatcher() {
     }
   };
 
+  // 候補者接受升級通知 → 自動從候補移到報名
+  const handleAcceptPromotion = async (notif) => {
+    if (!currentUser || !notif?.sessionId || !notif?.waitlistEntry) return;
+    const sessionId = notif.sessionId;
+    const entry = notif.waitlistEntry;
+
+    try {
+      // 找現在的 session 狀態（確認還有名額）
+      const session = sessions.find(s => s.id === sessionId);
+      if (!session) {
+        toast("找不到這場場次，可能已被刪除", 3000, "warn");
+        return;
+      }
+      const isFull = (session.registered || 0) >= (session.max || 0);
+      if (isFull) {
+        toast("抱歉，這場已經滿了 🥲", 3000, "warn");
+        return;
+      }
+
+      // 建立新的 registered entry（重新抓最新的球員卡資料）
+      const myPlayer = players
+        .filter(p => p.uid === currentUser.uid)
+        .sort((a, b) => {
+          const aTime = a.createdAt?.seconds || 0;
+          const bTime = b.createdAt?.seconds || 0;
+          return bTime - aTime;
+        })[0];
+      const newEntry = {
+        uid: currentUser.uid,
+        name: myPlayer?.nickname || entry.name || currentUser.displayName || "登入者",
+        playerId: myPlayer?.id || null,
+        photoURL: currentUser.photoURL || myPlayer?.photoURL || null,
+        joinedAt: Date.now(),
+      };
+
+      // 原子更新 session：候補 -1 → 報名 +1、從候補名單移除 → 加到報名名單
+      await updateDoc(doc(db, "sessions", sessionId), {
+        waitlist: increment(-1),
+        waitlistList: arrayRemove(entry),
+        registered: increment(1),
+        registeredList: arrayUnion(newEntry),
+        promotedUids: arrayRemove(currentUser.uid), // 清除標記，以防後續取消要重新通知
+      });
+
+      // 更新本地 state：從候補移到已報名
+      const nw = new Set(waitlistedSessions); nw.delete(sessionId);
+      setWaitlistedSessions(nw); saveWaitlist(nw);
+      const nj = new Set(joinedSessions); nj.add(sessionId);
+      setJoinedSessions(nj); saveJoined(nj);
+
+      // 更新通知狀態
+      await updateDoc(doc(db, "notifications", notif.id), {
+        responseStatus: "accepted",
+        readAt: serverTimestamp(),
+      });
+
+      toast("🎉 成功升級為正式報名！", 3000);
+    } catch (err) {
+      console.error("Accept promotion failed:", err);
+      toast("升級失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  // 候補者拒絕升級通知 → 留在候補 + 讓主揪可以再通知
+  const handleDeclinePromotion = async (notif) => {
+    if (!currentUser || !notif?.sessionId) return;
+    try {
+      // 更新通知狀態
+      await updateDoc(doc(db, "notifications", notif.id), {
+        responseStatus: "declined",
+        readAt: serverTimestamp(),
+      });
+
+      // 從 session.promotedUids 移除，讓主揪可以再通知下一位（或重新通知）
+      await updateDoc(doc(db, "sessions", notif.sessionId), {
+        promotedUids: arrayRemove(currentUser.uid),
+      });
+
+      toast("已婉拒此次邀請", 2500);
+    } catch (err) {
+      console.error("Decline promotion failed:", err);
+      toast("操作失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
   // Mark notification as read + scroll to the session
   const handleReadNotification = async (notif) => {
     try {
@@ -4993,6 +5135,8 @@ export default function VolleyballMatcher() {
         notifications={notifications}
         onReadNotification={handleReadNotification}
         onDeleteAll={handleDeleteAllNotifications}
+        onAcceptPromotion={handleAcceptPromotion}
+        onDeclinePromotion={handleDeclinePromotion}
       />
 
       {/* NEW: 其他球館揪團資訊 Modal */}
