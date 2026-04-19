@@ -3393,8 +3393,8 @@ const PartnerVenuesModal = ({ open, onClose }) => {
         )}
 
         <div style={{ marginTop: 16, padding: "10px 12px", borderRadius: 8, background: "rgba(127,168,124,0.08)", border: "1px solid rgba(127,168,124,0.20)", fontSize: 11, color: "#5A7B9A", lineHeight: 1.6 }}>
-          💡 有固定開團的球館想加入清單？<br/>
-          可到 LINE 官方帳號私訊聯絡，我們會評估後加入。
+          💡 這些球館都是有去打過覺得不錯<br/>
+          而且也會固定開臨打團的場。
         </div>
       </div>
     </>
