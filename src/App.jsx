@@ -1890,6 +1890,10 @@ const LoginChoiceModal = ({ open, onClose, onGoogle, onLine, onGuest, googleLoad
           <div style={{ fontSize: 11, color: "#7FA87C", marginTop: 6, textAlign: "center", fontWeight: 600 }}>
             ✓ 免設密碼　✓ 台灣人都有　✓ 快速一鍵登入
           </div>
+          <div style={{ fontSize: 10.5, color: "#8A7F6A", marginTop: 4, textAlign: "center", lineHeight: 1.5, padding: "0 4px" }}>
+            📧 將向 LINE 取得：顯示名稱、頭像、Email<br/>
+            Email 僅用於連結你的球員資料，不會對外揭露
+          </div>
         </div>
 
         {/* Google 登入 */}
@@ -1933,6 +1937,13 @@ const LoginChoiceModal = ({ open, onClose, onGoogle, onLine, onGuest, googleLoad
         <div style={{ fontSize: 11, color: "#8A7F6A", marginTop: 6, textAlign: "center" }}>
           不想綁帳號？可以用密碼保護你的資料
         </div>
+
+        {/* 隱私政策說明 — 給 LINE 審核看 */}
+        <div style={{ marginTop: 18, padding: "10px 12px", borderRadius: 10, background: "rgba(127,168,124,0.08)", border: "1px solid rgba(127,168,124,0.2)", fontSize: 10.5, color: "#5A7B9A", lineHeight: 1.6, textAlign: "center" }}>
+          🔒 我們取得的帳號資訊僅用於帳號識別與連結你在本服務的球員資料，<strong style={{ color: "#5B7A59" }}>絕不會對外揭露或用於行銷</strong>
+        </div>
+
+      </div>
 
       </div>
     </>
