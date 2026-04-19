@@ -52,6 +52,31 @@ const PARTNER_VENUES = [
     desc: "固定開團、顯示即時缺人數",
     url: "https://powerfrog-cwagdne0bdc4dedp.japanwest-01.azurewebsites.net/signup",
   },
+     {
+    emoji: "🏐",
+    name: "球魔方排球館",
+    desc: "固定開團、顯示即時缺人數",
+    url: "https://magicblock.acesports.tw/login",
+  },
+      {
+    emoji: "🏐",
+    name: "3.14排球館",
+    desc: "固定開團、臉書社團",
+    url: "https://www.facebook.com/groups/471627857365456",
+  },
+      {
+    emoji: "🏐",
+    name: "259排球館",
+    desc: "固定開團、臉書社團",
+    url: "https://www.facebook.com/groups/4342598336000512",
+  },
+        {
+    emoji: "🏐",
+    name: "612排球星球",
+    desc: "固定開團、臉書社團",
+    url: "https://www.facebook.com/groups/241020673769507",
+  },
+
   // 範例（把註解拿掉 + 改成你要加的球館）
   // { emoji: "🏐", name: "XXX 排球館", desc: "週X晚上固定場", url: "https://..." },
   // { emoji: "🎯", name: "XXX 社團", desc: "新手友善", url: "https://..." },
