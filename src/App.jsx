@@ -304,7 +304,7 @@ const ProgressRing = ({ current, min, max }) => {
 /* ════════════════════════════════════════════
    Session List Section — 顯示報名名單（展開式）
    ════════════════════════════════════════════ */
-const SessionListSection = ({ session, currentUser }) => {
+const SessionListSection = ({ session, currentUser, onOpenProfile }) => {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("registered"); // "registered" or "waitlist"
 
@@ -360,8 +360,15 @@ const SessionListSection = ({ session, currentUser }) => {
               {list.map((entry, idx) => {
                 const isMe = currentUser && entry.uid === currentUser.uid;
                 const isGuest = !entry.uid;
+                const clickable = !!(entry.playerId && onOpenProfile);
                 return (
-                  <div key={idx} style={{ padding: "8px 12px", borderRadius: 10, background: isMe ? "rgba(90,143,168,0.18)" : "rgba(255,249,236,0.6)", border: "1px solid", borderColor: isMe ? "rgba(90,143,168,0.32)" : "rgba(180,165,130,0.18)", display: "flex", alignItems: "center", gap: 10 }}>
+                  <div key={idx}
+                    onClick={clickable ? () => onOpenProfile(entry.playerId) : undefined}
+                    style={{ padding: "8px 12px", borderRadius: 10, background: isMe ? "rgba(90,143,168,0.18)" : "rgba(255,249,236,0.6)", border: "1px solid", borderColor: isMe ? "rgba(90,143,168,0.32)" : "rgba(180,165,130,0.18)", display: "flex", alignItems: "center", gap: 10, cursor: clickable ? "pointer" : "default", transition: "all 0.18s" }}
+                    onMouseEnter={clickable ? (e) => { e.currentTarget.style.borderColor = "#5A8FA8"; e.currentTarget.style.background = "rgba(90,143,168,0.12)"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(90,143,168,0.15)"; } : undefined}
+                    onMouseLeave={clickable ? (e) => { e.currentTarget.style.borderColor = isMe ? "rgba(90,143,168,0.32)" : "rgba(180,165,130,0.18)"; e.currentTarget.style.background = isMe ? "rgba(90,143,168,0.18)" : "rgba(255,249,236,0.6)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; } : undefined}
+                    title={clickable ? "點擊查看球員卡" : undefined}
+                  >
                     {/* 頭像 */}
                     {entry.photoURL ? (
                       <img src={entry.photoURL} alt="" style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, border: "1px solid rgba(180,165,130,0.2)" }}/>
@@ -396,7 +403,7 @@ const SessionListSection = ({ session, currentUser }) => {
 };
 
 /* ── Session Card ── */
-const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment, onWaitlist, onCancelWaitlist, hasWaitlisted, isAdmin, onAdminDelete, onAdminAdjust, currentUser, onNotifyWanting, wantingCount, onDuplicate }) => {
+const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment, onWaitlist, onCancelWaitlist, hasWaitlisted, isAdmin, onAdminDelete, onAdminAdjust, currentUser, onNotifyWanting, wantingCount, onDuplicate, onOpenProfile }) => {
   const status = getStatus(session);
   const need = Math.max(0, session.min - session.registered);
   const isFull = session.registered >= session.max;
@@ -552,7 +559,7 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
           )}
 
           {/* ══ 報名名單展開區 ══ */}
-          <SessionListSection session={session} currentUser={currentUser}/>
+          <SessionListSection session={session} currentUser={currentUser} onOpenProfile={onOpenProfile}/>
 
           {/* Comments section */}
           <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed rgba(180,165,130,0.22)" }}>
@@ -2012,6 +2019,167 @@ const ShareCardModal = ({ open, onClose, player }) => {
 };
 
 /* ════════════════════════════════════════════
+   Player Profile Modal — 唯讀版球員卡（給別人看）
+   ════════════════════════════════════════════ */
+const PlayerProfileModal = ({ open, onClose, player, sessions = [] }) => {
+  if (!open || !player) return null;
+
+  const hasSkills = player.skills && Object.values(player.skills).some(v => v > 0);
+  const stats = calcWinStats(player.weeklyRecords);
+  const wantExpiry = player.wantToPlayUntil || 0;
+  const isWanting = wantExpiry > Date.now();
+  const remainHours = isWanting ? Math.ceil((wantExpiry - Date.now()) / 3600000) : 0;
+
+  // 計算這位球員參加過的場次數（從 sessions 資料抓）
+  const joinedCount = sessions.filter(s => {
+    const list = s.registeredList || [];
+    return list.some(e => e.playerId === player.id);
+  }).length;
+
+  const trendIcon = stats?.trend === "up" ? "📈" : stats?.trend === "down" ? "📉" : stats?.trend === "same" ? "➡️" : "";
+
+  const initial = (player.nickname || "?").charAt(0);
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.35)", backdropFilter: "blur(4px)", zIndex: 950, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 951, width: "min(440px, 94vw)", maxHeight: "88vh", overflowY: "auto", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(196,167,136,0.35)", boxShadow: "0 20px 60px rgba(30,58,95,0.22)", animation: "fadeIn 0.28s ease" }}>
+        {/* 關閉按鈕 */}
+        <button onClick={onClose}
+          style={{ position: "absolute", top: 12, right: 12, background: "rgba(180,165,130,0.15)", border: "1px solid rgba(180,165,130,0.2)", borderRadius: 10, width: 32, height: 32, cursor: "pointer", color: "#8A7F6A", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, transition: "all 0.2s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(180,165,130,0.28)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(180,165,130,0.15)"; }}
+        >✕</button>
+
+        {/* 頂部：頭像 + 暱稱 + 基本資訊 */}
+        <div style={{ padding: "28px 22px 16px", borderBottom: "1px dashed rgba(180,165,130,0.22)" }}>
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+            {player.photoURL ? (
+              <img src={player.photoURL} alt="" style={{ width: 64, height: 64, borderRadius: "50%", border: "3px solid rgba(196,167,136,0.4)", objectFit: "cover", flexShrink: 0 }}/>
+            ) : (
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(196,167,136,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 28, fontWeight: 700, color: "#C4A788", border: "3px solid rgba(196,167,136,0.4)" }}>
+                {initial}
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#1E3A5F", marginBottom: 4, wordBreak: "break-word" }}>{player.nickname}</div>
+              <div style={{ fontSize: 12, color: "#C4A788", fontWeight: 600, marginBottom: 6 }}>
+                {player.level}{player.experience ? `・球齡 ${player.experience}` : ""}
+              </div>
+              {isWanting && (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 10, background: "rgba(127,168,124,0.2)", border: "1px solid rgba(127,168,124,0.32)" }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#7FA87C", display: "inline-block" }}/>
+                  <span style={{ fontSize: 11, color: "#5B7A59", fontWeight: 700 }}>想打球・剩 {remainHours}h</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {player.intro && (
+            <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 10, background: "rgba(255,249,236,0.7)", border: "1px solid rgba(180,165,130,0.2)", fontSize: 13, color: "#5A7B9A", lineHeight: 1.6, fontStyle: "italic" }}>
+              💬 {player.intro}
+            </div>
+          )}
+        </div>
+
+        {/* 基本資料區塊 */}
+        <div style={{ padding: "14px 22px", borderBottom: "1px dashed rgba(180,165,130,0.22)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontSize: 12 }}>
+            {player.position && (
+              <div><span style={{ color: "#8A7F6A" }}>位置：</span><span style={{ color: "#1E3A5F", fontWeight: 600 }}>{player.position}</span></div>
+            )}
+            {player.height && (
+              <div><span style={{ color: "#8A7F6A" }}>身高：</span><span style={{ color: "#1E3A5F", fontWeight: 600 }}>{player.height}</span></div>
+            )}
+            {player.gender && (
+              <div><span style={{ color: "#8A7F6A" }}>性別：</span><span style={{ color: "#1E3A5F", fontWeight: 600 }}>{player.gender}</span></div>
+            )}
+            {player.area && (
+              <div><span style={{ color: "#8A7F6A" }}>常出沒：</span><span style={{ color: "#1E3A5F", fontWeight: 600 }}>{player.area}</span></div>
+            )}
+          </div>
+          {player.timeSlots && player.timeSlots.length > 0 && (
+            <div style={{ marginTop: 10, fontSize: 12 }}>
+              <div style={{ color: "#8A7F6A", marginBottom: 4 }}>常打時段：</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                {player.timeSlots.map((t, i) => (
+                  <span key={i} style={{ padding: "2px 8px", borderRadius: 10, background: "rgba(90,143,168,0.15)", color: "#5A8FA8", fontSize: 11, fontWeight: 600 }}>{t}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 戰績區塊 */}
+        {(stats || joinedCount > 0) && (
+          <div style={{ padding: "14px 22px", borderBottom: "1px dashed rgba(180,165,130,0.22)" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#8A7F6A", marginBottom: 10, letterSpacing: "0.05em" }}>📊 戰績</div>
+            <div style={{ display: "grid", gridTemplateColumns: stats ? "1fr 1fr 1fr 1fr" : "1fr", gap: 10 }}>
+              <div style={{ textAlign: "center", padding: "8px 4px", borderRadius: 10, background: "rgba(90,143,168,0.10)" }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: "#5A8FA8" }}>{joinedCount}</div>
+                <div style={{ fontSize: 10, color: "#8A7F6A", marginTop: 2 }}>參與場次</div>
+              </div>
+              {stats && (
+                <>
+                  <div style={{ textAlign: "center", padding: "8px 4px", borderRadius: 10, background: "rgba(232,155,94,0.10)" }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: "#E89B5E" }}>{stats.totalPlayed}</div>
+                    <div style={{ fontSize: 10, color: "#8A7F6A", marginTop: 2 }}>總場次</div>
+                  </div>
+                  <div style={{ textAlign: "center", padding: "8px 4px", borderRadius: 10, background: "rgba(127,168,124,0.10)" }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: "#7FA87C" }}>{stats.totalWon}</div>
+                    <div style={{ fontSize: 10, color: "#8A7F6A", marginTop: 2 }}>總勝場</div>
+                  </div>
+                  <div style={{ textAlign: "center", padding: "8px 4px", borderRadius: 10, background: "rgba(196,167,136,0.14)" }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: "#C4A788" }}>{stats.rate}%</div>
+                    <div style={{ fontSize: 10, color: "#8A7F6A", marginTop: 2 }}>勝率 {trendIcon}</div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* 最近 8 週小走勢 */}
+            {stats && stats.recent && stats.recent.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 11, color: "#8A7F6A", marginBottom: 6 }}>最近幾週</div>
+                <div style={{ display: "flex", gap: 4, alignItems: "flex-end", height: 40 }}>
+                  {stats.recent.slice().reverse().map((rec, i) => {
+                    const rate = rec.played > 0 ? (rec.won / rec.played) * 100 : 0;
+                    const barH = Math.max(4, (rate / 100) * 36);
+                    return (
+                      <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }} title={`${rec.week}: ${rec.won}/${rec.played} (${Math.round(rate)}%)`}>
+                        <div style={{ width: "100%", height: barH, background: rate >= 50 ? "linear-gradient(180deg, #7FA87C, #5A8F58)" : "linear-gradient(180deg, #C4A788, #A8896C)", borderRadius: 3, minHeight: 4 }}/>
+                        <div style={{ fontSize: 8, color: "#8A7F6A" }}>{Math.round(rate)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 技能雷達圖 */}
+        {hasSkills && (
+          <div style={{ padding: "14px 22px", borderBottom: "1px dashed rgba(180,165,130,0.22)" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#8A7F6A", marginBottom: 10, letterSpacing: "0.05em" }}>🏐 技能分布</div>
+            <div style={{ display: "flex", justifyContent: "center", padding: "4px 0" }}>
+              <RadarChart skills={player.skills} size={200}/>
+            </div>
+          </div>
+        )}
+
+        {/* 底部 */}
+        <div style={{ padding: "14px 22px 20px", textAlign: "center" }}>
+          <div style={{ fontSize: 10, color: "#8A7F6A", fontStyle: "italic" }}>
+            球員卡資料由使用者自行提供
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ════════════════════════════════════════════
    Login Choice Modal — shown before player registration
    ════════════════════════════════════════════ */
 const LoginChoiceModal = ({ open, onClose, onGoogle, onLine, onGuest, googleLoading, lineLoading }) => {
@@ -3450,6 +3618,9 @@ export default function VolleyballMatcher() {
   const [showNicknamePrompt, setShowNicknamePrompt] = useState(false);
   const [pendingJoinSessionId, setPendingJoinSessionId] = useState(null);
   const [pendingJoinAction, setPendingJoinAction] = useState(null); // "register" or "waitlist"
+
+  // 從名單點名字，查看其他人的球員卡
+  const [viewingPlayerId, setViewingPlayerId] = useState(null);
   
   // NEW: share card state
   const [showShareCardModal, setShowShareCardModal] = useState(false);
@@ -4596,7 +4767,7 @@ export default function VolleyballMatcher() {
           )}
           {!loading && sorted.map((s, i) => (
             <div key={s.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal} onWaitlist={handleWaitlist} onCancelWaitlist={handleCancelWaitlist} hasWaitlisted={waitlistedSessions.has(s.id)} isAdmin={isAdmin} onAdminDelete={handleAdminDelete} onAdminAdjust={handleAdminAdjust} currentUser={currentUser} onNotifyWanting={handleOpenNotifyWanting} wantingCount={players.filter(p => (p.wantToPlayUntil || 0) > Date.now() && p.uid && p.uid !== currentUser?.uid).length} onDuplicate={handleDuplicateSession}/>
+              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal} onWaitlist={handleWaitlist} onCancelWaitlist={handleCancelWaitlist} hasWaitlisted={waitlistedSessions.has(s.id)} isAdmin={isAdmin} onAdminDelete={handleAdminDelete} onAdminAdjust={handleAdminAdjust} currentUser={currentUser} onNotifyWanting={handleOpenNotifyWanting} wantingCount={players.filter(p => (p.wantToPlayUntil || 0) > Date.now() && p.uid && p.uid !== currentUser?.uid).length} onDuplicate={handleDuplicateSession} onOpenProfile={setViewingPlayerId}/>
             </div>
           ))}
         </div>
@@ -4708,6 +4879,14 @@ export default function VolleyballMatcher() {
         actionLabel={pendingJoinAction === "waitlist" ? "候補" : "報名"}
       />
       <LoginChoiceModal open={showLoginChoiceModal} onClose={() => setShowLoginChoiceModal(false)} onGoogle={handleChooseGoogle} onLine={handleChooseLine} onGuest={handleChooseGuest} googleLoading={googleLoading} lineLoading={lineLoading}/>
+
+      {/* 點名單看其他人的球員卡 */}
+      <PlayerProfileModal
+        open={!!viewingPlayerId}
+        onClose={() => setViewingPlayerId(null)}
+        player={players.find(p => p.id === viewingPlayerId)}
+        sessions={sessions}
+      />
 
       <PasswordModal open={showPlayerPasswordModal} onClose={() => { setShowPlayerPasswordModal(false); setEditPlayerTarget(null); }} onVerify={handlePlayerPasswordVerify} sessionId={editPlayerTarget?.id}/>
       <EditPlayerModal open={showEditPlayerModal} onClose={() => { setShowEditPlayerModal(false); setEditPlayerTarget(null); }} player={editPlayerTarget} onSave={handleSavePlayer} onDelete={handleDeletePlayer}/>
