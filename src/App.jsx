@@ -3945,16 +3945,10 @@ export default function VolleyballMatcher() {
         used: false,
       });
 
-      setBindingCode(code);
-      setShowBindingModal(true);
-    } catch (err) {
-      console.error(err);
       const rollback = new Set(joinedSessions);
       rollback.delete(sessionId);
       setJoinedSessions(rollback); saveJoined(rollback);
       toast("報名失敗，請稍後再試", 3000, "warn");
-    }
-  };
 
   // 訪客輸入暱稱後的 callback
   const handleNicknameSubmit = async (nickname) => {
