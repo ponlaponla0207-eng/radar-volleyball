@@ -3826,8 +3826,8 @@ const PartnerVenuesModal = ({ open, onClose }) => {
         )}
 
         <div style={{ marginTop: 16, padding: "10px 12px", borderRadius: 8, background: "rgba(127,168,124,0.08)", border: "1px solid rgba(127,168,124,0.20)", fontSize: 11, color: "#5A7B9A", lineHeight: 1.6 }}>
-          💡 有固定開團的球館想加入清單？<br/>
-          可到 LINE 官方帳號私訊聯絡，我們會評估後加入。
+          💡 這些球館都是打過覺得很不錯<br/>
+          偶爾也會遇到很強的球友！
         </div>
       </div>
     </>
@@ -5061,7 +5061,7 @@ export default function VolleyballMatcher() {
               <HeaderAuthIndicator currentUser={currentUser} onLogin={handleHeaderLogin} onLineLogin={() => startLineLogin()} onLogout={handleGoogleLogout} googleLoading={googleLoading} lineLoading={lineLoading} onOpenMemberCenter={handleOpenMemberCenter} unreadNotificationCount={notifications.filter(n => !n.readAt).length} onOpenNotificationCenter={handleOpenNotificationCenter}/>
             </div>
           </div>
-          <p style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.5 }}>其實原本只是想打球怕場人不夠想要做個揪團網站</p>
+          <p style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.5 }}>其實原本也只是想做個揪團網站，不知道之後會變怎樣</p>
         </div>
       </div>
 
