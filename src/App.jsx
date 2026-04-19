@@ -1023,6 +1023,73 @@ const BindingCodeModal = ({ open, onClose, code }) => {
 };
 
 /* ════════════════════════════════════════════
+   Nickname Prompt Modal — 訪客報名時輸入暱稱
+   ════════════════════════════════════════════ */
+const NicknamePromptModal = ({ open, onClose, onSubmit, actionLabel = "報名" }) => {
+  const [nickname, setNickname] = useState("");
+  const [error, setError] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (open) {
+      setNickname("");
+      setError("");
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  const handleSubmit = () => {
+    const trimmed = nickname.trim();
+    if (!trimmed) {
+      setError("請輸入暱稱，讓主揪認得你");
+      return;
+    }
+    if (trimmed.length > 20) {
+      setError("暱稱不能超過 20 字");
+      return;
+    }
+    onSubmit(trimmed);
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(30,58,95,0.30)", backdropFilter: "blur(4px)", zIndex: 920, animation: "fadeIn 0.25s ease" }}/>
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 921, width: "min(380px, 92vw)", background: "linear-gradient(180deg, #FFF9EC, #FFF9EC)", borderRadius: 20, border: "1px solid rgba(90,143,168,0.3)", padding: "28px 24px", animation: "fadeIn 0.25s ease", boxShadow: "0 20px 60px rgba(30,58,95,0.20)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <span style={{ fontSize: 22 }}>👤</span>
+          <h3 style={{ fontSize: 17, fontWeight: 800, color: "#1E3A5F" }}>留個暱稱吧</h3>
+        </div>
+        <p style={{ fontSize: 12, color: "#5A7B9A", marginBottom: 16, lineHeight: 1.6 }}>
+          請輸入暱稱讓主揪知道是誰{actionLabel}<br/>
+          <span style={{ fontSize: 11, color: "#8A7F6A" }}>💡 用 Google/LINE 登入可以自動帶入球員卡資料</span>
+        </p>
+        <input ref={inputRef} type="text" value={nickname} onChange={(e) => { setNickname(e.target.value); setError(""); }}
+          placeholder="例：小明、阿美"
+          maxLength={20}
+          style={{ ...inputStyle, borderColor: error ? "#C85A5A" : "rgba(180,165,130,0.22)", marginBottom: error ? 4 : 16 }}
+          onFocus={(e) => { e.target.style.borderColor = "#5A8FA8"; }}
+          onBlur={(e) => { e.target.style.borderColor = error ? "#C85A5A" : "rgba(180,165,130,0.22)"; }}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+        />
+        {error && <div style={{ fontSize: 12, color: "#C85A5A", marginBottom: 12 }}>{error}</div>}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onClose}
+            style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(180,165,130,0.28)", background: "transparent", color: "#5A7B9A", fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+          >取消</button>
+          <button onClick={handleSubmit}
+            style={{ flex: 2, padding: "12px", borderRadius: 12, border: "none", background: "linear-gradient(135deg, #5A8FA8, #3D6B80)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}
+            onMouseEnter={(e) => { e.target.style.transform = "scale(1.02)"; }}
+            onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; }}
+          >✅ 確認{actionLabel}</button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ════════════════════════════════════════════
    Edit Session Modal (all fields)
    ════════════════════════════════════════════ */
 const EditSessionModal = ({ open, onClose, session, courtName, area, onSave, onCloseSession, onShare, onNotify }) => {
@@ -3284,6 +3351,11 @@ export default function VolleyballMatcher() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [lineLoading, setLineLoading] = useState(false);
 
+// 訪客報名時輸入暱稱用
+  const [showNicknamePrompt, setShowNicknamePrompt] = useState(false);
+  const [pendingJoinSessionId, setPendingJoinSessionId] = useState(null);
+  const [pendingJoinAction, setPendingJoinAction] = useState(null); // "register" or "waitlist"
+  
   // NEW: share card state
   const [showShareCardModal, setShowShareCardModal] = useState(false);
   const [shareCardTarget, setShareCardTarget] = useState(null);
@@ -3821,10 +3893,52 @@ export default function VolleyballMatcher() {
 
   const handleJoin = async (sessionId) => {
     if (joinedSessions.has(sessionId)) return;
+
+    // 如果有登入 → 嘗試用球員卡資料 / Google 名字；沒有就彈暱稱輸入框
+    let memberInfo = null;
+    if (currentUser) {
+      // 找這個 user 的球員卡（拿最新一筆）
+      const myPlayer = players
+        .filter(p => p.uid === currentUser.uid)
+        .sort((a, b) => {
+          const aTime = a.createdAt?.seconds || 0;
+          const bTime = b.createdAt?.seconds || 0;
+          return bTime - aTime;
+        })[0];
+      memberInfo = {
+        uid: currentUser.uid,
+        name: myPlayer?.nickname || currentUser.displayName || "登入者",
+        playerId: myPlayer?.id || null,
+        photoURL: currentUser.photoURL || myPlayer?.photoURL || null,
+      };
+    } else {
+      // 訪客 → 彈暱稱輸入框，等他輸入完再繼續
+      setPendingJoinSessionId(sessionId);
+      setPendingJoinAction("register");
+      setShowNicknamePrompt(true);
+      return;
+    }
+
+    // 有 memberInfo 的情況（登入者）直接報名
+    await doJoinWithInfo(sessionId, memberInfo);
+  };
+
+  // 實際執行報名寫入 Firestore 的 function
+  const doJoinWithInfo = async (sessionId, memberInfo) => {
     const nj = new Set(joinedSessions); nj.add(sessionId);
     setJoinedSessions(nj); saveJoined(nj);
     try {
-      await updateDoc(doc(db, "sessions", sessionId), { registered: increment(1) });
+      const entry = {
+        uid: memberInfo.uid || null,
+        name: memberInfo.name,
+        playerId: memberInfo.playerId || null,
+        photoURL: memberInfo.photoURL || null,
+        joinedAt: Date.now(),
+      };
+      await updateDoc(doc(db, "sessions", sessionId), {
+        registered: increment(1),
+        registeredList: arrayUnion(entry),
+      });
 
       const code = generateBindingCode();
       await setDoc(doc(db, "bindingCodes", code), {
@@ -3832,6 +3946,41 @@ export default function VolleyballMatcher() {
         createdAt: serverTimestamp(),
         used: false,
       });
+
+      setBindingCode(code);
+      setShowBindingModal(true);
+    } catch (err) {
+      console.error(err);
+      const rollback = new Set(joinedSessions);
+      rollback.delete(sessionId);
+      setJoinedSessions(rollback); saveJoined(rollback);
+      toast("報名失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  // 訪客輸入暱稱後的 callback
+  const handleNicknameSubmit = async (nickname) => {
+    setShowNicknamePrompt(false);
+    const sessionId = pendingJoinSessionId;
+    const action = pendingJoinAction;
+    setPendingJoinSessionId(null);
+    setPendingJoinAction(null);
+
+    if (!sessionId) return;
+
+    const guestInfo = {
+      uid: null,
+      name: nickname,
+      playerId: null,
+      photoURL: null,
+    };
+
+    if (action === "register") {
+      await doJoinWithInfo(sessionId, guestInfo);
+    } else if (action === "waitlist") {
+      await doWaitlistWithInfo(sessionId, guestInfo);
+    }
+  };
 
       setBindingCode(code);
       setShowBindingModal(true);
@@ -4406,6 +4555,13 @@ export default function VolleyballMatcher() {
       <CreatePlayerModal open={showCreatePlayerModal} onClose={() => setShowCreatePlayerModal(false)} onSubmit={handleCreatePlayer} currentUser={currentUser}/>
 
       {/* NEW: LoginChoiceModal */}
+      {/* 訪客輸入暱稱 */}
+      <NicknamePromptModal
+        open={showNicknamePrompt}
+        onClose={() => { setShowNicknamePrompt(false); setPendingJoinSessionId(null); setPendingJoinAction(null); }}
+        onSubmit={handleNicknameSubmit}
+        actionLabel={pendingJoinAction === "waitlist" ? "候補" : "報名"}
+      />
       <LoginChoiceModal open={showLoginChoiceModal} onClose={() => setShowLoginChoiceModal(false)} onGoogle={handleChooseGoogle} onLine={handleChooseLine} onGuest={handleChooseGuest} googleLoading={googleLoading} lineLoading={lineLoading}/>
 
       <PasswordModal open={showPlayerPasswordModal} onClose={() => { setShowPlayerPasswordModal(false); setEditPlayerTarget(null); }} onVerify={handlePlayerPasswordVerify} sessionId={editPlayerTarget?.id}/>
