@@ -304,7 +304,7 @@ const ProgressRing = ({ current, min, max }) => {
 /* ════════════════════════════════════════════
    Session List Section — 顯示報名名單（展開式）
    ════════════════════════════════════════════ */
-const SessionListSection = ({ session, currentUser, onOpenProfile }) => {
+const SessionListSection = ({ session, currentUser, onOpenProfile, onPromote, canManage }) => {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("registered"); // "registered" or "waitlist"
 
@@ -361,30 +361,59 @@ const SessionListSection = ({ session, currentUser, onOpenProfile }) => {
                 const isMe = currentUser && entry.uid === currentUser.uid;
                 const isGuest = !entry.uid;
                 const clickable = !!(entry.playerId && onOpenProfile);
+                // 在候補 tab 且使用者是主揪/admin → 顯示通知按鈕
+                const canPromote = tab === "waitlist" && canManage && !isGuest && entry.uid && onPromote;
+                // 已經通知過的會記在 session.promotedUids 裡
+                const alreadyNotified = (session.promotedUids || []).includes(entry.uid);
                 return (
-                  <div key={idx}
-                    onClick={clickable ? () => onOpenProfile(entry.playerId) : undefined}
-                    style={{ padding: "8px 12px", borderRadius: 10, background: isMe ? "rgba(90,143,168,0.18)" : "rgba(255,249,236,0.6)", border: "1px solid", borderColor: isMe ? "rgba(90,143,168,0.32)" : "rgba(180,165,130,0.18)", display: "flex", alignItems: "center", gap: 10, cursor: clickable ? "pointer" : "default", transition: "all 0.18s" }}
-                    onMouseEnter={clickable ? (e) => { e.currentTarget.style.borderColor = "#5A8FA8"; e.currentTarget.style.background = "rgba(90,143,168,0.12)"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(90,143,168,0.15)"; } : undefined}
-                    onMouseLeave={clickable ? (e) => { e.currentTarget.style.borderColor = isMe ? "rgba(90,143,168,0.32)" : "rgba(180,165,130,0.18)"; e.currentTarget.style.background = isMe ? "rgba(90,143,168,0.18)" : "rgba(255,249,236,0.6)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; } : undefined}
-                    title={clickable ? "點擊查看球員卡" : undefined}
-                  >
-                    {/* 頭像 */}
-                    {entry.photoURL ? (
-                      <img src={entry.photoURL} alt="" style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, border: "1px solid rgba(180,165,130,0.2)" }}/>
-                    ) : (
-                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: isGuest ? "rgba(180,165,130,0.28)" : "rgba(90,143,168,0.22)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 13, fontWeight: 700, color: isGuest ? "#8A7F6A" : "#5A8FA8" }}>
-                        {(entry.name || "?").charAt(0)}
+                  <div key={idx} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div
+                      onClick={clickable ? () => onOpenProfile(entry.playerId) : undefined}
+                      style={{ padding: "8px 12px", borderRadius: 10, background: isMe ? "rgba(90,143,168,0.18)" : "rgba(255,249,236,0.6)", border: "1px solid", borderColor: isMe ? "rgba(90,143,168,0.32)" : "rgba(180,165,130,0.18)", display: "flex", alignItems: "center", gap: 10, cursor: clickable ? "pointer" : "default", transition: "all 0.18s" }}
+                      onMouseEnter={clickable ? (e) => { e.currentTarget.style.borderColor = "#5A8FA8"; e.currentTarget.style.background = "rgba(90,143,168,0.12)"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(90,143,168,0.15)"; } : undefined}
+                      onMouseLeave={clickable ? (e) => { e.currentTarget.style.borderColor = isMe ? "rgba(90,143,168,0.32)" : "rgba(180,165,130,0.18)"; e.currentTarget.style.background = isMe ? "rgba(90,143,168,0.18)" : "rgba(255,249,236,0.6)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; } : undefined}
+                      title={clickable ? "點擊查看球員卡" : undefined}
+                    >
+                      {/* 頭像 */}
+                      {entry.photoURL ? (
+                        <img src={entry.photoURL} alt="" style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, border: "1px solid rgba(180,165,130,0.2)" }}/>
+                      ) : (
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: isGuest ? "rgba(180,165,130,0.28)" : "rgba(90,143,168,0.22)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 13, fontWeight: 700, color: isGuest ? "#8A7F6A" : "#5A8FA8" }}>
+                          {(entry.name || "?").charAt(0)}
+                        </div>
+                      )}
+                      {/* 名字 + 標籤 */}
+                      <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#1E3A5F" }}>{entry.name}</span>
+                        {isMe && <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 8, background: "#5A8FA8", color: "#fff", fontWeight: 700 }}>你</span>}
+                        {isGuest && <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 8, background: "rgba(180,165,130,0.28)", color: "#8A7F6A", fontWeight: 600 }}>訪客</span>}
+                        {entry.playerId && !isGuest && <span style={{ fontSize: 10, color: "#7FA87C" }}>🏐 球員卡</span>}
+                      </div>
+                      <span style={{ fontSize: 10, color: "#8A7F6A", flexShrink: 0 }}>{formatRelativeTime(entry.joinedAt)}</span>
+                    </div>
+
+                    {/* 主揪/admin 視角：通知候補者補上的按鈕（候補 tab 才顯示） */}
+                    {canPromote && (
+                      alreadyNotified ? (
+                        <div style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, background: "rgba(127,168,124,0.12)", border: "1px solid rgba(127,168,124,0.25)", color: "#5B7A59", display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+                          ✓ 已通知，等待 {entry.name} 回覆
+                        </div>
+                      ) : (
+                        <button onClick={(e) => { e.stopPropagation(); onPromote(session, entry); }}
+                          style={{ fontSize: 12, padding: "6px 10px", borderRadius: 8, border: "1px solid rgba(127,168,124,0.4)", background: "rgba(127,168,124,0.15)", color: "#5B7A59", cursor: "pointer", fontWeight: 700, transition: "all 0.2s", display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(127,168,124,0.28)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(127,168,124,0.15)"; e.currentTarget.style.transform = "translateY(0)"; }}
+                        >
+                          ✅ 通知 {entry.name} 可以補上了
+                        </button>
+                      )
+                    )}
+                    {/* 訪客候補者：提示主揪要私下聯絡 */}
+                    {tab === "waitlist" && canManage && isGuest && (
+                      <div style={{ fontSize: 10.5, padding: "4px 10px", borderRadius: 8, background: "rgba(180,165,130,0.1)", color: "#8A7F6A", fontStyle: "italic", textAlign: "center" }}>
+                        ⚠️ 訪客無法系統通知，請私下聯絡
                       </div>
                     )}
-                    {/* 名字 + 標籤 */}
-                    <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: "#1E3A5F" }}>{entry.name}</span>
-                      {isMe && <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 8, background: "#5A8FA8", color: "#fff", fontWeight: 700 }}>你</span>}
-                      {isGuest && <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 8, background: "rgba(180,165,130,0.28)", color: "#8A7F6A", fontWeight: 600 }}>訪客</span>}
-                      {entry.playerId && !isGuest && <span style={{ fontSize: 10, color: "#7FA87C" }}>🏐 球員卡</span>}
-                    </div>
-                    <span style={{ fontSize: 10, color: "#8A7F6A", flexShrink: 0 }}>{formatRelativeTime(entry.joinedAt)}</span>
                   </div>
                 );
               })}
@@ -403,7 +432,7 @@ const SessionListSection = ({ session, currentUser, onOpenProfile }) => {
 };
 
 /* ── Session Card ── */
-const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment, onWaitlist, onCancelWaitlist, hasWaitlisted, isAdmin, onAdminDelete, onAdminAdjust, currentUser, onNotifyWanting, wantingCount, onDuplicate, onOpenProfile }) => {
+const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJoined, onAddComment, onWaitlist, onCancelWaitlist, hasWaitlisted, isAdmin, onAdminDelete, onAdminAdjust, currentUser, onNotifyWanting, wantingCount, onDuplicate, onOpenProfile, onPromote }) => {
   const status = getStatus(session);
   const need = Math.max(0, session.min - session.registered);
   const isFull = session.registered >= session.max;
@@ -559,7 +588,7 @@ const SessionCard = ({ session, courtName, area, onJoin, onEdit, onCancel, hasJo
           )}
 
           {/* ══ 報名名單展開區 ══ */}
-          <SessionListSection session={session} currentUser={currentUser} onOpenProfile={onOpenProfile}/>
+          <SessionListSection session={session} currentUser={currentUser} onOpenProfile={onOpenProfile} onPromote={onPromote} canManage={isOrganizer || isAdmin}/>
 
           {/* Comments section */}
           <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px dashed rgba(180,165,130,0.22)" }}>
@@ -3561,8 +3590,8 @@ const PartnerVenuesModal = ({ open, onClose }) => {
         )}
 
         <div style={{ marginTop: 16, padding: "10px 12px", borderRadius: 8, background: "rgba(127,168,124,0.08)", border: "1px solid rgba(127,168,124,0.20)", fontSize: 11, color: "#5A7B9A", lineHeight: 1.6 }}>
-          💡 這些球館都是有去打過覺得不錯<br/>
-          而且也會固定開臨打團的場。
+          💡 有固定開團的球館想加入清單？<br/>
+          可到 LINE 官方帳號私訊聯絡，我們會評估後加入。
         </div>
       </div>
     </>
@@ -4001,6 +4030,42 @@ export default function VolleyballMatcher() {
       toast(`✅ 已通知 ${uids.length} 位夥伴`, 2500);
     } catch (err) {
       console.error("Send notifications failed:", err);
+      toast("通知發送失敗，請稍後再試", 3000, "warn");
+    }
+  };
+
+  // 主揪/admin 通知候補者可以補上了
+  const handlePromoteWaitlist = async (session, entry) => {
+    if (!currentUser || !entry?.uid) return;
+    const confirmed = window.confirm(`確定要通知 ${entry.name} 可以補上這場了嗎？\n\n對方會收到通知，可以按「我可以」接受或「我不行」拒絕。`);
+    if (!confirmed) return;
+    try {
+      const sessionTitle = session.courtName || session.venue || session.location || "場次";
+      const sessionTime = session.date || session.time || "";
+
+      // 寫一筆 promote 類型的通知
+      await addDoc(collection(db, "notifications"), {
+        toUid: entry.uid,
+        fromUid: currentUser.uid,
+        fromName: currentUser.displayName || "主揪",
+        sessionId: session.id,
+        sessionTitle,
+        sessionTime,
+        type: "promote", // 區分通知類型
+        waitlistEntry: entry, // 存原本候補的 entry，方便接受時升級
+        createdAt: serverTimestamp(),
+        readAt: null,
+        responseStatus: null, // "accepted" | "declined" | null
+      });
+
+      // 標記在 session 上，避免重複通知
+      await updateDoc(doc(db, "sessions", session.id), {
+        promotedUids: arrayUnion(entry.uid),
+      });
+
+      toast(`✅ 已通知 ${entry.name}，等待回覆`, 2500);
+    } catch (err) {
+      console.error("Promote waitlist failed:", err);
       toast("通知發送失敗，請稍後再試", 3000, "warn");
     }
   };
@@ -4767,7 +4832,7 @@ export default function VolleyballMatcher() {
           )}
           {!loading && sorted.map((s, i) => (
             <div key={s.id} style={{ animation: `slideUp 0.4s ease ${i * 0.06}s both` }}>
-              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal} onWaitlist={handleWaitlist} onCancelWaitlist={handleCancelWaitlist} hasWaitlisted={waitlistedSessions.has(s.id)} isAdmin={isAdmin} onAdminDelete={handleAdminDelete} onAdminAdjust={handleAdminAdjust} currentUser={currentUser} onNotifyWanting={handleOpenNotifyWanting} wantingCount={players.filter(p => (p.wantToPlayUntil || 0) > Date.now() && p.uid && p.uid !== currentUser?.uid).length} onDuplicate={handleDuplicateSession} onOpenProfile={setViewingPlayerId}/>
+              <SessionCard session={s} courtName={s.courtName} area={s.area} onJoin={handleJoin} onEdit={handleEditClick} onCancel={handleCancelRegistration} hasJoined={joinedSessions.has(s.id)} onAddComment={handleOpenCommentModal} onWaitlist={handleWaitlist} onCancelWaitlist={handleCancelWaitlist} hasWaitlisted={waitlistedSessions.has(s.id)} isAdmin={isAdmin} onAdminDelete={handleAdminDelete} onAdminAdjust={handleAdminAdjust} currentUser={currentUser} onNotifyWanting={handleOpenNotifyWanting} wantingCount={players.filter(p => (p.wantToPlayUntil || 0) > Date.now() && p.uid && p.uid !== currentUser?.uid).length} onDuplicate={handleDuplicateSession} onOpenProfile={setViewingPlayerId} onPromote={handlePromoteWaitlist}/>
             </div>
           ))}
         </div>
