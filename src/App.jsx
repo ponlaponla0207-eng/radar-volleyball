@@ -5061,7 +5061,7 @@ export default function VolleyballMatcher() {
               <HeaderAuthIndicator currentUser={currentUser} onLogin={handleHeaderLogin} onLineLogin={() => startLineLogin()} onLogout={handleGoogleLogout} googleLoading={googleLoading} lineLoading={lineLoading} onOpenMemberCenter={handleOpenMemberCenter} unreadNotificationCount={notifications.filter(n => !n.readAt).length} onOpenNotificationCenter={handleOpenNotificationCenter}/>
             </div>
           </div>
-          <p style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.5 }}>即時掌握台北各場館的排球場次，快速找到缺人的場，讓每一場都能順利開打</p>
+          <p style={{ fontSize: 13, color: "var(--text-dim)", lineHeight: 1.5 }}>其實原本只是想打球怕場人不夠想要做個揪團網站</p>
         </div>
       </div>
 
