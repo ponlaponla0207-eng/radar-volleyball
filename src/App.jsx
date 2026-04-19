@@ -2011,8 +2011,6 @@ const LoginChoiceModal = ({ open, onClose, onGoogle, onLine, onGuest, googleLoad
         </div>
 
       </div>
-
-      </div>
     </>
   );
 };
